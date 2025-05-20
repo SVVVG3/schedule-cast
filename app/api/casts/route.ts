@@ -62,13 +62,20 @@ async function authenticateUser(req: Request) {
         }
         
         // Get user data from Supabase
+        console.log(`[API] Fetching user with FID: ${fid}, type: ${typeof fid}`);
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('fid', fid)
           .maybeSingle();
           
-        if (userError || !userData) {
+        if (userError) {
+          console.error('[API] Error fetching user by FID:', userError);
+          return { authenticated: false, error: 'Error finding user' };
+        }
+        
+        if (!userData) {
+          console.log('[API] No user found with FID:', fid);
           return { authenticated: false, error: 'User not found' };
         }
         

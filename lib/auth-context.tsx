@@ -44,10 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Helper function to fetch the user from Supabase
   const fetchUserFromSupabase = async (fid: number) => {
     try {
+      console.log(`[AuthContext] Fetching user with FID: ${fid}, type: ${typeof fid}`);
+      
+      // Ensure FID is treated as a number
+      const numericFid = typeof fid === 'string' ? parseInt(fid, 10) : fid;
+      
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('fid', fid)
+        .eq('fid', numericFid)
         .maybeSingle();
       
       if (error) {
@@ -55,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       }
       
+      console.log('[AuthContext] Fetch result:', data ? 'User found' : 'No user found');
       return data;
     } catch (error) {
       console.error('[AuthContext] Unexpected error fetching user:', error);

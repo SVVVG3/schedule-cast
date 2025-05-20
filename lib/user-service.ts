@@ -97,20 +97,27 @@ export async function syncUserToSupabase(neynarUser: NeynarUser) {
  */
 export async function getUserByFid(fid: number) {
   try {
+    console.log(`[getUserByFid] Fetching user with FID: ${fid}, type: ${typeof fid}`);
+    
+    // Ensure FID is treated as a number
+    const numericFid = typeof fid === 'string' ? parseInt(fid, 10) : fid;
+    
+    // Use maybeSingle() instead of single() to avoid 406 errors when no results are found
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('fid', fid)
-      .single();
+      .eq('fid', numericFid)
+      .maybeSingle();
 
     if (error) {
-      console.error('Error fetching user by FID:', error);
+      console.error('[getUserByFid] Error fetching user by FID:', error);
       return null;
     }
-
+    
+    console.log('[getUserByFid] Query successful, result:', data ? 'User found' : 'No user found');
     return data;
   } catch (error) {
-    console.error('Exception fetching user by FID:', error);
+    console.error('[getUserByFid] Exception fetching user by FID:', error);
     return null;
   }
 }
