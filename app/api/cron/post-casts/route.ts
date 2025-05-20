@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import neynarClient from "@/lib/neynarClient";
-import { validateAndRefreshSigner } from "@/lib/neynar";
+import { validateAndRefreshSigner, postCastDirect, createSignerDirect } from "@/lib/neynar";
 
 export const dynamic = "force-dynamic";
 
@@ -37,10 +37,11 @@ export async function GET(request: NextRequest) {
       // Verify the fallback signer is valid before proceeding
       try {
         // Test the fallback signer with Neynar
-        const testResponse = await neynarClient.publishCast({
-          signerUuid: fallbackSignerUuid,
-          text: 'Test message - please ignore. This is an automated check for signer validity.',
-        });
+        const testResponse = await postCastDirect(
+          fallbackSignerUuid,
+          'Test message - please ignore. This is an automated check for signer validity.'
+        );
+        
         console.log(`[${timestamp}] Fallback signer validated successfully:`, testResponse);
       } catch (testError) {
         console.error(`[${timestamp}] Fallback signer validation failed:`, testError);
@@ -168,12 +169,13 @@ export async function GET(request: NextRequest) {
           if (fallbackSignerUuid) {
             console.log(`[${timestamp}] Using fallback signer ${fallbackSignerUuid} for cast ${cast.id}`);
             try {
-              // Enhanced error handling for Neynar API
               try {
-                const response = await neynarClient.publishCast({
-                  signerUuid: fallbackSignerUuid,
-                  text: cast.content,
-                });
+                // Use our direct API method
+                const response = await postCastDirect(
+                  fallbackSignerUuid,
+                  cast.content,
+                  cast.channel_id
+                );
                 
                 console.log(`[${timestamp}] Successfully posted cast ${cast.id} using fallback signer`);
                 
@@ -195,10 +197,6 @@ export async function GET(request: NextRequest) {
               } catch (neynarError: any) {
                 // Special handling for Neynar API errors
                 console.error(`[${timestamp}] Detailed Neynar error with fallback signer:`, typeof neynarError === 'object' ? JSON.stringify(neynarError) : neynarError);
-                
-                if (neynarError.response && neynarError.response.data) {
-                  console.error(`[${timestamp}] Neynar API response:`, neynarError.response.data);
-                }
                 
                 // Continue to try with normal flow since fallback failed
                 console.log(`[${timestamp}] Fallback signer failed, trying original signer`);
@@ -232,10 +230,12 @@ export async function GET(request: NextRequest) {
               }
             }
             
-            const response = await neynarClient.publishCast({
-              signerUuid: cast[signerIdField],
-              text: cast.content,
-            });
+            // Use our direct API method instead of the SDK
+            const response = await postCastDirect(
+              cast[signerIdField],
+              cast.content,
+              cast.channel_id
+            );
             
             console.log(`[${timestamp}] Successfully posted cast ${cast.id} using direct cast signer_uuid`);
             
@@ -301,10 +301,12 @@ export async function GET(request: NextRequest) {
                   console.log(`[${timestamp}] Found different signer_uuid in users table: ${userData.signer_uuid}`);
                   
                   try {
-                    const userSignerResponse = await neynarClient.publishCast({
-                      signerUuid: userData.signer_uuid,
-                      text: cast.content,
-                    });
+                    // Use our direct API method instead of the SDK
+                    const userSignerResponse = await postCastDirect(
+                      userData.signer_uuid,
+                      cast.content,
+                      cast.channel_id
+                    );
                     
                     console.log(`[${timestamp}] Successfully posted cast ${cast.id} with user's current signer`);
                     
@@ -336,10 +338,11 @@ export async function GET(request: NextRequest) {
             if (fallbackSignerUuid) {
               try {
                 console.log(`[${timestamp}] Last resort: trying fallback signer again`);
-                const response = await neynarClient.publishCast({
-                  signerUuid: fallbackSignerUuid,
-                  text: cast.content,
-                });
+                const response = await postCastDirect(
+                  fallbackSignerUuid,
+                  cast.content,
+                  cast.channel_id
+                );
                 
                 console.log(`[${timestamp}] Successfully posted cast ${cast.id} with fallback signer as last resort`);
                 

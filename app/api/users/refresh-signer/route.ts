@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { createSigner } from "@/lib/neynar";
+import { createSignerDirect } from "@/lib/neynar";
 
 /**
  * API route to force refresh a user's signer
@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
     
     // Create new signer
     try {
-      const newSignerData = await createSigner(numericFid);
+      // Use the direct API method instead of the SDK
+      const newSignerData = await createSignerDirect();
       const newSignerUuid = newSignerData.signer_uuid;
       
       console.log(`[refresh-signer] Created new signer: ${newSignerUuid}`);
@@ -76,8 +77,7 @@ export async function GET(request: NextRequest) {
         success: true,
         message: `Successfully refreshed signer for FID: ${numericFid}`,
         old_signer: user.signer_uuid,
-        new_signer: newSignerUuid,
-        approval_url: newSignerData.signer_approval_url
+        new_signer: newSignerUuid
       });
     } catch (signerError) {
       console.error(`[refresh-signer] Error creating new signer:`, signerError);

@@ -212,7 +212,7 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
       
       // Signer is invalid, create a new one
       try {
-        const newSignerData = await createSigner(fid);
+        const newSignerData = await createSignerDirect();
         const newSignerUuid = newSignerData.signer_uuid;
         
         console.log(`[validateAndRefreshSigner] New signer created: ${newSignerUuid}`);
@@ -255,5 +255,114 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
   } catch (error) {
     console.error(`[validateAndRefreshSigner] Error:`, error);
     throw error instanceof NeynarError ? error : new NeynarError(`Unexpected error: ${(error as Error).message}`, 500);
+  }
+}
+
+/**
+ * Create a signer via direct Neynar API call
+ * This bypasses the SDK due to API changes
+ */
+export async function createSignerDirect() {
+  if (!process.env.NEYNAR_API_KEY) {
+    throw new NeynarError('Neynar API key is missing', 500);
+  }
+
+  try {
+    console.log('[createSignerDirect] Creating managed signer via direct API call');
+    
+    const response = await fetch("https://api.neynar.com/v2/farcaster/signer", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.NEYNAR_API_KEY
+      }
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[createSignerDirect] API error:', errorText);
+      throw new NeynarError(`Failed to create signer: ${errorText}`, response.status);
+    }
+    
+    const data = await response.json();
+    console.log('[createSignerDirect] Successfully created signer:', data.signer_uuid);
+    
+    return {
+      signer_uuid: data.signer_uuid,
+      public_key: data.public_key,
+      status: data.status
+    };
+  } catch (error) {
+    console.error('[createSignerDirect] Error:', error);
+    if (error instanceof NeynarError) {
+      throw error;
+    }
+    throw new NeynarError(`Failed to create signer: ${(error as Error).message}`, 500);
+  }
+}
+
+/**
+ * Post a cast via direct Neynar API call
+ * This bypasses the SDK due to API changes
+ */
+export async function postCastDirect(
+  signerUuid: string,
+  content: string,
+  channelId?: string
+) {
+  if (!process.env.NEYNAR_API_KEY) {
+    throw new NeynarError('Neynar API key is missing', 500);
+  }
+
+  if (!signerUuid) {
+    throw new NeynarError('Signer UUID is required', 400);
+  }
+
+  if (!content || content.length > 320) {
+    throw new NeynarError(
+      'Cast content is required and must be 320 characters or less',
+      400
+    );
+  }
+
+  try {
+    console.log('[postCastDirect] Posting cast using signer:', signerUuid);
+    
+    // Prepare the request body
+    const requestBody: Record<string, any> = {
+      signer_uuid: signerUuid,
+      text: content,
+    };
+
+    // Add channel ID if provided
+    if (channelId) {
+      requestBody.channel_id = channelId;
+    }
+    
+    const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.NEYNAR_API_KEY
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[postCastDirect] API error:', errorText);
+      throw new NeynarError(`Failed to post cast: ${errorText}`, response.status);
+    }
+    
+    const data = await response.json();
+    console.log('[postCastDirect] Successfully posted cast');
+    
+    return data;
+  } catch (error) {
+    console.error('[postCastDirect] Error:', error);
+    if (error instanceof NeynarError) {
+      throw error;
+    }
+    throw new NeynarError(`Failed to post cast: ${(error as Error).message}`, 500);
   }
 } 
