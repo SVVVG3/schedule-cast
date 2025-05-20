@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey
+        "api_key": apiKey
       }
     });
     

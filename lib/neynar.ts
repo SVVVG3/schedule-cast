@@ -274,7 +274,7 @@ export async function createSignerDirect() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.NEYNAR_API_KEY
+        "api_key": process.env.NEYNAR_API_KEY
       }
     });
     
@@ -343,7 +343,7 @@ export async function postCastDirect(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.NEYNAR_API_KEY
+        "api_key": process.env.NEYNAR_API_KEY
       },
       body: JSON.stringify(requestBody)
     });
