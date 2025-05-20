@@ -201,8 +201,14 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
     // First, try to get signer information to check if it's valid
     try {
       const signerInfo = await getSignerInfo(signerUuid);
-      console.log(`[validateAndRefreshSigner] Signer is valid:`, signerInfo.status || 'active');
-      return { signerUuid, refreshed: false };
+      console.log(`[validateAndRefreshSigner] Signer is valid, status:`, signerInfo.status || 'unknown');
+      
+      // Check if the signer is approved
+      if (signerInfo.status !== 'approved') {
+        throw new NeynarError(`Signer is not approved, status: ${signerInfo.status}`, 403);
+      }
+      
+      return { signerUuid, refreshed: false, approved: true };
     } catch (validationError) {
       // Log detailed error information
       console.error(`[validateAndRefreshSigner] Signer validation failed with error:`, 
@@ -215,17 +221,32 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
         const newSignerData = await createSignerDirect();
         const newSignerUuid = newSignerData.signer_uuid;
         
-        console.log(`[validateAndRefreshSigner] New signer created: ${newSignerUuid}`);
+        console.log(`[validateAndRefreshSigner] New signer created: ${newSignerUuid}, status: ${newSignerData.status}`);
         
         // Update the user record in the database
         const { error } = await supabase
           .from('users')
-          .update({ signer_uuid: newSignerUuid })
+          .update({ 
+            signer_uuid: newSignerUuid,
+            signer_approval_url: newSignerData.signer_approval_url || null,
+            signer_status: newSignerData.status || 'generated'
+          })
           .eq('fid', fid);
         
         if (error) {
           console.error(`[validateAndRefreshSigner] Failed to update user record with new signer:`, error);
           throw new NeynarError(`Failed to update user record with new signer: ${error.message}`, 500);
+        }
+        
+        // Check if the signer is approved
+        const isApproved = newSignerData.status === 'approved';
+        
+        // If it's not approved, throw an error with the approval URL
+        if (!isApproved) {
+          throw new NeynarError(
+            `Signer needs approval. Please visit: ${newSignerData.signer_approval_url}`,
+            403
+          );
         }
         
         // Also update any scheduled casts that haven't been posted yet
@@ -246,7 +267,7 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
         }
         
         console.log(`[validateAndRefreshSigner] Refreshed signer for FID ${fid}: ${newSignerUuid}`);
-        return { signerUuid: newSignerUuid, refreshed: true };
+        return { signerUuid: newSignerUuid, refreshed: true, approved: isApproved };
       } catch (createError) {
         console.error(`[validateAndRefreshSigner] Failed to create new signer:`, createError);
         throw new NeynarError(`Failed to create new signer: ${(createError as Error).message}`, 500);
@@ -290,7 +311,9 @@ export async function createSignerDirect() {
     return {
       signer_uuid: data.signer_uuid,
       public_key: data.public_key,
-      status: data.status
+      status: data.status,
+      signer_approval_url: data.signer_approval_url,
+      approved: data.status === 'approved'
     };
   } catch (error) {
     console.error('[createSignerDirect] Error:', error);

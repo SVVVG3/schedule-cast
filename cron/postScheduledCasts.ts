@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { postCastDirect, validateAndRefreshSigner } from '@/lib/neynar';
+import { postCastDirect, validateAndRefreshSigner, NeynarError } from '@/lib/neynar';
 
 // Number of casts to process per batch
 const BATCH_SIZE = 10;
@@ -49,10 +49,41 @@ async function processCast(cast: any) {
       return { success: false, error: 'Missing fid' };
     }
     
+    // First check if user needs approval
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('signer_uuid, signer_status, signer_approval_url, needs_signer_approval')
+      .eq('fid', cast.fid)
+      .maybeSingle();
+    
+    if (userError) {
+      log(`Error fetching user for cast ${cast.id}: ${userError.message}`);
+      await markCastAsError(cast.id, `Error fetching user: ${userError.message}`);
+      return { success: false, error: `Error fetching user: ${userError.message}` };
+    }
+    
+    if (!user) {
+      log(`No user found for FID ${cast.fid} for cast ${cast.id}`);
+      await markCastAsError(cast.id, `No user found for FID ${cast.fid}`);
+      return { success: false, error: `No user found for FID ${cast.fid}` };
+    }
+    
+    // If the user needs signer approval or the signer status isn't approved, skip this cast
+    if (user.needs_signer_approval || (user.signer_status && user.signer_status !== 'approved')) {
+      const reason = user.signer_approval_url
+        ? `Signer not approved. User needs to approve at: ${user.signer_approval_url}`
+        : 'Signer not approved. User needs to login to approve signer.';
+        
+      log(`Skipping cast ${cast.id}: ${reason}`);
+      await markCastAsError(cast.id, reason);
+      return { success: false, error: reason };
+    }
+    
     // Validate and refresh the signer if needed
     try {
       log(`Validating signer ${cast.signer_uuid} for cast ${cast.id}`);
-      const { signerUuid, refreshed } = await validateAndRefreshSigner(cast.signer_uuid, cast.fid);
+      
+      const { signerUuid, refreshed, approved } = await validateAndRefreshSigner(cast.signer_uuid, cast.fid);
       
       if (refreshed) {
         log(`Signer was refreshed for cast ${cast.id}, using new signer: ${signerUuid}`);
@@ -69,28 +100,19 @@ async function processCast(cast: any) {
         
         // Use the new signer UUID
         cast.signer_uuid = signerUuid;
-      }
-    } catch (signerError) {
-      log(`Failed to validate/refresh signer for cast ${cast.id}: ${(signerError as Error).message}`);
-      
-      // Try to post directly as a fallback
-      try {
-        log(`Attempting to post cast ${cast.id} directly as fallback`);
         
-        // Get the user and their current signer_uuid
-        const { data: user, error: userError } = await supabase
-          .from('users')
-          .select('signer_uuid')
-          .eq('fid', cast.fid)
-          .maybeSingle();
-          
-        if (userError || !user || !user.signer_uuid) {
-          throw new Error(`Could not find valid user/signer for FID ${cast.fid}`);
+        // Check if the refreshed signer is approved
+        if (!approved) {
+          const reason = 'New signer needs approval. Please login to approve the signer.';
+          await markCastAsError(cast.id, reason);
+          return { success: false, error: reason };
         }
-        
-        // Use the user's current signer
+      }
+      
+      // Post to Farcaster via Neynar
+      try {
         const result = await postCastDirect(
-          user.signer_uuid,
+          cast.signer_uuid,
           cast.content,
           cast.channel_id || undefined
         );
@@ -98,28 +120,65 @@ async function processCast(cast: any) {
         // Mark as posted
         await markCastAsPosted(cast.id, result);
         
-        log(`Successfully posted cast ${cast.id} with fallback method`);
-        return { success: true, result, fallback: true };
-      } catch (fallbackError) {
-        // Both methods failed
-        const errorMessage = `No signer found with signer_uuid: ${cast.signer_uuid} and direct post failed`;
-        await markCastAsError(cast.id, errorMessage);
-        return { success: false, error: errorMessage };
+        log(`Successfully posted cast ${cast.id}`);
+        return { success: true, result };
+      } catch (postError) {
+        // If the post fails with a signer error, try to decode the error
+        const error = postError as NeynarError;
+        
+        if (error.status === 403 && error.message.includes('Signer')) {
+          // This is likely a signer approval issue
+          const errorObj = tryParseError(error.message);
+          
+          if (errorObj && errorObj.code === 'SignerNotApproved') {
+            // Update the user record to indicate they need approval
+            await supabase
+              .from('users')
+              .update({ 
+                needs_signer_approval: true,
+                signer_status: 'generated'
+              })
+              .eq('fid', cast.fid);
+            
+            const reason = 'Signer not approved. Please login to approve the signer.';
+            await markCastAsError(cast.id, reason);
+            return { success: false, error: reason };
+          }
+        }
+        
+        // For other errors, mark as error and return
+        await markCastAsError(cast.id, error.message);
+        return { success: false, error: error.message };
       }
+    } catch (signerError) {
+      const error = signerError as Error;
+      log(`Failed to validate/refresh signer for cast ${cast.id}: ${error.message}`);
+      
+      // Check if this is a signer approval issue
+      if (error.message.includes('needs approval') || error.message.includes('not approved')) {
+        // Update the user record to indicate they need approval
+        const approvalUrl = extractApprovalUrl(error.message);
+        await supabase
+          .from('users')
+          .update({ 
+            needs_signer_approval: true,
+            signer_status: 'generated',
+            signer_approval_url: approvalUrl || null
+          })
+          .eq('fid', cast.fid);
+        
+        const reason = approvalUrl
+          ? `Signer needs approval. Please visit: ${approvalUrl}`
+          : 'Signer needs approval. Please login to approve the signer.';
+          
+        await markCastAsError(cast.id, reason);
+        return { success: false, error: reason };
+      }
+      
+      // For other errors, just mark as error
+      await markCastAsError(cast.id, error.message);
+      return { success: false, error: error.message };
     }
-    
-    // Post to Farcaster via Neynar
-    const result = await postCastDirect(
-      cast.signer_uuid,
-      cast.content,
-      cast.channel_id || undefined
-    );
-    
-    // Mark as posted
-    await markCastAsPosted(cast.id, result);
-    
-    log(`Successfully posted cast ${cast.id}`);
-    return { success: true, result };
   } catch (error) {
     const errorMessage = (error as Error).message || 'Unknown error';
     log(`Error posting cast ${cast.id}: ${errorMessage}`);
@@ -129,6 +188,34 @@ async function processCast(cast: any) {
     
     return { success: false, error: errorMessage };
   }
+}
+
+/**
+ * Try to parse an error message as JSON
+ */
+function tryParseError(errorMessage: string): any {
+  try {
+    // First check if the string contains a JSON object
+    const match = errorMessage.match(/\{.*\}/);
+    if (match) {
+      return JSON.parse(match[0]);
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Extract approval URL from error message
+ */
+function extractApprovalUrl(message: string): string | null {
+  // Try to extract a URL from the error message
+  const urlMatch = message.match(/https?:\/\/[^\s"']+/);
+  if (urlMatch) {
+    return urlMatch[0];
+  }
+  return null;
 }
 
 /**
