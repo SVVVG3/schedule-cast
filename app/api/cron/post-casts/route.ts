@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import neynarClient from "@/lib/neynarClient";
+import { validateAndRefreshSigner } from "@/lib/neynar";
 
 export const dynamic = "force-dynamic";
 
@@ -212,6 +213,25 @@ export async function GET(request: NextRequest) {
           // This is more reliable than looking for a separate user_signers table that doesn't exist
           try {
             console.log(`[${timestamp}] Attempting to post directly using cast's signer_uuid: ${cast[signerIdField]}`);
+            
+            // First validate and refresh the signer if needed
+            if (cast.fid) {
+              try {
+                const { signerUuid: validSignerUuid, refreshed } = await validateAndRefreshSigner(cast[signerIdField], cast.fid);
+                
+                if (refreshed) {
+                  console.log(`[${timestamp}] Signer was invalid and has been refreshed to: ${validSignerUuid}`);
+                  // Update the signerIdField value with the new valid signer
+                  cast[signerIdField] = validSignerUuid;
+                } else {
+                  console.log(`[${timestamp}] Signer is valid and doesn't need refreshing`);
+                }
+              } catch (refreshError) {
+                console.error(`[${timestamp}] Error validating/refreshing signer:`, refreshError);
+                // Continue with the original signer, it might still work
+              }
+            }
+            
             const response = await neynarClient.publishCast({
               signerUuid: cast[signerIdField],
               text: cast.content,

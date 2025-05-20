@@ -12,6 +12,7 @@ const CAST_ENDPOINT = `${NEYNAR_API_URL}/cast`;
 const SIGNER_ENDPOINT = `${NEYNAR_API_URL}/signer`;
 
 import { registerUserSigner } from '@/utils/registerUserSigner';
+import { supabase } from './supabase';
 
 // Error types
 export class NeynarError extends Error {
@@ -177,5 +178,56 @@ export async function createSigner(fid: number) {
       throw error;
     }
     throw new NeynarError(`Failed to create signer: ${(error as Error).message}`, 500);
+  }
+}
+
+/**
+ * Validates if a signer is still valid, and refreshes it if not
+ * 
+ * @param signerUuid The signer UUID to validate
+ * @param fid The Farcaster ID associated with the signer
+ * @returns An object with the valid signer UUID and whether it was refreshed
+ */
+export async function validateAndRefreshSigner(signerUuid: string, fid: number) {
+  if (!process.env.NEYNAR_API_KEY) {
+    throw new NeynarError('Neynar API key is missing', 500);
+  }
+
+  if (!signerUuid || !fid) {
+    throw new NeynarError('Signer UUID and FID are required', 400);
+  }
+
+  console.log(`[validateAndRefreshSigner] Validating signer ${signerUuid} for FID ${fid}`);
+  
+  try {
+    // First, try to get signer information to check if it's valid
+    try {
+      const signerInfo = await getSignerInfo(signerUuid);
+      console.log(`[validateAndRefreshSigner] Signer is valid:`, signerInfo.status || 'active');
+      return { signerUuid, refreshed: false };
+    } catch (validationError) {
+      console.log(`[validateAndRefreshSigner] Signer validation failed, creating new signer`);
+      
+      // Signer is invalid, create a new one
+      const newSignerData = await createSigner(fid);
+      const newSignerUuid = newSignerData.signer_uuid;
+      
+      // Update the user record in the database
+      const { error } = await supabase
+        .from('users')
+        .update({ signer_uuid: newSignerUuid })
+        .eq('fid', fid);
+      
+      if (error) {
+        console.error(`[validateAndRefreshSigner] Failed to update user record with new signer:`, error);
+        throw new NeynarError(`Failed to update user record with new signer: ${error.message}`, 500);
+      }
+      
+      console.log(`[validateAndRefreshSigner] Refreshed signer for FID ${fid}: ${newSignerUuid}`);
+      return { signerUuid: newSignerUuid, refreshed: true };
+    }
+  } catch (error) {
+    console.error(`[validateAndRefreshSigner] Error:`, error);
+    throw error instanceof NeynarError ? error : new NeynarError(`Unexpected error: ${(error as Error).message}`, 500);
   }
 } 

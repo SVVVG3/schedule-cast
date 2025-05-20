@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { createSigner } from './neynar';
+import { createSigner, validateAndRefreshSigner } from './neynar';
 
 // Define a type for the SIWN user data
 interface NeynarUser {
@@ -179,7 +179,23 @@ export async function getOrCreateSigner(fid: number) {
     // If the user already has a signer, return it
     if (user?.signer_uuid) {
       console.log('[getOrCreateSigner] Found existing signer:', user.signer_uuid);
-      return user.signer_uuid;
+      
+      // Validate the signer and refresh if needed
+      try {
+        console.log('[getOrCreateSigner] Validating existing signer...');
+        const { signerUuid, refreshed } = await validateAndRefreshSigner(user.signer_uuid, fid);
+        
+        if (refreshed) {
+          console.log('[getOrCreateSigner] Signer was invalid and has been refreshed:', signerUuid);
+        } else {
+          console.log('[getOrCreateSigner] Existing signer is valid, no refresh needed');
+        }
+        
+        return signerUuid;
+      } catch (validationError) {
+        console.error('[getOrCreateSigner] Error validating signer:', validationError);
+        // If validation fails, we'll fall through to creating a new signer
+      }
     }
 
     console.log('[getOrCreateSigner] User exists but has no signer, creating one');
