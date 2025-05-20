@@ -1,66 +1,110 @@
-import { NextResponse } from 'next/server';
-import { main as postScheduledCasts } from '@/cron/postScheduledCasts';
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase";
+import { neynarClient } from "@/lib/neynarClient";
 
-/**
- * API route to run the scheduled casts posting job
- * 
- * This endpoint is designed to be called by Vercel Cron or other schedulers.
- * It requires a secret key to prevent unauthorized access.
- */
-export async function GET(request: Request) {
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  console.log("Running scheduled casts posting job via API route");
+  
+  // Validate cron secret
+  const cronSecret = process.env.CRON_SECRET;
+  const requestSecret = request.nextUrl.searchParams.get('cron_secret');
+  
+  // Debug mode for testing
+  const isDebug = request.nextUrl.searchParams.get('debug') === 'true';
+  
+  // Skip secret validation in debug mode or validate the secret
+  if (!isDebug && requestSecret !== cronSecret) {
+    console.error(`Invalid cron secret provided: ${requestSecret}`);
+    return NextResponse.json({ error: 'Invalid cron secret provided' }, { status: 401 });
+  }
+
   try {
-    // Verify cron secret if provided in environment
-    const url = new URL(request.url);
-    const providedSecret = url.searchParams.get('secret');
-    const expectedSecret = process.env.CRON_SECRET;
-    
-    // Only check secret if one is configured
-    if (expectedSecret && providedSecret !== expectedSecret) {
-      console.error('Invalid cron secret provided');
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] Starting scheduled casts posting job`);
+
+    // Create Supabase client
+    const supabase = createClient();
+
+    // Get all scheduled casts that are due
+    const { data: casts, error } = await supabase
+      .from('scheduled_casts')
+      .select('*')
+      .lte('scheduled_time', new Date().toISOString())
+      .eq('posted', false);
+
+    if (error) {
+      console.error(`[${timestamp}] Error fetching scheduled casts:`, error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    console.log(`[${timestamp}] Found ${casts?.length || 0} casts due for posting`);
     
-    // Only allow this in production or if debug flag is set
-    const isProduction = process.env.NODE_ENV === 'production';
-    const debugMode = url.searchParams.get('debug') === 'true';
-    
-    if (!isProduction && !debugMode) {
-      console.warn('Cron job skipped in development mode without debug flag');
-      return NextResponse.json(
-        { message: 'Skipped in development. Add ?debug=true to run anyway.' },
-        { status: 200 }
-      );
+    let successCount = 0;
+    let failCount = 0;
+
+    // Process each cast
+    if (casts && casts.length > 0) {
+      for (const cast of casts) {
+        console.log(`[${timestamp}] Processing cast ${cast.id}`);
+        
+        try {
+          // Get user signer
+          const { data: signers, error: signerError } = await supabase
+            .from('user_signers')
+            .select('*')
+            .eq('uuid', cast.signer_uuid)
+            .single();
+
+          if (signerError || !signers) {
+            console.error(`[${timestamp}] Error getting signer for cast ${cast.id}:`, signerError);
+            failCount++;
+            continue;
+          }
+
+          // Cast the message to Farcaster
+          const response = await neynarClient.publishCast({
+            signer_uuid: signers.uuid,
+            text: cast.content,
+          });
+
+          console.log(`[${timestamp}] Successfully posted cast ${cast.id}`);
+          
+          // Mark as posted in database
+          try {
+            const { error: updateError } = await supabase
+              .from('scheduled_casts')
+              .update({ 
+                posted: true, 
+                posted_at: new Date().toISOString(),
+                result: response
+              })
+              .eq('id', cast.id);
+
+            if (updateError) {
+              console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
+            }
+          } catch (updateErr) {
+            console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateErr);
+          }
+          
+          successCount++;
+        } catch (castError) {
+          console.error(`[${timestamp}] Error posting cast ${cast.id}:`, castError);
+          failCount++;
+        }
+      }
     }
-    
-    // Run the cron job
-    console.log('Running scheduled casts posting job via API route');
-    const result = await postScheduledCasts();
+
+    console.log(`[${timestamp}] Completed job: ${successCount} succeeded, ${failCount} failed`);
     
     return NextResponse.json({
       success: true,
-      timestamp: new Date().toISOString(),
-      result
+      message: `Processed ${casts?.length || 0} casts: ${successCount} succeeded, ${failCount} failed`
     });
   } catch (error) {
-    console.error('Error running cron job:', error);
-    return NextResponse.json(
-      { error: 'Failed to run posting job', message: (error as Error).message },
-      { status: 500 }
-    );
+    console.error("Error in scheduled casts job:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
-// Add OPTIONS method to support CORS preflight requests
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
-} 
