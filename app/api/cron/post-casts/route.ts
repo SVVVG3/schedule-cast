@@ -26,14 +26,7 @@ export async function GET(request: NextRequest) {
     console.log(`[${timestamp}] Starting scheduled casts posting job`);
     console.log(`[${timestamp}] NEYNAR_API_KEY present: ${!!process.env.NEYNAR_API_KEY}`);
     console.log(`[${timestamp}] Force fix mode: ${forceFix}`);
-
-    // Attempt to refresh schema cache first
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin}/api/refresh-schema`);
-    } catch (cacheError) {
-      console.log(`[${timestamp}] Schema refresh attempt error:`, cacheError);
-      // Continue even if schema refresh fails
-    }
+    console.log(`[${timestamp}] Debug mode: ${isDebug}`);
 
     // Check for fallback signer option
     const fallbackSignerUuid = request.nextUrl.searchParams.get('fallbackSigner');
@@ -55,14 +48,6 @@ export async function GET(request: NextRequest) {
           details: "The provided fallback signer UUID could not be validated with Neynar." 
         }, { status: 400 });
       }
-    }
-
-    // Get problematic signers list from URL params
-    const problematicSignersList = request.nextUrl.searchParams.get('fixSigners');
-    let problematicSigners: string[] = [];
-    if (problematicSignersList) {
-      problematicSigners = problematicSignersList.split(',');
-      console.log(`[${timestamp}] Fixing specific problematic signers:`, problematicSigners);
     }
 
     // First, let's check for casts that were already posted but not marked as posted
@@ -91,60 +76,6 @@ export async function GET(request: NextRequest) {
         console.error(`[${timestamp}] Error in fix operation:`, fixErr);
       }
     }
-
-    // Check for table names in the database
-    let signerTable = 'user_signers'; // Default table name
-    try {
-      // List tables in the database to find the correct signer table
-      const { data: tables, error: tablesError } = await supabase
-        .from('pg_tables')
-        .select('tablename')
-        .eq('schemaname', 'public');
-        
-      if (tablesError) {
-        console.log(`[${timestamp}] Error listing tables:`, tablesError);
-        // Try an alternative method to check tables
-        try {
-          // Direct SQL query to list tables
-          const { data: tablesList } = await supabase.rpc('get_tables');
-          if (tablesList) {
-            console.log(`[${timestamp}] Available tables from RPC:`, tablesList);
-            
-            // Find potential signer tables
-            const signerTableCandidates = tablesList.filter((table: string) => 
-              table.includes('signer') || table.includes('user')
-            );
-            
-            if (signerTableCandidates.length > 0) {
-              console.log(`[${timestamp}] Potential signer tables:`, signerTableCandidates);
-              // Use the first candidate
-              signerTable = signerTableCandidates[0];
-            }
-          }
-        } catch (rpcError) {
-          console.log(`[${timestamp}] Error with RPC get_tables:`, rpcError);
-          // Continue with default table name
-        }
-      } else if (tables && tables.length > 0) {
-        console.log(`[${timestamp}] Available tables:`, tables.map(t => t.tablename));
-        
-        // Find potential signer tables
-        const signerTableCandidates = tables
-          .map(t => t.tablename)
-          .filter(name => name.includes('signer') || name.includes('user'));
-        
-        if (signerTableCandidates.length > 0) {
-          console.log(`[${timestamp}] Potential signer tables:`, signerTableCandidates);
-          // Use the first candidate
-          signerTable = signerTableCandidates[0];
-        }
-      }
-    } catch (tableError) {
-      console.log(`[${timestamp}] Error checking tables:`, tableError);
-      // Continue with default table name
-    }
-    
-    console.log(`[${timestamp}] Using signer table: ${signerTable}`);
 
     // Check for the column names in the scheduled_casts table
     let timeColumn = 'scheduled_time'; // Default
@@ -232,22 +163,18 @@ export async function GET(request: NextRequest) {
           // Check if we should use the fallback signer instead of the one in the cast
           const useEffectiveSignerId = fallbackSignerUuid || cast[signerIdField];
           
-          // Check if this is a problematic signer we're trying to fix
-          const signerId = cast[signerIdField];
-          const isProblematicSigner = problematicSigners.includes(signerId) || forceFix;
-          
-          // If fallback signer is provided or this is a problematic signer, post directly
-          if (fallbackSignerUuid || isProblematicSigner) {
-            console.log(`[${timestamp}] Using ${fallbackSignerUuid ? 'fallback' : 'direct'} signer ${useEffectiveSignerId} for cast ${cast.id}`);
+          // If fallback signer is provided, post directly using it first
+          if (fallbackSignerUuid) {
+            console.log(`[${timestamp}] Using fallback signer ${fallbackSignerUuid} for cast ${cast.id}`);
             try {
               // Enhanced error handling for Neynar API
               try {
                 const response = await neynarClient.publishCast({
-                  signerUuid: useEffectiveSignerId,
+                  signerUuid: fallbackSignerUuid,
                   text: cast.content,
                 });
                 
-                console.log(`[${timestamp}] Successfully posted cast ${cast.id} using ${fallbackSignerUuid ? 'fallback' : 'direct'} signer`);
+                console.log(`[${timestamp}] Successfully posted cast ${cast.id} using fallback signer`);
                 
                 // Mark as posted in database
                 const { error: updateError } = await supabase
@@ -266,334 +193,34 @@ export async function GET(request: NextRequest) {
                 continue;
               } catch (neynarError: any) {
                 // Special handling for Neynar API errors
-                console.error(`[${timestamp}] Detailed Neynar error:`, typeof neynarError === 'object' ? JSON.stringify(neynarError) : neynarError);
+                console.error(`[${timestamp}] Detailed Neynar error with fallback signer:`, typeof neynarError === 'object' ? JSON.stringify(neynarError) : neynarError);
                 
                 if (neynarError.response && neynarError.response.data) {
                   console.error(`[${timestamp}] Neynar API response:`, neynarError.response.data);
                 }
                 
-                throw neynarError;
+                // Continue to try with normal flow since fallback failed
+                console.log(`[${timestamp}] Fallback signer failed, trying original signer`);
               }
             } catch (directPostError: any) {
-              console.error(`[${timestamp}] Failed to post with ${fallbackSignerUuid ? 'fallback' : 'problematic'} signer:`, directPostError);
-              
-              // If fallback signer failed, we're done - this is our last resort
-              if (fallbackSignerUuid) {
-                failCount++;
-                failureReasons.push({ 
-                  id: cast.id, 
-                  reason: `Fallback signer post failed: ${(directPostError as Error).message || JSON.stringify(directPostError)}` 
-                });
-                continue;
-              }
-              
-              // If problematic direct post failed but we have a fallback, we'll continue to the normal flow
-              // Otherwise, we'll continue to try other methods
+              console.error(`[${timestamp}] Failed to post with fallback signer:`, directPostError);
+              // Continue to try with normal flow since fallback failed
             }
           }
           
-          // Check the structure of the signer table
-          let signerUuidField = 'uuid'; // Default field name for signer uuid
-          let signers = null;
-          let signerError = null;
-          
+          // Try to post directly using the signer UUID from the cast
+          // This is more reliable than looking for a separate user_signers table that doesn't exist
           try {
-            // First try getting a sample from the signer table to check its structure
-            const { data: signerSample, error: sampleError } = await supabase
-              .from(signerTable)
-              .select('*')
-              .limit(1);
-              
-            if (sampleError) {
-              console.error(`[${timestamp}] Error getting signer table sample:`, sampleError);
-            } else if (signerSample && signerSample.length > 0) {
-              console.log(`[${timestamp}] Signer table sample:`, JSON.stringify(signerSample[0], null, 2));
-              
-              // Try to get the signer with the appropriate field
-              const { data: foundSigners, error: lookupError } = await supabase
-                .from(signerTable)
-                .select('*')
-                .eq(signerUuidField, cast[signerIdField])
-                .single();
-                
-              signers = foundSigners;
-              signerError = lookupError;
-            }
-          } catch (signerTableError) {
-            console.error(`[${timestamp}] Error working with signer table:`, signerTableError);
-            signerError = signerTableError;
-          }
-          
-          // Handle signer lookup results
-          if (signerError) {
-            console.error(`[${timestamp}] Error getting signer for cast ${cast.id}:`, signerError);
-            
-            // If fallback signer exists, use it
-            if (fallbackSignerUuid) {
-              try {
-                console.log(`[${timestamp}] Using fallback signer for cast ${cast.id} after signer lookup error`);
-                const response = await neynarClient.publishCast({
-                  signerUuid: fallbackSignerUuid,
-                  text: cast.content,
-                });
-                
-                console.log(`[${timestamp}] Successfully posted cast ${cast.id} with fallback signer`);
-                
-                // Mark as posted in database
-                const { error: updateError } = await supabase
-                  .from('scheduled_casts')
-                  .update({ 
-                    posted: true, 
-                    posted_at: new Date().toISOString()
-                  })
-                  .eq('id', cast.id);
-                  
-                if (updateError) {
-                  console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
-                }
-                
-                successCount++;
-                continue;
-              } catch (fallbackError: any) {
-                console.error(`[${timestamp}] Fallback signer also failed:`, fallbackError);
-                failCount++;
-                failureReasons.push({ 
-                  id: cast.id, 
-                  reason: `Signer error and fallback also failed: ${(signerError as Error).message || JSON.stringify(signerError)}, ${(fallbackError as Error).message || JSON.stringify(fallbackError)}` 
-                });
-                continue;
-              }
-            }
-            
-            // If we can't get the signer info, try to post directly using the signer ID from the cast
-            // This assumes that the signer_uuid in the cast IS the actual signer UUID for Neynar
-            try {
-              console.log(`[${timestamp}] Attempting to post directly using signer ID from cast: ${cast[signerIdField]}`);
-              const response = await neynarClient.publishCast({
-                signerUuid: cast[signerIdField],
-                text: cast.content,
-              });
-              
-              console.log(`[${timestamp}] Successfully posted cast ${cast.id} to Farcaster using direct signer ID`);
-              
-              // If successful, create the missing signer entry
-              if (forceFix) {
-                try {
-                  console.log(`[${timestamp}] Creating missing signer record for ${cast[signerIdField]}`);
-                  const { data: newSigner, error: createError } = await supabase
-                    .from(signerTable)
-                    .insert([
-                      { 
-                        uuid: cast[signerIdField],
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                      }
-                    ])
-                    .select();
-                    
-                  if (createError) {
-                    console.error(`[${timestamp}] Failed to create signer record:`, createError);
-                  } else {
-                    console.log(`[${timestamp}] Created signer record:`, newSigner);
-                  }
-                } catch (createErr) {
-                  console.error(`[${timestamp}] Error creating signer:`, createErr);
-                }
-              }
-              
-              // Mark as posted in database
-              try {
-                const { error: updateError } = await supabase
-                  .from('scheduled_casts')
-                  .update({ 
-                    posted: true, 
-                    posted_at: new Date().toISOString()
-                  })
-                  .eq('id', cast.id);
-                  
-                if (updateError) {
-                  console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
-                }
-              } catch (updateErr) {
-                console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateErr);
-              }
-              
-              successCount++;
-              continue;
-            } catch (directPostError: any) {
-              console.error(`[${timestamp}] Failed to post directly with signer ID:`, directPostError);
-              
-              // Try the fallback signer as last resort if provided
-              if (fallbackSignerUuid) {
-                try {
-                  console.log(`[${timestamp}] Last resort - using fallback signer for cast ${cast.id}`);
-                  const response = await neynarClient.publishCast({
-                    signerUuid: fallbackSignerUuid,
-                    text: cast.content,
-                  });
-                  
-                  console.log(`[${timestamp}] Successfully posted cast ${cast.id} with fallback signer as last resort`);
-                  
-                  // Mark as posted in database
-                  const { error: updateError } = await supabase
-                    .from('scheduled_casts')
-                    .update({ 
-                      posted: true, 
-                      posted_at: new Date().toISOString()
-                    })
-                    .eq('id', cast.id);
-                    
-                  if (updateError) {
-                    console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
-                  }
-                  
-                  successCount++;
-                  continue;
-                } catch (fallbackError: any) {
-                  console.error(`[${timestamp}] Last resort fallback signer also failed:`, fallbackError);
-                  failCount++;
-                  failureReasons.push({ 
-                    id: cast.id, 
-                    reason: `All posting methods failed: original error, direct posting, and fallback` 
-                  });
-                  continue;
-                }
-              }
-              
-              failCount++;
-              failureReasons.push({ 
-                id: cast.id, 
-                reason: `Signer error and direct post failed: ${(signerError as Error).message || JSON.stringify(signerError)}, ${(directPostError as Error).message || JSON.stringify(directPostError)}` 
-              });
-              continue;
-            }
-          }
-          
-          if (!signers) {
-            console.error(`[${timestamp}] No signer found for ${signerIdField}: ${cast[signerIdField]}`);
-            
-            // If fallback signer exists, use it
-            if (fallbackSignerUuid) {
-              try {
-                console.log(`[${timestamp}] Using fallback signer for cast ${cast.id} due to missing signer`);
-                const response = await neynarClient.publishCast({
-                  signerUuid: fallbackSignerUuid,
-                  text: cast.content,
-                });
-                
-                console.log(`[${timestamp}] Successfully posted cast ${cast.id} with fallback signer`);
-                
-                // Mark as posted in database
-                const { error: updateError } = await supabase
-                  .from('scheduled_casts')
-                  .update({ 
-                    posted: true, 
-                    posted_at: new Date().toISOString()
-                  })
-                  .eq('id', cast.id);
-                  
-                if (updateError) {
-                  console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
-                }
-                
-                successCount++;
-                continue;
-              } catch (fallbackError: any) {
-                console.error(`[${timestamp}] Fallback signer failed for missing signer:`, fallbackError);
-                failCount++;
-                failureReasons.push({ 
-                  id: cast.id, 
-                  reason: `No signer found and fallback also failed: ${(fallbackError as Error).message || JSON.stringify(fallbackError)}` 
-                });
-                continue;
-              }
-            }
-            
-            // Attempt to post directly even if signer isn't found
-            try {
-              console.log(`[${timestamp}] No signer found, attempting direct post with ID: ${cast[signerIdField]}`);
-              const response = await neynarClient.publishCast({
-                signerUuid: cast[signerIdField],
-                text: cast.content,
-              });
-              
-              console.log(`[${timestamp}] Successfully posted cast ${cast.id} using direct ID despite missing signer`);
-              
-              // If successful, create the missing signer entry
-              if (forceFix) {
-                try {
-                  console.log(`[${timestamp}] Creating missing signer record for ${cast[signerIdField]}`);
-                  const { data: newSigner, error: createError } = await supabase
-                    .from(signerTable)
-                    .insert([
-                      { 
-                        uuid: cast[signerIdField],
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                      }
-                    ])
-                    .select();
-                    
-                  if (createError) {
-                    console.error(`[${timestamp}] Failed to create signer record:`, createError);
-                  } else {
-                    console.log(`[${timestamp}] Created signer record:`, newSigner);
-                  }
-                } catch (createErr) {
-                  console.error(`[${timestamp}] Error creating signer:`, createErr);
-                }
-              }
-              
-              // Mark as posted in database
-              const { error: updateError } = await supabase
-                .from('scheduled_casts')
-                .update({ 
-                  posted: true, 
-                  posted_at: new Date().toISOString()
-                })
-                .eq('id', cast.id);
-                
-              if (updateError) {
-                console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
-              }
-              
-              successCount++;
-              continue;
-            } catch (directPostError: any) {
-              console.error(`[${timestamp}] Failed to post with missing signer:`, directPostError);
-              
-              // Detailed error logging for Neynar errors
-              if (directPostError.response && directPostError.response.data) {
-                console.error(`[${timestamp}] Neynar API response:`, directPostError.response.data);
-              }
-              
-              failCount++;
-              failureReasons.push({ 
-                id: cast.id, 
-                reason: `No signer found with ${signerIdField}: ${cast[signerIdField]} and direct post failed` 
-              });
-              continue;
-            }
-          }
-          
-          console.log(`[${timestamp}] Found signer:`, JSON.stringify(signers, null, 2));
-          
-          // Determine the correct field to use for the signer UUID
-          const signerUuid = signers.uuid || signers.signer_uuid || signers.id || cast[signerIdField];
-          console.log(`[${timestamp}] Using signer UUID: ${signerUuid}`);
-
-          // Cast the message to Farcaster
-          try {
+            console.log(`[${timestamp}] Attempting to post directly using cast's signer_uuid: ${cast[signerIdField]}`);
             const response = await neynarClient.publishCast({
-              signerUuid: signerUuid,
+              signerUuid: cast[signerIdField],
               text: cast.content,
             });
-
-            console.log(`[${timestamp}] Successfully posted cast ${cast.id} to Farcaster`);
             
-            // Mark as posted in database - Using simpler update for schema cache issues
+            console.log(`[${timestamp}] Successfully posted cast ${cast.id} using direct cast signer_uuid`);
+            
+            // Mark as posted in database
             try {
-              // First attempt - using the standard update with all fields
               const { error: updateError } = await supabase
                 .from('scheduled_casts')
                 .update({ 
@@ -633,55 +260,94 @@ export async function GET(request: NextRequest) {
             }
             
             successCount++;
-          } catch (neynarError: any) {
-            console.error(`[${timestamp}] Neynar API error for cast ${cast.id}:`, neynarError);
+            continue;
+          } catch (directPostError: any) {
+            console.error(`[${timestamp}] Failed to post with direct signer_uuid:`, directPostError);
             
-            // Detailed error logging for Neynar errors
-            if (neynarError.response && neynarError.response.data) {
-              console.error(`[${timestamp}] Neynar API response:`, neynarError.response.data);
+            // If we have a FID, try to look up the current signer from the users table
+            if (cast.fid) {
+              try {
+                console.log(`[${timestamp}] Looking up current signer for FID ${cast.fid} in users table`);
+                const { data: userData, error: userError } = await supabase
+                  .from('users')
+                  .select('signer_uuid')
+                  .eq('fid', cast.fid)
+                  .single();
+                  
+                if (userError) {
+                  console.error(`[${timestamp}] Error looking up user:`, userError);
+                } else if (userData && userData.signer_uuid && userData.signer_uuid !== cast[signerIdField]) {
+                  // User exists and has a different signer UUID than the one in the cast
+                  console.log(`[${timestamp}] Found different signer_uuid in users table: ${userData.signer_uuid}`);
+                  
+                  try {
+                    const userSignerResponse = await neynarClient.publishCast({
+                      signerUuid: userData.signer_uuid,
+                      text: cast.content,
+                    });
+                    
+                    console.log(`[${timestamp}] Successfully posted cast ${cast.id} with user's current signer`);
+                    
+                    // Mark as posted in database
+                    const { error: updateError } = await supabase
+                      .from('scheduled_casts')
+                      .update({ 
+                        posted: true, 
+                        posted_at: new Date().toISOString() 
+                      })
+                      .eq('id', cast.id);
+                      
+                    if (updateError) {
+                      console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
+                    }
+                    
+                    successCount++;
+                    continue;
+                  } catch (userSignerError) {
+                    console.error(`[${timestamp}] Failed to post with user's current signer:`, userSignerError);
+                  }
+                }
+              } catch (userLookupError) {
+                console.error(`[${timestamp}] Error looking up user:`, userLookupError);
+              }
             }
             
-            // Try with fallback signer if available
+            // If all else fails and we have a fallback, try it again as last resort
             if (fallbackSignerUuid) {
               try {
-                console.log(`[${timestamp}] Trying fallback signer after Neynar API error`);
-                const fallbackResponse = await neynarClient.publishCast({
+                console.log(`[${timestamp}] Last resort: trying fallback signer again`);
+                const response = await neynarClient.publishCast({
                   signerUuid: fallbackSignerUuid,
                   text: cast.content,
                 });
                 
-                console.log(`[${timestamp}] Successfully posted cast ${cast.id} with fallback signer after API error`);
+                console.log(`[${timestamp}] Successfully posted cast ${cast.id} with fallback signer as last resort`);
                 
                 // Mark as posted in database
                 const { error: updateError } = await supabase
                   .from('scheduled_casts')
                   .update({ 
                     posted: true, 
-                    posted_at: new Date().toISOString()
+                    posted_at: new Date().toISOString() 
                   })
                   .eq('id', cast.id);
                   
                 if (updateError) {
-                  console.error(`[${timestamp}] Error marking cast ${cast.id} as posted after fallback:`, updateError);
+                  console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
                 }
                 
                 successCount++;
                 continue;
-              } catch (fallbackError: any) {
-                console.error(`[${timestamp}] Fallback signer failed after API error:`, fallbackError);
-                failCount++;
-                failureReasons.push({ 
-                  id: cast.id, 
-                  reason: `API error and fallback failed: ${neynarError.message || JSON.stringify(neynarError)}, ${(fallbackError as Error).message || JSON.stringify(fallbackError)}` 
-                });
-                continue;
+              } catch (fallbackError) {
+                console.error(`[${timestamp}] Last resort fallback signer also failed:`, fallbackError);
               }
             }
             
+            // All attempts failed
             failCount++;
             failureReasons.push({ 
               id: cast.id, 
-              reason: `Neynar API error: ${neynarError.message || JSON.stringify(neynarError)}` 
+              reason: `No signer found with ${signerIdField}: ${cast[signerIdField]} and direct post failed` 
             });
           }
         } catch (castError: any) {
