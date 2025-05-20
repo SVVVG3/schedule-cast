@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase";
-import { neynarClient } from "@/lib/neynarClient";
+import { supabase } from "@/lib/supabase";
+import neynarClient from "@/lib/neynarClient";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +23,6 @@ export async function GET(request: NextRequest) {
   try {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Starting scheduled casts posting job`);
-
-    // Create Supabase client
-    const supabase = createClient();
 
     // Get all scheduled casts that are due
     const { data: casts, error } = await supabase
@@ -65,7 +62,7 @@ export async function GET(request: NextRequest) {
 
           // Cast the message to Farcaster
           const response = await neynarClient.publishCast({
-            signer_uuid: signers.uuid,
+            signerUuid: signers.uuid,
             text: cast.content,
           });
 
