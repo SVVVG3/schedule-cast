@@ -7,7 +7,7 @@ import { createSigner } from '@/lib/neynar';
 export async function POST(request: Request) {
   try {
     // Parse request body
-    const { fid } = await request.json();
+    const { fid, forceNewSigner } = await request.json();
     
     if (!fid) {
       return NextResponse.json(
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     }
     
     console.log('[test-user-insert] Attempting to create user for FID:', fid);
+    console.log('[test-user-insert] Force new signer:', forceNewSigner);
     
     // First check if user exists
     const { data: existingUser, error: checkError } = await supabase
@@ -58,8 +59,8 @@ export async function POST(request: Request) {
       console.log('[test-user-insert] Found existing user:', { userId, signerUuid });
     }
     
-    // If no signer, create one
-    if (!signerUuid) {
+    // Create a new signer if requested or if none exists
+    if (forceNewSigner || !signerUuid) {
       try {
         console.log('[test-user-insert] Creating signer for FID:', fid);
         const signerData = await createSigner(fid);
