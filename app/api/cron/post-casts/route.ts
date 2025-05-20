@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
   try {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Starting scheduled casts posting job`);
+    console.log(`[${timestamp}] NEYNAR_API_KEY present: ${!!process.env.NEYNAR_API_KEY}`);
 
     // Attempt to refresh schema cache first
     try {
@@ -42,11 +43,15 @@ export async function GET(request: NextRequest) {
       
       if (sample && sample.length > 0) {
         const columns = Object.keys(sample[0]);
+        console.log(`[${timestamp}] Available columns:`, columns);
+        
         const timeColumnCandidates = ['scheduled_time', 'schedule_time', 'scheduled_at', 'schedule_at', 'scheduled_for'];
         const foundTimeColumn = columns.find(col => timeColumnCandidates.includes(col));
         if (foundTimeColumn) {
           timeColumn = foundTimeColumn;
         }
+      } else {
+        console.log(`[${timestamp}] No sample data found to determine columns`);
       }
     } catch (error) {
       console.log(`[${timestamp}] Error checking columns:`, error);
@@ -68,9 +73,13 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`[${timestamp}] Found ${casts?.length || 0} casts due for posting`);
+    if (casts && casts.length > 0) {
+      console.log(`[${timestamp}] Cast data sample:`, JSON.stringify(casts[0], null, 2));
+    }
     
     let successCount = 0;
     let failCount = 0;
+    let failureReasons = [];
 
     // Process each cast
     if (casts && casts.length > 0) {
@@ -78,6 +87,21 @@ export async function GET(request: NextRequest) {
         console.log(`[${timestamp}] Processing cast ${cast.id}`);
         
         try {
+          // Verify cast has required fields
+          if (!cast.content) {
+            console.error(`[${timestamp}] Cast ${cast.id} is missing content`);
+            failCount++;
+            failureReasons.push({ id: cast.id, reason: "Missing content" });
+            continue;
+          }
+          
+          if (!cast.signer_uuid) {
+            console.error(`[${timestamp}] Cast ${cast.id} is missing signer_uuid`);
+            failCount++;
+            failureReasons.push({ id: cast.id, reason: "Missing signer_uuid" });
+            continue;
+          }
+          
           // Get user signer
           const { data: signers, error: signerError } = await supabase
             .from('user_signers')
@@ -85,77 +109,107 @@ export async function GET(request: NextRequest) {
             .eq('uuid', cast.signer_uuid)
             .single();
 
-          if (signerError || !signers) {
+          if (signerError) {
             console.error(`[${timestamp}] Error getting signer for cast ${cast.id}:`, signerError);
             failCount++;
+            failureReasons.push({ id: cast.id, reason: `Signer error: ${signerError.message}` });
             continue;
           }
-
-          // Cast the message to Farcaster
-          const response = await neynarClient.publishCast({
-            signerUuid: signers.uuid,
-            text: cast.content,
-          });
-
-          console.log(`[${timestamp}] Successfully posted cast ${cast.id} to Farcaster`);
           
-          // Mark as posted in database - Using simpler update for schema cache issues
-          try {
-            // First attempt - using the standard update with all fields
-            const { error: updateError } = await supabase
-              .from('scheduled_casts')
-              .update({ 
-                posted: true, 
-                posted_at: new Date().toISOString(),
-                result: response
-              })
-              .eq('id', cast.id);
-
-            if (updateError) {
-              console.error(`[${timestamp}] First update attempt error:`, updateError);
-              
-              // Second attempt - try without result field if it's a schema cache issue
-              if (updateError.message.includes('result') || updateError.message.includes('schema cache')) {
-                const { error: fallbackError } = await supabase
-                  .from('scheduled_casts')
-                  .update({ 
-                    posted: true, 
-                    posted_at: new Date().toISOString() 
-                  })
-                  .eq('id', cast.id);
-                
-                if (fallbackError) {
-                  console.error(`[${timestamp}] Fallback update also failed:`, fallbackError);
-                  throw fallbackError;
-                } else {
-                  console.log(`[${timestamp}] Fallback update succeeded for cast ${cast.id}`);
-                }
-              } else {
-                throw updateError;
-              }
-            }
-          } catch (updateErr) {
-            console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateErr);
-            // We don't fail the whole operation if just the update fails
-            // The cast was still posted to Farcaster
+          if (!signers) {
+            console.error(`[${timestamp}] No signer found for uuid: ${cast.signer_uuid}`);
+            failCount++;
+            failureReasons.push({ id: cast.id, reason: "No signer found with this UUID" });
+            continue;
           }
           
-          successCount++;
-        } catch (castError) {
+          console.log(`[${timestamp}] Found signer:`, JSON.stringify(signers, null, 2));
+
+          // Cast the message to Farcaster
+          try {
+            const response = await neynarClient.publishCast({
+              signerUuid: signers.uuid,
+              text: cast.content,
+            });
+
+            console.log(`[${timestamp}] Successfully posted cast ${cast.id} to Farcaster`);
+            
+            // Mark as posted in database - Using simpler update for schema cache issues
+            try {
+              // First attempt - using the standard update with all fields
+              const { error: updateError } = await supabase
+                .from('scheduled_casts')
+                .update({ 
+                  posted: true, 
+                  posted_at: new Date().toISOString(),
+                  result: response
+                })
+                .eq('id', cast.id);
+
+              if (updateError) {
+                console.error(`[${timestamp}] First update attempt error:`, updateError);
+                
+                // Second attempt - try without result field if it's a schema cache issue
+                if (updateError.message.includes('result') || updateError.message.includes('schema cache')) {
+                  const { error: fallbackError } = await supabase
+                    .from('scheduled_casts')
+                    .update({ 
+                      posted: true, 
+                      posted_at: new Date().toISOString() 
+                    })
+                    .eq('id', cast.id);
+                  
+                  if (fallbackError) {
+                    console.error(`[${timestamp}] Fallback update also failed:`, fallbackError);
+                    throw fallbackError;
+                  } else {
+                    console.log(`[${timestamp}] Fallback update succeeded for cast ${cast.id}`);
+                  }
+                } else {
+                  throw updateError;
+                }
+              }
+            } catch (updateErr) {
+              console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateErr);
+              // We don't fail the whole operation if just the update fails
+              // The cast was still posted to Farcaster
+            }
+            
+            successCount++;
+          } catch (neynarError: any) {
+            console.error(`[${timestamp}] Neynar API error for cast ${cast.id}:`, neynarError);
+            failCount++;
+            failureReasons.push({ 
+              id: cast.id, 
+              reason: `Neynar API error: ${neynarError.message || JSON.stringify(neynarError)}` 
+            });
+          }
+        } catch (castError: any) {
           console.error(`[${timestamp}] Error posting cast ${cast.id}:`, castError);
           failCount++;
+          failureReasons.push({ 
+            id: cast.id, 
+            reason: `General error: ${castError.message || JSON.stringify(castError)}` 
+          });
         }
       }
     }
 
     console.log(`[${timestamp}] Completed job: ${successCount} succeeded, ${failCount} failed`);
+    if (failureReasons.length > 0) {
+      console.log(`[${timestamp}] Failure reasons:`, JSON.stringify(failureReasons, null, 2));
+    }
     
     return NextResponse.json({
       success: true,
-      message: `Processed ${casts?.length || 0} casts: ${successCount} succeeded, ${failCount} failed`
+      message: `Processed ${casts?.length || 0} casts: ${successCount} succeeded, ${failCount} failed`,
+      details: failureReasons
     });
   } catch (error) {
     console.error("Error in scheduled casts job:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Internal server error",
+      details: error instanceof Error ? error.message : String(error)  
+    }, { status: 500 });
   }
 }
