@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/post-casts",
-      "schedule": "* * * * *"
+      "path": "/api/cron/post-casts?cron_secret=${CRON_SECRET}",
+      "schedule": "*/5 * * * *"
     }
-  ],
-  "env": {
-    "CRON_SECRET": {
-      "description": "Secret key for cron job security"
-    },
-    "NEYNAR_API_KEY": {
-      "description": "API key for Neynar Farcaster API"
-    }
-  }
-} 
+  ]
+}
