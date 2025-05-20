@@ -1,0 +1,181 @@
+/**
+ * Neynar API wrapper for interacting with Farcaster
+ * 
+ * This library provides functions to:
+ * 1. Post casts using a signer
+ * 2. Fetch relevant Farcaster data
+ */
+
+// API endpoint constants
+const NEYNAR_API_URL = 'https://api.neynar.com/v2/farcaster';
+const CAST_ENDPOINT = `${NEYNAR_API_URL}/cast`;
+const SIGNER_ENDPOINT = `${NEYNAR_API_URL}/signer`;
+
+import { registerUserSigner } from '@/utils/registerUserSigner';
+
+// Error types
+export class NeynarError extends Error {
+  status: number;
+  
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'NeynarError';
+    this.status = status;
+  }
+}
+
+/**
+ * Post a cast to Farcaster using the Neynar API
+ * 
+ * @param signerUuid The unique identifier for the signer
+ * @param content The text content of the cast (max 320 chars)
+ * @param channelId Optional channel ID to post to
+ * @returns The API response with cast details
+ */
+export async function postCast(
+  signerUuid: string,
+  content: string,
+  channelId?: string
+) {
+  if (!process.env.NEYNAR_API_KEY) {
+    throw new NeynarError('Neynar API key is missing', 500);
+  }
+
+  if (!signerUuid) {
+    throw new NeynarError('Signer UUID is required', 400);
+  }
+
+  if (!content || content.length > 320) {
+    throw new NeynarError(
+      'Cast content is required and must be 320 characters or less',
+      400
+    );
+  }
+
+  try {
+    // Prepare the request body
+    const requestBody: Record<string, any> = {
+      signer_uuid: signerUuid,
+      text: content,
+    };
+
+    // Add channel ID if provided
+    if (channelId) {
+      requestBody.channel_id = channelId;
+    }
+
+    // Make the API request
+    const response = await fetch(CAST_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.NEYNAR_API_KEY,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    // Parse the response
+    const data = await response.json();
+
+    // Handle API errors
+    if (!response.ok) {
+      throw new NeynarError(
+        data.message || 'Failed to post cast',
+        response.status
+      );
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof NeynarError) {
+      throw error;
+    }
+    throw new NeynarError(`Unexpected error: ${(error as Error).message}`, 500);
+  }
+}
+
+/**
+ * Get information about a signer
+ * 
+ * @param signerUuid The unique identifier for the signer
+ * @returns The signer information
+ */
+export async function getSignerInfo(signerUuid: string) {
+  if (!process.env.NEYNAR_API_KEY) {
+    throw new NeynarError('Neynar API key is missing', 500);
+  }
+
+  if (!signerUuid) {
+    throw new NeynarError('Signer UUID is required', 400);
+  }
+
+  try {
+    // Make the API request
+    const response = await fetch(`${SIGNER_ENDPOINT}/${signerUuid}`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.NEYNAR_API_KEY,
+      },
+    });
+
+    // Parse the response
+    const data = await response.json();
+
+    // Handle API errors
+    if (!response.ok) {
+      throw new NeynarError(
+        data.message || 'Failed to get signer information',
+        response.status
+      );
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof NeynarError) {
+      throw error;
+    }
+    throw new NeynarError(`Unexpected error: ${(error as Error).message}`, 500);
+  }
+}
+
+/**
+ * Create a signer for a Farcaster user
+ * 
+ * This function uses the mnemonic-based approach rather than the default
+ * managed signers. It generates a keypair derived from the developer mnemonic
+ * and registers it with Neynar.
+ * 
+ * @param fid The Farcaster ID of the user
+ * @returns The created signer information including signer_uuid and approval_url
+ */
+export async function createSigner(fid: number) {
+  if (!process.env.NEYNAR_API_KEY) {
+    throw new NeynarError('Neynar API key is missing', 500);
+  }
+
+  if (!fid) {
+    throw new NeynarError('Farcaster ID (fid) is required', 400);
+  }
+
+  try {
+    console.log('[createSigner] Creating mnemonic-derived signer for FID:', fid);
+    
+    // Use the registerUserSigner utility to create a key pair from the mnemonic
+    // and register it with Neynar
+    const signerInfo = await registerUserSigner(fid, false, { includeDebugLogs: true });
+    
+    console.log('[createSigner] Successfully registered signer:', signerInfo.signer_uuid);
+    
+    return {
+      signer_uuid: signerInfo.signer_uuid,
+      public_key: signerInfo.public_key,
+      signer_approval_url: signerInfo.signer_approval_url
+    };
+  } catch (error) {
+    console.error('[createSigner] Error:', error);
+    if (error instanceof NeynarError) {
+      throw error;
+    }
+    throw new NeynarError(`Failed to create signer: ${(error as Error).message}`, 500);
+  }
+} 
