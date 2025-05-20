@@ -204,25 +204,53 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
       console.log(`[validateAndRefreshSigner] Signer is valid:`, signerInfo.status || 'active');
       return { signerUuid, refreshed: false };
     } catch (validationError) {
-      console.log(`[validateAndRefreshSigner] Signer validation failed, creating new signer`);
+      // Log detailed error information
+      console.error(`[validateAndRefreshSigner] Signer validation failed with error:`, 
+        typeof validationError === 'object' ? JSON.stringify(validationError) : validationError);
+
+      console.log(`[validateAndRefreshSigner] Creating new signer for FID ${fid}`);
       
       // Signer is invalid, create a new one
-      const newSignerData = await createSigner(fid);
-      const newSignerUuid = newSignerData.signer_uuid;
-      
-      // Update the user record in the database
-      const { error } = await supabase
-        .from('users')
-        .update({ signer_uuid: newSignerUuid })
-        .eq('fid', fid);
-      
-      if (error) {
-        console.error(`[validateAndRefreshSigner] Failed to update user record with new signer:`, error);
-        throw new NeynarError(`Failed to update user record with new signer: ${error.message}`, 500);
+      try {
+        const newSignerData = await createSigner(fid);
+        const newSignerUuid = newSignerData.signer_uuid;
+        
+        console.log(`[validateAndRefreshSigner] New signer created: ${newSignerUuid}`);
+        
+        // Update the user record in the database
+        const { error } = await supabase
+          .from('users')
+          .update({ signer_uuid: newSignerUuid })
+          .eq('fid', fid);
+        
+        if (error) {
+          console.error(`[validateAndRefreshSigner] Failed to update user record with new signer:`, error);
+          throw new NeynarError(`Failed to update user record with new signer: ${error.message}`, 500);
+        }
+        
+        // Also update any scheduled casts that haven't been posted yet
+        try {
+          const { error: castsError } = await supabase
+            .from('scheduled_casts')
+            .update({ signer_uuid: newSignerUuid })
+            .eq('fid', fid)
+            .eq('posted', false);
+          
+          if (castsError) {
+            console.error(`[validateAndRefreshSigner] Error updating scheduled casts:`, castsError);
+            // Don't fail the operation if this part fails
+          }
+        } catch (castsUpdateError) {
+          console.error(`[validateAndRefreshSigner] Error updating scheduled casts:`, castsUpdateError);
+          // Don't fail the operation if this part fails
+        }
+        
+        console.log(`[validateAndRefreshSigner] Refreshed signer for FID ${fid}: ${newSignerUuid}`);
+        return { signerUuid: newSignerUuid, refreshed: true };
+      } catch (createError) {
+        console.error(`[validateAndRefreshSigner] Failed to create new signer:`, createError);
+        throw new NeynarError(`Failed to create new signer: ${(createError as Error).message}`, 500);
       }
-      
-      console.log(`[validateAndRefreshSigner] Refreshed signer for FID ${fid}: ${newSignerUuid}`);
-      return { signerUuid: newSignerUuid, refreshed: true };
     }
   } catch (error) {
     console.error(`[validateAndRefreshSigner] Error:`, error);

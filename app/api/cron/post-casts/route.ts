@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check for the column names in the scheduled_casts table
-    let timeColumn = 'scheduled_time'; // Default
+    let timeColumn = 'scheduled_at'; // Changed default from 'scheduled_time' to 'scheduled_at'
     try {
       const { data: sample } = await supabase
         .from('scheduled_casts')
