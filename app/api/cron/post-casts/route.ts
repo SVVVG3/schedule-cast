@@ -26,17 +26,40 @@ export async function GET(request: NextRequest) {
 
     // Attempt to refresh schema cache first
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/refresh-schema`);
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin}/api/refresh-schema`);
     } catch (cacheError) {
       console.log(`[${timestamp}] Schema refresh attempt error:`, cacheError);
       // Continue even if schema refresh fails
     }
 
+    // Check for the column names in the table
+    let timeColumn = 'scheduled_time'; // Default
+    try {
+      const { data: sample } = await supabase
+        .from('scheduled_casts')
+        .select('*')
+        .limit(1);
+      
+      if (sample && sample.length > 0) {
+        const columns = Object.keys(sample[0]);
+        const timeColumnCandidates = ['scheduled_time', 'schedule_time', 'scheduled_at', 'schedule_at', 'scheduled_for'];
+        const foundTimeColumn = columns.find(col => timeColumnCandidates.includes(col));
+        if (foundTimeColumn) {
+          timeColumn = foundTimeColumn;
+        }
+      }
+    } catch (error) {
+      console.log(`[${timestamp}] Error checking columns:`, error);
+      // Continue with default column name
+    }
+
+    console.log(`[${timestamp}] Using time column: ${timeColumn}`);
+
     // Get all scheduled casts that are due
     const { data: casts, error } = await supabase
       .from('scheduled_casts')
       .select('*')
-      .lte('scheduled_time', new Date().toISOString())
+      .lte(timeColumn, new Date().toISOString())
       .eq('posted', false);
 
     if (error) {
