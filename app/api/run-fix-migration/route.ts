@@ -7,42 +7,38 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Read migration SQL
-    const migrationPath = path.join(process.cwd(), 'migrations', '09_fix_posted_casts.sql');
-    let sql;
+    // We'll run the SQL directly against the scheduled_casts table
+    console.log("Running fix migration...");
     
-    try {
-      sql = fs.readFileSync(migrationPath, 'utf8');
-    } catch (err) {
-      // If file system access fails (likely in production), use hardcoded SQL
-      sql = `
-      -- Fix any casts that were posted but not marked as posted
-      UPDATE scheduled_casts
-      SET 
-        posted = true, 
-        posted_at = NOW()
-      WHERE 
-        scheduled_time <= NOW() 
-        AND posted = false;
-      `;
-    }
-
-    // Run the migration
-    const { error } = await supabase.rpc('pgx_query', { query: sql });
+    // Try to update the casts directly
+    const { error } = await supabase
+      .from('scheduled_casts')
+      .update({ 
+        posted: true, 
+        posted_at: new Date().toISOString() 
+      })
+      .lte('scheduled_time', new Date().toISOString())
+      .eq('posted', false);
     
     if (error) {
       console.error("Error running fix migration:", error);
+      return NextResponse.json({
+        success: false,
+        message: "Failed to run fix migration",
+        error: error.message
+      }, { status: 500 });
+    }
+    
+    // Also try to refresh the schema cache
+    try {
+      await supabase
+        .from('scheduled_casts')
+        .select('result')
+        .limit(1);
       
-      // Try direct query as fallback
-      const { error: directError } = await supabase.rpc('pg_catalog_refresh');
-      
-      if (directError) {
-        return NextResponse.json({
-          success: false,
-          message: "Failed to run fix migration",
-          error: error.message
-        }, { status: 500 });
-      }
+      console.log("Schema cache refresh attempt completed");
+    } catch (cacheErr) {
+      console.log("Schema cache refresh attempt error (non-critical):", cacheErr);
     }
     
     return NextResponse.json({
