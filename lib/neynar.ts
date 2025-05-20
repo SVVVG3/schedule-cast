@@ -142,9 +142,8 @@ export async function getSignerInfo(signerUuid: string) {
 /**
  * Create a signer for a Farcaster user
  * 
- * This function uses the mnemonic-based approach rather than the default
- * managed signers. It generates a keypair derived from the developer mnemonic
- * and registers it with Neynar.
+ * This function uses Neynar's managed signer approach to create a new signer
+ * for the specified Farcaster user.
  * 
  * @param fid The Farcaster ID of the user
  * @returns The created signer information including signer_uuid and approval_url
@@ -159,10 +158,9 @@ export async function createSigner(fid: number) {
   }
 
   try {
-    console.log('[createSigner] Creating mnemonic-derived signer for FID:', fid);
+    console.log('[createSigner] Creating managed signer for FID:', fid);
     
-    // Use the registerUserSigner utility to create a key pair from the mnemonic
-    // and register it with Neynar
+    // Use the registerUserSigner utility to create a managed signer via Neynar
     const signerInfo = await registerUserSigner(fid, false, { includeDebugLogs: true });
     
     console.log('[createSigner] Successfully registered signer:', signerInfo.signer_uuid);

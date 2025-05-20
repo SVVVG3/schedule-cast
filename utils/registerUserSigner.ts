@@ -1,21 +1,16 @@
 /**
- * Utility to register a mnemonic-derived signer with Neynar
+ * Utility to register a managed signer with Neynar
  * 
  * This utility:
- * 1. Derives a keypair for a user from the developer mnemonic
- * 2. Registers the public key with Neynar
- * 3. Returns the signer UUID and public key for storage
+ * 1. Creates a new managed signer through Neynar's API
+ * 2. Returns the signer UUID and public key for storage
  */
 
-import { mnemonicToAccount, publicKeyToAddress } from 'viem/accounts';
-import { getFid } from './getFid';
-import { hexToBytes, bytesToHex } from 'viem';
 import neynarClient from '@/lib/neynarClient';
 
 interface RegisterUserSignerResult {
   signer_uuid: string;
   public_key: string;
-  private_key?: string; // Only included if returnPrivateKey is true (DEV only)
   signer_approval_url: string;
 }
 
@@ -59,10 +54,9 @@ export async function getSignerApprovalUrl(signerUuid: string, includeDebugLogs:
 }
 
 /**
- * Registers a user signer with Neynar using the dev mnemonic
+ * Registers a user signer with Neynar using their managed signer service
  * 
- * @param userFid - The Farcaster ID of the user, used as derivation index
- * @param returnPrivateKey - Whether to return the private key (for testing only)
+ * @param userFid - The Farcaster ID of the user
  * @param options - Additional options
  * @returns The registered signer information
  */
@@ -70,13 +64,11 @@ export async function registerUserSigner(
   userFid: number,
   returnPrivateKey: boolean = false,
   options: {
-    customDerivationIndex?: number;
     includeDebugLogs?: boolean;
   } = {}
 ): Promise<RegisterUserSignerResult> {
   // Destructure options with defaults
   const {
-    customDerivationIndex,
     includeDebugLogs = false,
   } = options;
   
@@ -87,32 +79,6 @@ export async function registerUserSigner(
     
   try {
     debug('Starting signer registration for user FID:', userFid);
-    
-    // 1. Check for developer mnemonic
-    const mnemonic = process.env.FARCASTER_DEVELOPER_MNEMONIC;
-    if (!mnemonic) {
-      throw new Error('FARCASTER_DEVELOPER_MNEMONIC is not set in environment variables');
-    }
-
-    // 2. Get app FID from mnemonic (needed for registration)
-    const appFid = await getFid();
-    debug('Retrieved app FID:', appFid);
-    
-    // 3. Derive user account from mnemonic
-    // Use either a custom index or the user's FID as the derivation index
-    const derivationIndex = customDerivationIndex ?? userFid;
-    
-    debug('Deriving keypair with index:', derivationIndex);
-    const account = mnemonicToAccount(mnemonic, { accountIndex: derivationIndex });
-    
-    const publicKey = account.publicKey;
-    const address = publicKeyToAddress(publicKey);
-    
-    debug('Derived public key:', publicKey);
-    debug('Derived address:', address);
-
-    // 4. Register signer with Neynar
-    debug('Registering with Neynar API');
     
     if (!process.env.NEYNAR_API_KEY) {
       throw new Error('NEYNAR_API_KEY is not set in environment variables');
@@ -125,8 +91,6 @@ export async function registerUserSigner(
         'Content-Type': 'application/json',
         'x-api-key': process.env.NEYNAR_API_KEY || ''
       },
-      // Note: For managed signers, we don't need to provide the public key
-      // Neynar will generate a signer and return the approval URL
       body: JSON.stringify({
         fid: userFid,  // Associate the signer with this user's FID
       })
@@ -143,8 +107,7 @@ export async function registerUserSigner(
     
     debug('Successfully registered signer:', responseData);
     
-    // 5. Get the signer approval URL using the direct API call
-    // The SDK doesn't have a dedicated method for this, so we'll use fetch
+    // Get the signer approval URL using the direct API call
     let signerApprovalUrl = '';
     try {
       debug('Fetching signer approval URL');
@@ -155,14 +118,10 @@ export async function registerUserSigner(
       // Continue even if this fails - the signer was created successfully
     }
     
-    // 6. Return data
+    // Return data
     return {
       signer_uuid: responseData.signer_uuid,
-      public_key: responseData.public_key || publicKey, // Use Neynar's public key if available
-      // We can't return the private key directly from the account object
-      // Instead, we'd need to use the mnemonic and derivation index again
-      // Only for testing, should not be used in production
-      private_key: returnPrivateKey ? `PRIVATE_KEY_OMITTED_FOR_SECURITY` : undefined,
+      public_key: responseData.public_key || '',
       signer_approval_url: signerApprovalUrl
     };
   } catch (error) {
