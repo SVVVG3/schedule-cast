@@ -24,6 +24,14 @@ export async function GET(request: NextRequest) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Starting scheduled casts posting job`);
 
+    // Attempt to refresh schema cache first
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/refresh-schema`);
+    } catch (cacheError) {
+      console.log(`[${timestamp}] Schema refresh attempt error:`, cacheError);
+      // Continue even if schema refresh fails
+    }
+
     // Get all scheduled casts that are due
     const { data: casts, error } = await supabase
       .from('scheduled_casts')
@@ -66,10 +74,11 @@ export async function GET(request: NextRequest) {
             text: cast.content,
           });
 
-          console.log(`[${timestamp}] Successfully posted cast ${cast.id}`);
+          console.log(`[${timestamp}] Successfully posted cast ${cast.id} to Farcaster`);
           
-          // Mark as posted in database
+          // Mark as posted in database - Using simpler update for schema cache issues
           try {
+            // First attempt - using the standard update with all fields
             const { error: updateError } = await supabase
               .from('scheduled_casts')
               .update({ 
@@ -80,10 +89,32 @@ export async function GET(request: NextRequest) {
               .eq('id', cast.id);
 
             if (updateError) {
-              console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
+              console.error(`[${timestamp}] First update attempt error:`, updateError);
+              
+              // Second attempt - try without result field if it's a schema cache issue
+              if (updateError.message.includes('result') || updateError.message.includes('schema cache')) {
+                const { error: fallbackError } = await supabase
+                  .from('scheduled_casts')
+                  .update({ 
+                    posted: true, 
+                    posted_at: new Date().toISOString() 
+                  })
+                  .eq('id', cast.id);
+                
+                if (fallbackError) {
+                  console.error(`[${timestamp}] Fallback update also failed:`, fallbackError);
+                  throw fallbackError;
+                } else {
+                  console.log(`[${timestamp}] Fallback update succeeded for cast ${cast.id}`);
+                }
+              } else {
+                throw updateError;
+              }
             }
           } catch (updateErr) {
             console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateErr);
+            // We don't fail the whole operation if just the update fails
+            // The cast was still posted to Farcaster
           }
           
           successCount++;
