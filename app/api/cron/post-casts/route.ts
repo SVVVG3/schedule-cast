@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   
   // Debug mode for testing
   const isDebug = request.nextUrl.searchParams.get('debug') === 'true';
+  const forceFix = request.nextUrl.searchParams.get('fix') === 'true';
   
   // Skip secret validation in debug mode or validate the secret
   if (!isDebug && requestSecret !== cronSecret) {
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] Starting scheduled casts posting job`);
     console.log(`[${timestamp}] NEYNAR_API_KEY present: ${!!process.env.NEYNAR_API_KEY}`);
+    console.log(`[${timestamp}] Force fix mode: ${forceFix}`);
 
     // Attempt to refresh schema cache first
     try {
@@ -31,6 +33,41 @@ export async function GET(request: NextRequest) {
     } catch (cacheError) {
       console.log(`[${timestamp}] Schema refresh attempt error:`, cacheError);
       // Continue even if schema refresh fails
+    }
+
+    // Get problematic signers list from URL params
+    const problematicSignersList = request.nextUrl.searchParams.get('fixSigners');
+    let problematicSigners: string[] = [];
+    if (problematicSignersList) {
+      problematicSigners = problematicSignersList.split(',');
+      console.log(`[${timestamp}] Fixing specific problematic signers:`, problematicSigners);
+    }
+
+    // First, let's check for casts that were already posted but not marked as posted
+    // This happens if the cast was successfully published but the DB update failed
+    if (forceFix) {
+      try {
+        console.log(`[${timestamp}] Running fix for already posted casts...`);
+        
+        // Create a migration to mark casts as posted
+        const { data: fixedCasts, error: fixError } = await supabase
+          .from('scheduled_casts')
+          .update({ 
+            posted: true, 
+            posted_at: new Date().toISOString() 
+          })
+          .eq('posted', false)
+          .lte('scheduled_time', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Older than 24 hours
+          .select();
+        
+        if (fixError) {
+          console.error(`[${timestamp}] Error fixing old casts:`, fixError);
+        } else {
+          console.log(`[${timestamp}] Fixed ${fixedCasts?.length || 0} old casts that were stuck as not posted`);
+        }
+      } catch (fixErr) {
+        console.error(`[${timestamp}] Error in fix operation:`, fixErr);
+      }
     }
 
     // Check for table names in the database
@@ -170,6 +207,42 @@ export async function GET(request: NextRequest) {
             }
           }
           
+          // Check if this is a problematic signer we're trying to fix
+          const signerId = cast[signerIdField];
+          const isProblematicSigner = problematicSigners.includes(signerId) || forceFix;
+          
+          // If this is a known problematic signer and we're in fix mode, post directly
+          if (isProblematicSigner) {
+            console.log(`[${timestamp}] Identified problematic signer ${signerId}, attempting direct post`);
+            try {
+              const response = await neynarClient.publishCast({
+                signerUuid: signerId,
+                text: cast.content,
+              });
+              
+              console.log(`[${timestamp}] Successfully posted cast ${cast.id} with problematic signer directly`);
+              
+              // Mark as posted in database
+              const { error: updateError } = await supabase
+                .from('scheduled_casts')
+                .update({ 
+                  posted: true, 
+                  posted_at: new Date().toISOString()
+                })
+                .eq('id', cast.id);
+                
+              if (updateError) {
+                console.error(`[${timestamp}] Error marking problematic cast ${cast.id} as posted:`, updateError);
+              }
+              
+              successCount++;
+              continue;
+            } catch (directPostError: any) {
+              console.error(`[${timestamp}] Failed to post problematic signer directly:`, directPostError);
+              // Continue with normal flow as fallback
+            }
+          }
+          
           // Check the structure of the signer table
           let signerUuidField = 'uuid'; // Default field name for signer uuid
           let signers = null;
@@ -217,6 +290,31 @@ export async function GET(request: NextRequest) {
               
               console.log(`[${timestamp}] Successfully posted cast ${cast.id} to Farcaster using direct signer ID`);
               
+              // If successful, create the missing signer entry
+              if (forceFix) {
+                try {
+                  console.log(`[${timestamp}] Creating missing signer record for ${cast[signerIdField]}`);
+                  const { data: newSigner, error: createError } = await supabase
+                    .from(signerTable)
+                    .insert([
+                      { 
+                        uuid: cast[signerIdField],
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                      }
+                    ])
+                    .select();
+                    
+                  if (createError) {
+                    console.error(`[${timestamp}] Failed to create signer record:`, createError);
+                  } else {
+                    console.log(`[${timestamp}] Created signer record:`, newSigner);
+                  }
+                } catch (createErr) {
+                  console.error(`[${timestamp}] Error creating signer:`, createErr);
+                }
+              }
+              
               // Mark as posted in database
               try {
                 const { error: updateError } = await supabase
@@ -249,9 +347,66 @@ export async function GET(request: NextRequest) {
           
           if (!signers) {
             console.error(`[${timestamp}] No signer found for ${signerIdField}: ${cast[signerIdField]}`);
-            failCount++;
-            failureReasons.push({ id: cast.id, reason: `No signer found with ${signerIdField}: ${cast[signerIdField]}` });
-            continue;
+            
+            // Attempt to post directly even if signer isn't found
+            try {
+              console.log(`[${timestamp}] No signer found, attempting direct post with ID: ${cast[signerIdField]}`);
+              const response = await neynarClient.publishCast({
+                signerUuid: cast[signerIdField],
+                text: cast.content,
+              });
+              
+              console.log(`[${timestamp}] Successfully posted cast ${cast.id} using direct ID despite missing signer`);
+              
+              // If successful, create the missing signer entry
+              if (forceFix) {
+                try {
+                  console.log(`[${timestamp}] Creating missing signer record for ${cast[signerIdField]}`);
+                  const { data: newSigner, error: createError } = await supabase
+                    .from(signerTable)
+                    .insert([
+                      { 
+                        uuid: cast[signerIdField],
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                      }
+                    ])
+                    .select();
+                    
+                  if (createError) {
+                    console.error(`[${timestamp}] Failed to create signer record:`, createError);
+                  } else {
+                    console.log(`[${timestamp}] Created signer record:`, newSigner);
+                  }
+                } catch (createErr) {
+                  console.error(`[${timestamp}] Error creating signer:`, createErr);
+                }
+              }
+              
+              // Mark as posted in database
+              const { error: updateError } = await supabase
+                .from('scheduled_casts')
+                .update({ 
+                  posted: true, 
+                  posted_at: new Date().toISOString()
+                })
+                .eq('id', cast.id);
+                
+              if (updateError) {
+                console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
+              }
+              
+              successCount++;
+              continue;
+            } catch (directPostError: any) {
+              console.error(`[${timestamp}] Failed to post with missing signer:`, directPostError);
+              failCount++;
+              failureReasons.push({ 
+                id: cast.id, 
+                reason: `No signer found with ${signerIdField}: ${cast[signerIdField]} and direct post failed` 
+              });
+              continue;
+            }
           }
           
           console.log(`[${timestamp}] Found signer:`, JSON.stringify(signers, null, 2));
