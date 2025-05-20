@@ -33,7 +33,61 @@ export async function GET(request: NextRequest) {
       // Continue even if schema refresh fails
     }
 
-    // Check for the column names in the table
+    // Check for table names in the database
+    let signerTable = 'user_signers'; // Default table name
+    try {
+      // List tables in the database to find the correct signer table
+      const { data: tables, error: tablesError } = await supabase
+        .from('pg_tables')
+        .select('tablename')
+        .eq('schemaname', 'public');
+        
+      if (tablesError) {
+        console.log(`[${timestamp}] Error listing tables:`, tablesError);
+        // Try an alternative method to check tables
+        try {
+          // Direct SQL query to list tables
+          const { data: tablesList } = await supabase.rpc('get_tables');
+          if (tablesList) {
+            console.log(`[${timestamp}] Available tables from RPC:`, tablesList);
+            
+            // Find potential signer tables
+            const signerTableCandidates = tablesList.filter((table: string) => 
+              table.includes('signer') || table.includes('user')
+            );
+            
+            if (signerTableCandidates.length > 0) {
+              console.log(`[${timestamp}] Potential signer tables:`, signerTableCandidates);
+              // Use the first candidate
+              signerTable = signerTableCandidates[0];
+            }
+          }
+        } catch (rpcError) {
+          console.log(`[${timestamp}] Error with RPC get_tables:`, rpcError);
+          // Continue with default table name
+        }
+      } else if (tables && tables.length > 0) {
+        console.log(`[${timestamp}] Available tables:`, tables.map(t => t.tablename));
+        
+        // Find potential signer tables
+        const signerTableCandidates = tables
+          .map(t => t.tablename)
+          .filter(name => name.includes('signer') || name.includes('user'));
+        
+        if (signerTableCandidates.length > 0) {
+          console.log(`[${timestamp}] Potential signer tables:`, signerTableCandidates);
+          // Use the first candidate
+          signerTable = signerTableCandidates[0];
+        }
+      }
+    } catch (tableError) {
+      console.log(`[${timestamp}] Error checking tables:`, tableError);
+      // Continue with default table name
+    }
+    
+    console.log(`[${timestamp}] Using signer table: ${signerTable}`);
+
+    // Check for the column names in the scheduled_casts table
     let timeColumn = 'scheduled_time'; // Default
     try {
       const { data: sample } = await supabase
@@ -43,7 +97,7 @@ export async function GET(request: NextRequest) {
       
       if (sample && sample.length > 0) {
         const columns = Object.keys(sample[0]);
-        console.log(`[${timestamp}] Available columns:`, columns);
+        console.log(`[${timestamp}] Available columns in scheduled_casts:`, columns);
         
         const timeColumnCandidates = ['scheduled_time', 'schedule_time', 'scheduled_at', 'schedule_at', 'scheduled_for'];
         const foundTimeColumn = columns.find(col => timeColumnCandidates.includes(col));
@@ -95,40 +149,121 @@ export async function GET(request: NextRequest) {
             continue;
           }
           
+          // Determine which field to use for signer identification
+          let signerIdField = 'signer_uuid';
           if (!cast.signer_uuid) {
-            console.error(`[${timestamp}] Cast ${cast.id} is missing signer_uuid`);
-            failCount++;
-            failureReasons.push({ id: cast.id, reason: "Missing signer_uuid" });
-            continue;
+            // Check alternative field names
+            const possibleFields = ['signer_id', 'user_id', 'uuid', 'signer', 'user_uuid'];
+            for (const field of possibleFields) {
+              if (cast[field]) {
+                signerIdField = field;
+                console.log(`[${timestamp}] Using ${field} instead of signer_uuid for cast ${cast.id}`);
+                break;
+              }
+            }
+            
+            if (signerIdField === 'signer_uuid' && !cast.signer_uuid) {
+              console.error(`[${timestamp}] Cast ${cast.id} is missing signer identification`);
+              failCount++;
+              failureReasons.push({ id: cast.id, reason: "Missing signer identification" });
+              continue;
+            }
           }
           
-          // Get user signer
-          const { data: signers, error: signerError } = await supabase
-            .from('user_signers')
-            .select('*')
-            .eq('uuid', cast.signer_uuid)
-            .single();
-
+          // Check the structure of the signer table
+          let signerUuidField = 'uuid'; // Default field name for signer uuid
+          let signers = null;
+          let signerError = null;
+          
+          try {
+            // First try getting a sample from the signer table to check its structure
+            const { data: signerSample, error: sampleError } = await supabase
+              .from(signerTable)
+              .select('*')
+              .limit(1);
+              
+            if (sampleError) {
+              console.error(`[${timestamp}] Error getting signer table sample:`, sampleError);
+            } else if (signerSample && signerSample.length > 0) {
+              console.log(`[${timestamp}] Signer table sample:`, JSON.stringify(signerSample[0], null, 2));
+              
+              // Try to get the signer with the appropriate field
+              const { data: foundSigners, error: lookupError } = await supabase
+                .from(signerTable)
+                .select('*')
+                .eq(signerUuidField, cast[signerIdField])
+                .single();
+                
+              signers = foundSigners;
+              signerError = lookupError;
+            }
+          } catch (signerTableError) {
+            console.error(`[${timestamp}] Error working with signer table:`, signerTableError);
+            signerError = signerTableError;
+          }
+          
+          // Handle signer lookup results
           if (signerError) {
             console.error(`[${timestamp}] Error getting signer for cast ${cast.id}:`, signerError);
-            failCount++;
-            failureReasons.push({ id: cast.id, reason: `Signer error: ${signerError.message}` });
-            continue;
+            
+            // If we can't get the signer info, try to post directly using the signer ID from the cast
+            // This assumes that the signer_uuid in the cast IS the actual signer UUID for Neynar
+            try {
+              console.log(`[${timestamp}] Attempting to post directly using signer ID from cast: ${cast[signerIdField]}`);
+              const response = await neynarClient.publishCast({
+                signerUuid: cast[signerIdField],
+                text: cast.content,
+              });
+              
+              console.log(`[${timestamp}] Successfully posted cast ${cast.id} to Farcaster using direct signer ID`);
+              
+              // Mark as posted in database
+              try {
+                const { error: updateError } = await supabase
+                  .from('scheduled_casts')
+                  .update({ 
+                    posted: true, 
+                    posted_at: new Date().toISOString()
+                  })
+                  .eq('id', cast.id);
+                  
+                if (updateError) {
+                  console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
+                }
+              } catch (updateErr) {
+                console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateErr);
+              }
+              
+              successCount++;
+              continue;
+            } catch (directPostError: any) {
+              console.error(`[${timestamp}] Failed to post directly with signer ID:`, directPostError);
+              failCount++;
+              failureReasons.push({ 
+                id: cast.id, 
+                reason: `Signer error and direct post failed: ${(signerError as Error).message || JSON.stringify(signerError)}, ${(directPostError as Error).message || JSON.stringify(directPostError)}` 
+              });
+              continue;
+            }
           }
           
           if (!signers) {
-            console.error(`[${timestamp}] No signer found for uuid: ${cast.signer_uuid}`);
+            console.error(`[${timestamp}] No signer found for ${signerIdField}: ${cast[signerIdField]}`);
             failCount++;
-            failureReasons.push({ id: cast.id, reason: "No signer found with this UUID" });
+            failureReasons.push({ id: cast.id, reason: `No signer found with ${signerIdField}: ${cast[signerIdField]}` });
             continue;
           }
           
           console.log(`[${timestamp}] Found signer:`, JSON.stringify(signers, null, 2));
+          
+          // Determine the correct field to use for the signer UUID
+          const signerUuid = signers.uuid || signers.signer_uuid || signers.id || cast[signerIdField];
+          console.log(`[${timestamp}] Using signer UUID: ${signerUuid}`);
 
           // Cast the message to Farcaster
           try {
             const response = await neynarClient.publishCast({
-              signerUuid: signers.uuid,
+              signerUuid: signerUuid,
               text: cast.content,
             });
 
