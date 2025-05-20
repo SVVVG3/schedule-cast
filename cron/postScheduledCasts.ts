@@ -8,7 +8,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { postCast } from '@/lib/neynar';
+import { postCastDirect, validateAndRefreshSigner } from '@/lib/neynar';
 
 // Number of casts to process per batch
 const BATCH_SIZE = 10;
@@ -42,8 +42,74 @@ async function processCast(cast: any) {
       return { success: false, error: 'Missing signer_uuid' };
     }
     
+    // Skip if missing fid
+    if (!cast.fid) {
+      log(`Cast ${cast.id} missing fid, marking as error`);
+      await markCastAsError(cast.id, 'Missing fid');
+      return { success: false, error: 'Missing fid' };
+    }
+    
+    // Validate and refresh the signer if needed
+    try {
+      log(`Validating signer ${cast.signer_uuid} for cast ${cast.id}`);
+      const { signerUuid, refreshed } = await validateAndRefreshSigner(cast.signer_uuid, cast.fid);
+      
+      if (refreshed) {
+        log(`Signer was refreshed for cast ${cast.id}, using new signer: ${signerUuid}`);
+        
+        // Update the cast with the new signer_uuid
+        const { error: updateError } = await supabase
+          .from('scheduled_casts')
+          .update({ signer_uuid: signerUuid })
+          .eq('id', cast.id);
+          
+        if (updateError) {
+          log(`Error updating cast ${cast.id} with new signer: ${updateError.message}`);
+        }
+        
+        // Use the new signer UUID
+        cast.signer_uuid = signerUuid;
+      }
+    } catch (signerError) {
+      log(`Failed to validate/refresh signer for cast ${cast.id}: ${(signerError as Error).message}`);
+      
+      // Try to post directly as a fallback
+      try {
+        log(`Attempting to post cast ${cast.id} directly as fallback`);
+        
+        // Get the user and their current signer_uuid
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('signer_uuid')
+          .eq('fid', cast.fid)
+          .maybeSingle();
+          
+        if (userError || !user || !user.signer_uuid) {
+          throw new Error(`Could not find valid user/signer for FID ${cast.fid}`);
+        }
+        
+        // Use the user's current signer
+        const result = await postCastDirect(
+          user.signer_uuid,
+          cast.content,
+          cast.channel_id || undefined
+        );
+        
+        // Mark as posted
+        await markCastAsPosted(cast.id, result);
+        
+        log(`Successfully posted cast ${cast.id} with fallback method`);
+        return { success: true, result, fallback: true };
+      } catch (fallbackError) {
+        // Both methods failed
+        const errorMessage = `No signer found with signer_uuid: ${cast.signer_uuid} and direct post failed`;
+        await markCastAsError(cast.id, errorMessage);
+        return { success: false, error: errorMessage };
+      }
+    }
+    
     // Post to Farcaster via Neynar
-    const result = await postCast(
+    const result = await postCastDirect(
       cast.signer_uuid,
       cast.content,
       cast.channel_id || undefined
@@ -147,14 +213,29 @@ export async function main() {
     
     log(`Completed job: ${successCount} succeeded, ${failedCount} failed`);
     
+    // Prepare detailed results
+    const failedDetails = results
+      .filter(r => !r.success)
+      .map((r, i) => ({
+        id: dueCasts[i].id,
+        reason: r.error
+      }));
+    
     return {
-      processed: dueCasts.length,
-      success: successCount,
-      failed: failedCount
+      success: true,
+      message: `Processed ${dueCasts.length} casts: ${successCount} succeeded, ${failedCount} failed`,
+      details: failedDetails
     };
   } catch (error) {
     log(`Unexpected error in cron job: ${(error as Error).message}`);
-    return { processed: 0, success: 0, failed: 0, error: (error as Error).message };
+    return { 
+      success: false,
+      message: `Job failed with error: ${(error as Error).message}`,
+      processed: 0, 
+      successCount: 0, 
+      failedCount: 0, 
+      error: (error as Error).message 
+    };
   }
 }
 
