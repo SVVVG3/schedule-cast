@@ -331,8 +331,16 @@ export async function createSignerDirect() {
   try {
     console.log('[createSignerDirect] Creating developer managed signer via Neynar API');
     
+    // Generate a key pair for the signer
+    const { generatePrivateKey, privateKeyToAccount } = await import('viem/accounts');
+    const privateKey = generatePrivateKey();
+    const account = privateKeyToAccount(privateKey);
+    const publicKey = account.address; // This gives us the Ethereum address derived from the public key
+    
     // Calculate deadline (24 hours from now)
     const deadline = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
+    
+    console.log('[createSignerDirect] Generated key pair, public key:', publicKey);
     
     // Use the correct endpoint for developer managed signers
     const response = await fetch("https://api.neynar.com/v2/farcaster/signer/developer_managed/signed_key", {
@@ -343,7 +351,8 @@ export async function createSignerDirect() {
       },
       body: JSON.stringify({
         app_fid: 466111, // Use Schedule-Cast owner's FID as the app FID
-        deadline: deadline // Required: Unix timestamp deadline for the signer
+        deadline: deadline, // Required: Unix timestamp deadline for the signer
+        public_key: publicKey // Required: The public key for the signer
       })
     });
     
@@ -372,7 +381,8 @@ export async function createSignerDirect() {
     
     return {
       signer_uuid: data.signer_uuid,
-      public_key: data.public_key,
+      public_key: data.public_key || publicKey,
+      private_key: privateKey, // Store this securely!
       status: data.status || 'generated',
       signer_approval_url: approvalUrl,
       approved: data.status === 'approved'
