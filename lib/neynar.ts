@@ -306,13 +306,23 @@ export async function createSignerDirect() {
     }
     
     const data = await response.json();
+    console.log('[createSignerDirect] API response:', JSON.stringify(data, null, 2));
+    
+    // Construct the approval URL if it's not provided in the response
+    // According to Neynar docs, the approval URL format is:
+    // https://client.warpcast.com/deeplinks/signed-key-request?token={signer_uuid}
+    const approvalUrl = data.signer_approval_url || 
+                       data.approval_url || 
+                       `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.signer_uuid}`;
+    
     console.log('[createSignerDirect] Successfully created signer:', data.signer_uuid);
+    console.log('[createSignerDirect] Approval URL:', approvalUrl);
     
     return {
       signer_uuid: data.signer_uuid,
       public_key: data.public_key,
-      status: data.status,
-      signer_approval_url: data.signer_approval_url,
+      status: data.status || 'generated',
+      signer_approval_url: approvalUrl,
       approved: data.status === 'approved'
     };
   } catch (error) {
