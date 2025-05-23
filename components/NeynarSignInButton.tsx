@@ -146,6 +146,18 @@ export default function NeynarSignInButton({
           </div>
         )}
       </div>
+      {/* Fallback button if Neynar widget doesn't render after 3 seconds */}
+      <div className="mt-2">
+        <button 
+          onClick={() => window.open('https://warpcast.com/~/signin-with-neynar', '_blank')}
+          className="w-full flex items-center justify-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all duration-200"
+        >
+          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+          </svg>
+          Sign in with Farcaster (Backup)
+        </button>
+      </div>
     </div>
   );
 } 
