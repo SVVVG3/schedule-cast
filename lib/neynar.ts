@@ -359,8 +359,9 @@ export async function createSignerDirect() {
     console.log('[createSignerDirect] API response:', JSON.stringify(data, null, 2));
     
     // Use the approval URL from API response if available, otherwise construct it
+    // Based on Neynar docs, the token should be the public_key, not signer_uuid
     const approvalUrl = data.signer_approval_url || 
-      `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.signer_uuid}`;
+      `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.public_key}`;
     
     console.log('[createSignerDirect] Successfully created signer:', data.signer_uuid);
     console.log('[createSignerDirect] Approval URL:', approvalUrl);
