@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
-import WorkingModernCastForm from '@/components/WorkingModernCastForm';
-import WorkingModernScheduledCasts from '@/components/WorkingModernScheduledCasts';
+import SimpleCastForm from '@/components/SimpleCastForm';
+import ScheduledCasts from '@/components/ScheduledCasts';
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
@@ -51,12 +51,14 @@ export default function Dashboard() {
           <div className="space-y-8">
             {/* Cast Form */}
             <div>
-              <WorkingModernCastForm />
+              <h2 className="text-xl font-semibold mb-4">Create New Cast</h2>
+              <SimpleCastForm />
             </div>
             
             {/* Scheduled Casts */}
             <div>
-              <WorkingModernScheduledCasts />
+              <h2 className="text-xl font-semibold mb-4">Your Scheduled Casts</h2>
+              <ScheduledCasts />
             </div>
           </div>
         ) : (
