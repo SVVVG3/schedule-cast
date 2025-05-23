@@ -2,20 +2,19 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { 
   createSignerDirect, 
-  getSignerInfo, 
+  checkSignerStatus, 
   postCastDirect, 
-  validateAndRefreshSigner,
   retryWithBackoff 
 } from '@/lib/neynar';
 
 /**
- * Comprehensive test endpoint for Neynar implementation
+ * Comprehensive test endpoint for Neynar managed signers
  * 
- * This endpoint tests our implementation against the Neynar documentation:
- * - Signer creation using developer managed signers
- * - Proper API headers (x-api-key)
- * - Rate limiting and retry logic
- * - Signer validation and approval flow
+ * This endpoint tests our implementation of Neynar managed signers:
+ * - Signer creation with Neynar sponsorship
+ * - Proper approval URL generation
+ * - Signer status checking
+ * - Cast posting with approved signers
  */
 export async function POST(request: Request) {
   try {
@@ -59,21 +58,21 @@ export async function POST(request: Request) {
         throw new Error(`User not found or error: ${userError?.message}`);
       }
       
-      // Step 2: Test signer info retrieval (if user has a signer)
+      // Step 2: Test signer status checking (if user has a signer)
       if (user.signer_uuid && testType !== 'create_only') {
-        console.log('[test] Step 2: Testing signer info retrieval');
+        console.log('[test] Step 2: Testing signer status checking');
         try {
-          const signerInfo = await retryWithBackoff(() => getSignerInfo(user.signer_uuid));
+          const signerStatus = await retryWithBackoff(() => checkSignerStatus(user.signer_uuid));
           results.steps.push({
             step: 2,
-            name: 'Get existing signer info',
+            name: 'Check existing signer status',
             success: true,
-            data: signerInfo
+            data: signerStatus
           });
         } catch (signerError: any) {
           results.steps.push({
             step: 2,
-            name: 'Get existing signer info',
+            name: 'Check existing signer status',
             success: false,
             error: signerError.message,
             note: 'This is expected if signer is invalid/expired'
@@ -83,18 +82,19 @@ export async function POST(request: Request) {
       
       // Step 3: Test signer creation
       if (testType === 'create_only' || testType === 'full') {
-        console.log('[test] Step 3: Testing signer creation');
+        console.log('[test] Step 3: Testing Neynar managed signer creation');
         try {
           const newSigner = await retryWithBackoff(() => createSignerDirect());
           results.steps.push({
             step: 3,
-            name: 'Create new signer',
+            name: 'Create new Neynar managed signer',
             success: true,
             data: {
               signer_uuid: newSigner.signer_uuid,
               status: newSigner.status,
               signer_approval_url: newSigner.signer_approval_url,
-              approved: newSigner.approved
+              approved: newSigner.approved,
+              sponsored: true // Neynar sponsored
             }
           });
           
@@ -112,38 +112,16 @@ export async function POST(request: Request) {
         } catch (signerError: any) {
           results.steps.push({
             step: 3,
-            name: 'Create new signer',
+            name: 'Create new Neynar managed signer',
             success: false,
             error: signerError.message
           });
         }
       }
       
-      // Step 4: Test signer validation and refresh
-      if (testType === 'validate' || testType === 'full') {
-        console.log('[test] Step 4: Testing signer validation');
-        try {
-          const validation = await validateAndRefreshSigner(user.signer_uuid, fid);
-          results.steps.push({
-            step: 4,
-            name: 'Validate and refresh signer',
-            success: true,
-            data: validation
-          });
-        } catch (validationError: any) {
-          results.steps.push({
-            step: 4,
-            name: 'Validate and refresh signer',
-            success: false,
-            error: validationError.message,
-            note: 'This is expected if signer needs approval'
-          });
-        }
-      }
-      
-      // Step 5: Test cast posting (only if content provided and signer is approved)
+      // Step 4: Test cast posting (only if content provided and signer is approved)
       if (content && (testType === 'cast' || testType === 'full')) {
-        console.log('[test] Step 5: Testing cast posting');
+        console.log('[test] Step 4: Testing cast posting');
         
         // Get the latest user data after potential signer updates
         const { data: updatedUser } = await supabase
@@ -152,18 +130,31 @@ export async function POST(request: Request) {
           .eq('fid', fid)
           .maybeSingle();
         
-        if (updatedUser?.signer_uuid && updatedUser.signer_status === 'approved') {
+        if (updatedUser?.signer_uuid) {
           try {
-            const castResult = await postCastDirect(updatedUser.signer_uuid, content);
-            results.steps.push({
-              step: 5,
-              name: 'Post test cast',
-              success: true,
-              data: { cast_hash: castResult.cast?.hash || 'unknown' }
-            });
+            // Check if signer is approved first
+            const signerStatus = await checkSignerStatus(updatedUser.signer_uuid);
+            
+            if (signerStatus.approved) {
+              const castResult = await postCastDirect(updatedUser.signer_uuid, content);
+              results.steps.push({
+                step: 4,
+                name: 'Post test cast',
+                success: true,
+                data: { cast_hash: castResult.cast?.hash || 'unknown' }
+              });
+            } else {
+              results.steps.push({
+                step: 4,
+                name: 'Post test cast',
+                success: false,
+                error: 'Signer not approved',
+                note: 'User needs to visit approval URL first'
+              });
+            }
           } catch (castError: any) {
             results.steps.push({
-              step: 5,
+              step: 4,
               name: 'Post test cast',
               success: false,
               error: castError.message
@@ -171,11 +162,11 @@ export async function POST(request: Request) {
           }
         } else {
           results.steps.push({
-            step: 5,
+            step: 4,
             name: 'Post test cast',
             success: false,
-            error: 'Signer not approved or missing',
-            note: 'User needs to approve signer first'
+            error: 'No signer available',
+            note: 'User needs a signer first'
           });
         }
       }
@@ -187,14 +178,14 @@ export async function POST(request: Request) {
       results.summary = {
         success_rate: `${successfulSteps}/${totalSteps}`,
         overall_success: successfulSteps === totalSteps,
-        needs_action: results.steps.some((s: any) => s.error?.includes('approval'))
+        needs_action: results.steps.some((s: any) => s.error?.includes('approval') || s.note?.includes('approval'))
       };
       
       console.log(`[test] Test completed: ${successfulSteps}/${totalSteps} steps successful`);
       
       return NextResponse.json({
         success: true,
-        message: 'Neynar implementation test completed',
+        message: 'Neynar managed signer test completed',
         results: results
       });
       

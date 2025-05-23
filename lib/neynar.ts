@@ -151,8 +151,8 @@ export async function getSignerInfo(signerUuid: string) {
   }
 
   try {
-    // Use the correct endpoint for developer managed signers
-    const response = await fetch(`${DEVELOPER_MANAGED_SIGNER_ENDPOINT}/${signerUuid}`, {
+    // Use the correct endpoint for Neynar managed signers
+    const response = await fetch(`https://api.neynar.com/v2/farcaster/signer/${signerUuid}`, {
       method: 'GET',
       headers: {
         'x-api-key': process.env.NEYNAR_API_KEY,
@@ -320,8 +320,8 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
 }
 
 /**
- * Create a signer via direct Neynar API call
- * This uses the simpler developer managed signer endpoint
+ * Create a Neynar managed signer (recommended approach)
+ * This creates a signer that's managed by Neynar with proper approval flow
  */
 export async function createSignerDirect() {
   if (!process.env.NEYNAR_API_KEY) {
@@ -329,17 +329,17 @@ export async function createSignerDirect() {
   }
 
   try {
-    console.log('[createSignerDirect] Creating developer managed signer via Neynar API');
+    console.log('[createSignerDirect] Creating Neynar managed signer');
     
-    // Use the simpler endpoint for developer managed signers (no signature required)
-    const response = await fetch("https://api.neynar.com/v2/farcaster/signer/developer_managed/signed_key", {
+    // Use the Neynar managed signer endpoint (simpler and recommended)
+    const response = await fetch("https://api.neynar.com/v2/farcaster/signer", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.NEYNAR_API_KEY
       },
       body: JSON.stringify({
-        app_fid: 466111 // Use Schedule-Cast owner's FID as the app FID
+        sponsored_by_neynar: true // Let Neynar sponsor the signer for free
       })
     });
     
@@ -358,10 +358,8 @@ export async function createSignerDirect() {
     const data = await response.json();
     console.log('[createSignerDirect] API response:', JSON.stringify(data, null, 2));
     
-    // The developer managed signer endpoint should return approval_url directly
-    const approvalUrl = data.signer_approval_url || 
-                       data.approval_url || 
-                       `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.signer_uuid}`;
+    // Create the proper approval URL for Warpcast deeplink
+    const approvalUrl = `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.signer_uuid}`;
     
     console.log('[createSignerDirect] Successfully created signer:', data.signer_uuid);
     console.log('[createSignerDirect] Approval URL:', approvalUrl);
@@ -369,7 +367,7 @@ export async function createSignerDirect() {
     return {
       signer_uuid: data.signer_uuid,
       public_key: data.public_key,
-      status: data.status || 'generated',
+      status: data.status || 'pending_approval',
       signer_approval_url: approvalUrl,
       approved: data.status === 'approved'
     };
@@ -379,6 +377,59 @@ export async function createSignerDirect() {
       throw error;
     }
     throw new NeynarError(`Failed to create signer: ${(error as Error).message}`, 500);
+  }
+}
+
+/**
+ * Check the current status of a signer
+ * This is used to poll until the user approves the signer
+ */
+export async function checkSignerStatus(signerUuid: string) {
+  if (!process.env.NEYNAR_API_KEY) {
+    throw new NeynarError('Neynar API key is missing', 500);
+  }
+
+  if (!signerUuid) {
+    throw new NeynarError('Signer UUID is required', 400);
+  }
+
+  try {
+    console.log('[checkSignerStatus] Checking status for signer:', signerUuid);
+    
+    // Use the correct endpoint for Neynar managed signers
+    const response = await fetch(`https://api.neynar.com/v2/farcaster/signer/${signerUuid}`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.NEYNAR_API_KEY,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[checkSignerStatus] API error:', errorText);
+      
+      if (response.status === 429) {
+        throw new NeynarError('Rate limit exceeded. Please try again later.', 429);
+      }
+      
+      throw new NeynarError(`Failed to check signer status: ${errorText}`, response.status);
+    }
+
+    const data = await response.json();
+    console.log('[checkSignerStatus] Signer status:', data.status);
+    
+    return {
+      signer_uuid: data.signer_uuid,
+      public_key: data.public_key,
+      status: data.status,
+      approved: data.status === 'approved'
+    };
+  } catch (error) {
+    console.error('[checkSignerStatus] Error:', error);
+    if (error instanceof NeynarError) {
+      throw error;
+    }
+    throw new NeynarError(`Failed to check signer status: ${(error as Error).message}`, 500);
   }
 }
 
