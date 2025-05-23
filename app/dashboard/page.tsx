@@ -4,33 +4,24 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
-import SimpleCastForm from '@/components/SimpleCastForm';
-import ScheduledCasts from '@/components/ScheduledCasts';
+import WorkingModernCastForm from '@/components/WorkingModernCastForm';
+import WorkingModernScheduledCasts from '@/components/WorkingModernScheduledCasts';
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const { isLoading: userLoading, supabaseUser } = useUser();
   const router = useRouter();
 
-  // Debug logging
-  console.log('[Dashboard] Auth state:', {
-    isAuthenticated,
-    authLoading,
-    userLoading,
-    authUser,
-    supabaseUser
-  });
+  // Note: Authentication working properly
 
   // Redirect to homepage if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      console.log('[Dashboard] Redirecting to home - not authenticated');
       router.push('/');
     }
   }, [authLoading, isAuthenticated, router]);
 
   if (authLoading || userLoading) {
-    console.log('[Dashboard] Showing loading state');
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center">
         <div className="text-center">
@@ -42,11 +33,8 @@ export default function Dashboard() {
   }
 
   if (!isAuthenticated) {
-    console.log('[Dashboard] Not authenticated, returning null');
     return null; // We'll redirect in the useEffect
   }
-
-  console.log('[Dashboard] Rendering main dashboard');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
@@ -57,27 +45,18 @@ export default function Dashboard() {
             Dashboard
           </h1>
           <p className="text-gray-600">Schedule and manage your Farcaster casts</p>
-          
-          {/* Debug info */}
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-left">
-            <p><strong>Auth User:</strong> {authUser?.username || authUser?.fid || 'None'}</p>
-            <p><strong>Supabase User:</strong> {supabaseUser?.username || 'None'}</p>
-            <p><strong>Loading states:</strong> auth={authLoading.toString()}, user={userLoading.toString()}</p>
-          </div>
         </div>
         
         {supabaseUser ? (
           <div className="space-y-8">
             {/* Cast Form */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">Create New Cast</h2>
-              <SimpleCastForm />
+              <WorkingModernCastForm />
             </div>
             
             {/* Scheduled Casts */}
             <div>
-              <h2 className="text-xl font-semibold mb-4">Your Scheduled Casts</h2>
-              <ScheduledCasts />
+              <WorkingModernScheduledCasts />
             </div>
           </div>
         ) : (
@@ -101,9 +80,6 @@ export default function Dashboard() {
                   <h3 className="text-sm font-medium text-yellow-800">Profile Loading</h3>
                   <p className="text-sm text-yellow-700">
                     Unable to load your user profile. Please try refreshing the page.
-                  </p>
-                  <p className="text-xs text-yellow-600 mt-2">
-                    Auth user: {authUser?.username || 'None'} | Supabase user: {supabaseUser?.username || 'None'}
                   </p>
                 </div>
               </div>
