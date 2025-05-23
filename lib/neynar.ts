@@ -328,12 +328,11 @@ export async function createSignerDirect() {
     throw new NeynarError('Neynar API key is missing', 500);
   }
 
-  if (!process.env.NEYNAR_APP_FID) {
-    throw new NeynarError('NEYNAR_APP_FID environment variable is required for developer managed signers', 500);
-  }
-
   try {
     console.log('[createSignerDirect] Creating developer managed signer via Neynar API');
+    
+    // Calculate deadline (24 hours from now)
+    const deadline = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
     
     // Use the correct endpoint for developer managed signers
     const response = await fetch("https://api.neynar.com/v2/farcaster/signer/developer_managed/signed_key", {
@@ -343,7 +342,8 @@ export async function createSignerDirect() {
         "x-api-key": process.env.NEYNAR_API_KEY // Fixed: use x-api-key instead of api_key
       },
       body: JSON.stringify({
-        app_fid: parseInt(process.env.NEYNAR_APP_FID) // Required parameter for developer managed signers
+        app_fid: 466111, // Use Schedule-Cast owner's FID as the app FID
+        deadline: deadline // Required: Unix timestamp deadline for the signer
       })
     });
     
