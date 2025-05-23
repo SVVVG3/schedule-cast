@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SupabaseStatus from '@/components/SupabaseStatus';
 import NeynarSignInButton from '@/components/NeynarSignInButton';
-import NeynarCallbackHandler from '@/components/NeynarCallbackHandler';
 import { useAuth } from '@/lib/auth-context';
 
 export default function Home() {
@@ -34,13 +33,7 @@ export default function Home() {
   }
 
   return (
-    <>
-      {/* Handle Neynar callback */}
-      <Suspense fallback={null}>
-        <NeynarCallbackHandler />
-      </Suspense>
-      
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full">
           {/* Modern Card with Gradient Border */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 p-[1px] shadow-2xl">
@@ -113,6 +106,5 @@ export default function Home() {
           </p>
         </div>
       </div>
-    </>
-  )
+    )
 } 
