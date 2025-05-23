@@ -119,21 +119,33 @@ export default function NeynarSignInButton({
       // Clear any existing content
       buttonRef.current.innerHTML = '';
       
+      const finalClientId = clientId || process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || 'a09909a7-0a8c-489c-a361-7c586dd0db35';
+      console.log('Creating Neynar sign-in button with client ID:', finalClientId);
+      
       // Create new button
       const button = document.createElement('div');
       button.className = 'neynar_signin';
-      button.setAttribute('data-client_id', clientId || process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '');
+      button.setAttribute('data-client_id', finalClientId);
       button.setAttribute('data-success-callback', callbackName);
       button.setAttribute('data-theme', theme);
       
       // Append button
       buttonRef.current.appendChild(button);
+      
+      console.log('Neynar sign-in button created and appended');
     }
   }, [isLoaded, theme, clientId]);
   
   return (
     <div className={className}>
-      <div ref={buttonRef}></div>
+      <div ref={buttonRef}>
+        {!isLoaded && (
+          <div className="flex items-center justify-center py-3 px-6 bg-purple-600 text-white rounded-lg">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            Loading sign in...
+          </div>
+        )}
+      </div>
     </div>
   );
 } 
