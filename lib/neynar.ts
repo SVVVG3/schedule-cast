@@ -25,6 +25,45 @@ export class NeynarError extends Error {
   }
 }
 
+// Rate limiting utilities
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Retry wrapper for API calls with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on non-rate-limit errors
+      if (!(error instanceof NeynarError) || error.status !== 429) {
+        throw error;
+      }
+      
+      // Don't retry on the last attempt
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s, etc.
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`[retryWithBackoff] Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+      await sleep(delay);
+    }
+  }
+  
+  throw lastError!;
+}
+
 /**
  * Post a cast to Farcaster using the Neynar API
  * 
@@ -200,7 +239,7 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
   try {
     // First, try to get signer information to check if it's valid
     try {
-      const signerInfo = await getSignerInfo(signerUuid);
+      const signerInfo = await retryWithBackoff(() => getSignerInfo(signerUuid));
       console.log(`[validateAndRefreshSigner] Signer is valid, status:`, signerInfo.status || 'unknown');
       
       // Check if the signer is approved
@@ -218,7 +257,7 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
       
       // Signer is invalid, create a new one
       try {
-        const newSignerData = await createSignerDirect();
+        const newSignerData = await retryWithBackoff(() => createSignerDirect());
         const newSignerUuid = newSignerData.signer_uuid;
         
         console.log(`[validateAndRefreshSigner] New signer created: ${newSignerUuid}, status: ${newSignerData.status}`);
@@ -281,7 +320,7 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
 
 /**
  * Create a signer via direct Neynar API call
- * This bypasses the SDK due to API changes
+ * This uses the developer managed signer endpoint as per Neynar docs
  */
 export async function createSignerDirect() {
   if (!process.env.NEYNAR_API_KEY) {
@@ -289,28 +328,33 @@ export async function createSignerDirect() {
   }
 
   try {
-    console.log('[createSignerDirect] Creating managed signer via direct API call');
+    console.log('[createSignerDirect] Creating developer managed signer via Neynar API');
     
-    const response = await fetch("https://api.neynar.com/v2/farcaster/signer", {
+    // Use the correct endpoint for developer managed signers
+    const response = await fetch("https://api.neynar.com/v2/farcaster/signer/developer_managed/signed_key", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "api_key": process.env.NEYNAR_API_KEY
+        "x-api-key": process.env.NEYNAR_API_KEY // Fixed: use x-api-key instead of api_key
       }
     });
     
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[createSignerDirect] API error:', errorText);
+      
+      // Check for rate limiting
+      if (response.status === 429) {
+        throw new NeynarError('Rate limit exceeded. Please try again later.', 429);
+      }
+      
       throw new NeynarError(`Failed to create signer: ${errorText}`, response.status);
     }
     
     const data = await response.json();
     console.log('[createSignerDirect] API response:', JSON.stringify(data, null, 2));
     
-    // Construct the approval URL if it's not provided in the response
-    // According to Neynar docs, the approval URL format is:
-    // https://client.warpcast.com/deeplinks/signed-key-request?token={signer_uuid}
+    // The developer managed signer endpoint should return approval_url directly
     const approvalUrl = data.signer_approval_url || 
                        data.approval_url || 
                        `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.signer_uuid}`;
@@ -335,67 +379,78 @@ export async function createSignerDirect() {
 }
 
 /**
- * Post a cast via direct Neynar API call
- * This bypasses the SDK due to API changes
+ * Post a cast via direct Neynar API call with retry logic
+ * This bypasses the SDK due to API changes and includes rate limit handling
  */
 export async function postCastDirect(
   signerUuid: string,
   content: string,
   channelId?: string
 ) {
-  if (!process.env.NEYNAR_API_KEY) {
-    throw new NeynarError('Neynar API key is missing', 500);
-  }
-
-  if (!signerUuid) {
-    throw new NeynarError('Signer UUID is required', 400);
-  }
-
-  if (!content || content.length > 320) {
-    throw new NeynarError(
-      'Cast content is required and must be 320 characters or less',
-      400
-    );
-  }
-
-  try {
-    console.log('[postCastDirect] Posting cast using signer:', signerUuid);
-    
-    // Prepare the request body
-    const requestBody: Record<string, any> = {
-      signer_uuid: signerUuid,
-      text: content,
-    };
-
-    // Add channel ID if provided
-    if (channelId) {
-      requestBody.channel_id = channelId;
+  return retryWithBackoff(async () => {
+    if (!process.env.NEYNAR_API_KEY) {
+      throw new NeynarError('Neynar API key is missing', 500);
     }
-    
-    const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api_key": process.env.NEYNAR_API_KEY
-      },
-      body: JSON.stringify(requestBody)
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[postCastDirect] API error:', errorText);
-      throw new NeynarError(`Failed to post cast: ${errorText}`, response.status);
+
+    if (!signerUuid) {
+      throw new NeynarError('Signer UUID is required', 400);
     }
-    
-    const data = await response.json();
-    console.log('[postCastDirect] Successfully posted cast');
-    
-    return data;
-  } catch (error) {
-    console.error('[postCastDirect] Error:', error);
-    if (error instanceof NeynarError) {
-      throw error;
+
+    if (!content || content.length > 320) {
+      throw new NeynarError(
+        'Cast content is required and must be 320 characters or less',
+        400
+      );
     }
-    throw new NeynarError(`Failed to post cast: ${(error as Error).message}`, 500);
-  }
-} 
+
+    try {
+      console.log('[postCastDirect] Posting cast using signer:', signerUuid);
+      
+      // Prepare the request body
+      const requestBody: Record<string, any> = {
+        signer_uuid: signerUuid,
+        text: content,
+      };
+
+      // Add channel ID if provided
+      if (channelId) {
+        requestBody.channel_id = channelId;
+      }
+      
+      const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY // Fixed: use x-api-key instead of api_key
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[postCastDirect] API error:', errorText);
+        
+        // Check for rate limiting
+        if (response.status === 429) {
+          throw new NeynarError('Rate limit exceeded. Please try again later.', 429);
+        }
+        
+        throw new NeynarError(`Failed to post cast: ${errorText}`, response.status);
+      }
+      
+      const data = await response.json();
+      console.log('[postCastDirect] Successfully posted cast');
+      
+      return data;
+    } catch (error) {
+      console.error('[postCastDirect] Error:', error);
+      if (error instanceof NeynarError) {
+        throw error;
+      }
+      throw new NeynarError(`Failed to post cast: ${(error as Error).message}`, 500);
+    }
+  });
+}
+
+// Export retry function for use in other modules
+export { retryWithBackoff }; 
