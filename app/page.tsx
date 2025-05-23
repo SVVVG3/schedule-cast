@@ -39,12 +39,14 @@ export default function Home() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 p-[1px] shadow-2xl">
             <div className="rounded-3xl bg-white p-8 text-center">
               {/* Logo */}
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600">
+              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 flex-shrink-0">
                 <svg
-                  className="h-8 w-8 text-white"
+                  className="h-8 w-8 text-white flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  width="32"
+                  height="32"
                 >
                   <path
                     strokeLinecap="round"
@@ -66,19 +68,19 @@ export default function Home() {
               {/* Features */}
               <div className="space-y-3 mb-8">
                 <div className="flex items-center text-sm text-gray-700">
-                  <svg className="h-4 w-4 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" width="16" height="16">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   Schedule casts for any future date & time
                 </div>
                 <div className="flex items-center text-sm text-gray-700">
-                  <svg className="h-4 w-4 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" width="16" height="16">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   Post to channels or your main feed
                 </div>
                 <div className="flex items-center text-sm text-gray-700">
-                  <svg className="h-4 w-4 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-4 w-4 text-green-500 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" width="16" height="16">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   Track your scheduled & posted casts
