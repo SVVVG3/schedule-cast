@@ -8,77 +8,113 @@ export async function POST(request: Request) {
   try {
     console.log('[migrate/add-signer-fields] Running migration to add signer approval fields');
     
-    const migrationSQL = `
--- Add signer approval fields to the users table
--- This migration adds fields to track signer status and approval URLs
-
--- First check if columns exist before adding them
-DO $$
-BEGIN
-    -- Add signer_approval_url column if it doesn't exist
-    IF NOT EXISTS (
-        SELECT 1 
-        FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'signer_approval_url'
-    ) THEN
-        ALTER TABLE users 
-        ADD COLUMN signer_approval_url TEXT;
-    END IF;
+    const migrations = [
+      {
+        name: 'signer_approval_url',
+        sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS signer_approval_url TEXT;`
+      },
+      {
+        name: 'signer_status', 
+        sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS signer_status TEXT DEFAULT 'generated';`
+      },
+      {
+        name: 'needs_signer_approval',
+        sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS needs_signer_approval BOOLEAN DEFAULT FALSE;`
+      },
+      {
+        name: 'last_signer_check',
+        sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS last_signer_check TIMESTAMPTZ;`
+      }
+    ];
     
-    -- Add signer_status column if it doesn't exist
-    IF NOT EXISTS (
-        SELECT 1 
-        FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'signer_status'
-    ) THEN
-        ALTER TABLE users 
-        ADD COLUMN signer_status TEXT DEFAULT 'generated';
-    END IF;
+    const results = [];
     
-    -- Add needs_signer_approval column if it doesn't exist
-    IF NOT EXISTS (
-        SELECT 1 
-        FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'needs_signer_approval'
-    ) THEN
-        ALTER TABLE users 
-        ADD COLUMN needs_signer_approval BOOLEAN DEFAULT FALSE;
-    END IF;
+    // Execute each migration individually
+    for (const migration of migrations) {
+      try {
+        console.log(`[migrate] Adding column: ${migration.name}`);
+        
+        // Use .rpc to execute raw SQL
+        const { error } = await supabase.rpc('exec', { 
+          sql: migration.sql 
+        });
+        
+        if (error) {
+          // If the RPC doesn't work, try using the SQL directly
+          console.log(`[migrate] RPC failed for ${migration.name}, trying direct SQL execution`);
+          
+          // Try executing the SQL through a different method
+          const { error: directError } = await supabase
+            .from('users')
+            .select('id')
+            .limit(1);
+          
+          if (directError) {
+            throw new Error(`Failed to access users table: ${directError.message}`);
+          }
+          
+          // Since we can't execute DDL directly, we'll need to do this differently
+          console.log(`[migrate] Cannot execute DDL through client for ${migration.name}`);
+          results.push({
+            column: migration.name,
+            success: false,
+            error: 'DDL execution not supported through client',
+            sql: migration.sql
+          });
+        } else {
+          results.push({
+            column: migration.name,
+            success: true
+          });
+        }
+      } catch (migrationError) {
+        console.error(`[migrate] Error with ${migration.name}:`, migrationError);
+        results.push({
+          column: migration.name,
+          success: false,
+          error: (migrationError as Error).message,
+          sql: migration.sql
+        });
+      }
+    }
     
-    -- Add last_signer_check column if it doesn't exist
-    IF NOT EXISTS (
-        SELECT 1 
-        FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'last_signer_check'
-    ) THEN
-        ALTER TABLE users 
-        ADD COLUMN last_signer_check TIMESTAMPTZ;
-    END IF;
-END
-$$;`;
+    // Check if all migrations succeeded
+    const allSucceeded = results.every(r => r.success);
     
-    // Execute the migration
-    const { error } = await supabase.rpc('exec_sql', { sql: migrationSQL });
-    
-    if (error) {
-      console.error('[migrate/add-signer-fields] Migration failed:', error);
-      return NextResponse.json(
-        { error: `Migration failed: ${error.message}` },
-        { status: 500 }
-      );
+    if (!allSucceeded) {
+      return NextResponse.json({
+        success: false,
+        message: 'Migration partially failed - please run the SQL manually in Supabase dashboard',
+        results: results,
+        manual_sql: migrations.map(m => m.sql).join('\n'),
+        instructions: 'Copy the manual_sql and run it in your Supabase SQL Editor dashboard'
+      });
     }
     
     console.log('[migrate/add-signer-fields] Migration completed successfully');
     
     return NextResponse.json({
       success: true,
-      message: 'Signer approval fields migration completed successfully'
+      message: 'Signer approval fields migration completed successfully',
+      results: results
     });
   } catch (error) {
     console.error('[migrate/add-signer-fields] Unexpected error:', error);
-    return NextResponse.json(
-      { error: `Migration failed: ${(error as Error).message}` },
-      { status: 500 }
-    );
+    
+    // Provide manual SQL as fallback
+    const manualSQL = `
+-- Run this SQL in your Supabase SQL Editor dashboard:
+ALTER TABLE users ADD COLUMN IF NOT EXISTS signer_approval_url TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS signer_status TEXT DEFAULT 'generated';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS needs_signer_approval BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_signer_check TIMESTAMPTZ;
+`;
+    
+    return NextResponse.json({
+      success: false,
+      error: `Migration failed: ${(error as Error).message}`,
+      manual_sql: manualSQL,
+      instructions: 'Please run the manual_sql in your Supabase SQL Editor dashboard'
+    }, { status: 500 });
   }
 } 

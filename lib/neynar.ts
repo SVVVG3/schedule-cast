@@ -10,6 +10,7 @@
 const NEYNAR_API_URL = 'https://api.neynar.com/v2/farcaster';
 const CAST_ENDPOINT = `${NEYNAR_API_URL}/cast`;
 const SIGNER_ENDPOINT = `${NEYNAR_API_URL}/signer`;
+const DEVELOPER_MANAGED_SIGNER_ENDPOINT = `${NEYNAR_API_URL}/signer/developer_managed`;
 
 import { registerUserSigner } from '@/utils/registerUserSigner';
 import { supabase } from './supabase';
@@ -150,8 +151,8 @@ export async function getSignerInfo(signerUuid: string) {
   }
 
   try {
-    // Make the API request
-    const response = await fetch(`${SIGNER_ENDPOINT}/${signerUuid}`, {
+    // Use the correct endpoint for developer managed signers
+    const response = await fetch(`${DEVELOPER_MANAGED_SIGNER_ENDPOINT}/${signerUuid}`, {
       method: 'GET',
       headers: {
         'x-api-key': process.env.NEYNAR_API_KEY,
@@ -327,6 +328,10 @@ export async function createSignerDirect() {
     throw new NeynarError('Neynar API key is missing', 500);
   }
 
+  if (!process.env.NEYNAR_APP_FID) {
+    throw new NeynarError('NEYNAR_APP_FID environment variable is required for developer managed signers', 500);
+  }
+
   try {
     console.log('[createSignerDirect] Creating developer managed signer via Neynar API');
     
@@ -336,7 +341,10 @@ export async function createSignerDirect() {
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.NEYNAR_API_KEY // Fixed: use x-api-key instead of api_key
-      }
+      },
+      body: JSON.stringify({
+        app_fid: parseInt(process.env.NEYNAR_APP_FID) // Required parameter for developer managed signers
+      })
     });
     
     if (!response.ok) {
