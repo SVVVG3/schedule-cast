@@ -2,7 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/lib/auth-context'
 import { UserProvider } from '@/lib/user-context'
-import ModernNavbar from '@/components/ModernNavbar'
+import ImprovedNavbar from '@/components/ImprovedNavbar'
 
 export const metadata: Metadata = {
   title: 'Schedule Cast - Farcaster Scheduling',
@@ -20,7 +20,7 @@ export default function RootLayout({
         <AuthProvider>
           <UserProvider>
             <div className="min-h-screen flex flex-col">
-              <ModernNavbar />
+              <ImprovedNavbar />
               <main className="flex-grow">{children}</main>
               <footer className="bg-gray-100 py-4 border-t">
                 <div className="container mx-auto px-4 text-center text-sm text-gray-600">

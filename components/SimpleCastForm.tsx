@@ -89,7 +89,9 @@ export default function SimpleCastForm() {
       padding: '20px', 
       borderRadius: '8px', 
       border: '1px solid #e5e7eb',
-      maxWidth: '500px'
+      maxWidth: '500px',
+      width: '100%',
+      margin: '0 auto'
     }}>
       <h3 style={{ marginBottom: '20px', fontSize: '18px', fontWeight: 'bold' }}>
         Schedule a Cast (Simple Version)
