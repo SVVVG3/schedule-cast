@@ -53,7 +53,6 @@ export default function AuthButton({ className = '' }: AuthButtonProps) {
     <NeynarSignInButton 
       theme="dark"
       className={className}
-      onError={(error) => console.error('SIWN Authentication Error:', error)}
     />
   );
 } 
