@@ -358,8 +358,9 @@ export async function createSignerDirect() {
     const data = await response.json();
     console.log('[createSignerDirect] API response:', JSON.stringify(data, null, 2));
     
-    // Create the proper approval URL for Warpcast deeplink
-    const approvalUrl = `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.signer_uuid}`;
+    // Use the approval URL from API response if available, otherwise construct it
+    const approvalUrl = data.signer_approval_url || 
+      `https://client.warpcast.com/deeplinks/signed-key-request?token=${data.signer_uuid}`;
     
     console.log('[createSignerDirect] Successfully created signer:', data.signer_uuid);
     console.log('[createSignerDirect] Approval URL:', approvalUrl);
@@ -369,7 +370,8 @@ export async function createSignerDirect() {
       public_key: data.public_key,
       status: data.status || 'pending_approval',
       signer_approval_url: approvalUrl,
-      approved: data.status === 'approved'
+      approved: data.status === 'approved',
+      sponsored: data.sponsored_by_neynar || true
     };
   } catch (error) {
     console.error('[createSignerDirect] Error:', error);
