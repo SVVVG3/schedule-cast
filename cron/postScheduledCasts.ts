@@ -13,7 +13,7 @@ import { postCastDirect, checkSignerStatus, retryWithBackoff } from '../lib/neyn
 interface ScheduledCast {
   id: string;
   content: string;
-  scheduled_time: string;
+  scheduled_at: string;
   posted: boolean;
   fid: number;
   signer_uuid: string;
@@ -30,7 +30,7 @@ export async function postScheduledCasts() {
       .from('scheduled_casts')
       .select('*')
       .eq('posted', false)
-      .lte('scheduled_time', now);
+      .lte('scheduled_at', now);
 
     if (error) {
       console.error('[postScheduledCasts] Error fetching scheduled casts:', error);
@@ -51,9 +51,32 @@ export async function postScheduledCasts() {
       try {
         console.log(`[postScheduledCasts] Processing cast ${cast.id} for user ${cast.username} (FID: ${cast.fid})`);
         
+        // Get the current signer from the users table (not the old one from scheduled_casts)
+        const { data: user, error: userError } = await supabase
+          .from('users')
+          .select('signer_uuid')
+          .eq('fid', cast.fid)
+          .maybeSingle();
+          
+        if (userError || !user || !user.signer_uuid) {
+          console.error(`[postScheduledCasts] No current signer found for FID ${cast.fid}:`, userError);
+          await supabase
+            .from('scheduled_casts')
+            .update({
+              error_message: 'No current signer found. Please sign in with Neynar again.',
+              failed_at: new Date().toISOString()
+            })
+            .eq('id', cast.id);
+          failureCount++;
+          continue;
+        }
+        
+        // Use the current signer from users table
+        let currentSignerUuid = user.signer_uuid;
+        console.log(`[postScheduledCasts] Using current signer: ${currentSignerUuid} (cast had: ${cast.signer_uuid})`);
+        
         // First, check if the user's signer is approved
         let signerApproved = false;
-        let currentSignerUuid = cast.signer_uuid;
         
         if (currentSignerUuid) {
           try {
