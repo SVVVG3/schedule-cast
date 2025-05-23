@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SupabaseStatus from '@/components/SupabaseStatus';
 import NeynarSignInButton from '@/components/NeynarSignInButton';
-import ImprovedNeynarButton from '@/components/ImprovedNeynarButton';
 import { useAuth } from '@/lib/auth-context';
 
 export default function Home() {
@@ -91,22 +90,7 @@ export default function Home() {
               <p className="text-sm text-gray-600">
                 Sign in with your Farcaster account to get started
               </p>
-              
-              {/* Primary: Official Neynar React SDK Button */}
-              <div className="mb-4">
-                <ImprovedNeynarButton className="w-full" />
-              </div>
-              
-              {/* Fallback: Custom Implementation */}
-              <details className="text-left">
-                <summary className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
-                  Alternative sign-in method
-                </summary>
-                <div className="mt-2 pt-2 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 mb-2">If the above button doesn't work, try this alternative:</p>
-                  <NeynarSignInButton theme="dark" className="w-full" />
-                </div>
-              </details>
+              <NeynarSignInButton theme="dark" className="w-full" />
             </div>
 
             {/* Status */}
