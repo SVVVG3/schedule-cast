@@ -1,45 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useFrameContext } from '@/lib/frame-context';
 import NeynarSignInButton from './NeynarSignInButton';
+import MobileNeynarSignIn from './MobileNeynarSignIn';
 
 interface UniversalAuthButtonProps {
   className?: string;
 }
 
 export default function UniversalAuthButton({ className = '' }: UniversalAuthButtonProps) {
-  const { user, isAuthenticated, signOut, signIn } = useAuth();
-  const { isFrameApp, frameContext } = useFrameContext();
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const { user, isAuthenticated, isLoading, signOut } = useAuth();
+  const frameContext = useFrameContext();
+  const [isMobile, setIsMobile] = useState(false);
 
-  const handleSignIn = async () => {
-    setIsSigningIn(true);
-    try {
-      await signIn();
-      console.log('Authentication successful');
-    } catch (error) {
-      console.error('Authentication failed:', error);
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
+  useEffect(() => {
+    // Detect mobile environment
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent;
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const isFrameEnv = window.location.pathname.startsWith('/miniapp') || 
+                        window.location.search.includes('miniApp=true') ||
+                        window.parent !== window;
+      
+      return isMobileDevice || isFrameEnv;
+    };
 
-  const handleSignOut = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut();
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+    setIsMobile(checkMobile());
+  }, []);
 
-  // If user is authenticated, show user info and sign out
+  if (isLoading) {
+    return (
+      <div className={`flex items-center space-x-2 ${className}`}>
+        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+        <span className="text-sm text-gray-400">Loading...</span>
+      </div>
+    );
+  }
+
   if (isAuthenticated && user) {
     return (
-      <div className="flex items-center space-x-3">
+      <div className={`flex items-center space-x-3 ${className}`}>
         <div className="flex items-center space-x-2">
           {user.avatar && (
             <div className="w-8 h-8 overflow-hidden rounded-full flex-shrink-0 border border-gray-600">
@@ -50,7 +52,7 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
                 style={{ 
                   width: '32px !important', 
                   height: '32px !important',
-                  maxWidth: '32px', 
+                  maxWidth: '32px',
                   maxHeight: '32px',
                   minWidth: '32px',
                   minHeight: '32px'
@@ -58,24 +60,36 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
               />
             </div>
           )}
-          <span className="text-xs font-medium truncate max-w-[200px]">
-            {user.displayName || user.username || `User ${user.fid}`}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-white">
+              {user.displayName || user.username || `User ${user.fid}`}
+            </span>
+            {user.fid && (
+              <span className="text-xs text-gray-400">FID {user.fid}</span>
+            )}
+          </div>
         </div>
-        
         <button
-          onClick={handleSignOut}
-          disabled={isSigningOut}
-          className={`px-2 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 transition duration-150 disabled:opacity-50 ${className}`}
+          onClick={signOut}
+          className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors duration-200"
         >
-          {isSigningOut ? '...' : 'Sign Out'}
+          Sign Out
         </button>
       </div>
     );
   }
 
   // Show appropriate sign-in method based on environment
-  // Always use Neynar SIWN for proper signer delegation, even in frame environment
+  // Use mobile-friendly sign-in for mobile/frame environments
+  if (isMobile) {
+    return (
+      <div className={className}>
+        <MobileNeynarSignIn theme="dark" />
+      </div>
+    );
+  }
+
+  // Use regular SIWN for desktop
   return (
     <div className={className}>
       <NeynarSignInButton theme="dark" />
