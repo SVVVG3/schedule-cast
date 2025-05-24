@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
 import NeynarSignInButton from './NeynarSignInButton';
+import SignerApprovalChecker from './SignerApprovalChecker';
 
 interface CastFormData {
   content: string;
@@ -103,91 +104,101 @@ export default function CompactCastForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              What's on your mind?
-            </label>
-            <textarea
-              rows={4}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${
-                !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
-              }`}
-              placeholder={isAuthenticated ? "Share your thoughts with the world..." : "Sign in to schedule casts..."}
-              maxLength={320}
-              disabled={!isAuthenticated}
-              {...register('content', { required: 'Content is required' })}
-            />
-            {errors.content && (
-              <p className="text-red-600 text-sm mt-1">
-                {errors.content.message}
+        <SignerApprovalChecker
+          fallback={
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">
+                Please approve your signer to start scheduling casts
               </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            </div>
+          }
+        >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date
+                What's on your mind?
+              </label>
+              <textarea
+                rows={4}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${
+                  !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                }`}
+                placeholder={isAuthenticated ? "Share your thoughts with the world..." : "Sign in to schedule casts..."}
+                maxLength={320}
+                disabled={!isAuthenticated}
+                {...register('content', { required: 'Content is required' })}
+              />
+              {errors.content && (
+                <p className="text-red-600 text-sm mt-1">
+                  {errors.content.message}
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  }`}
+                  disabled={!isAuthenticated}
+                  {...register('scheduledDate', { required: 'Date is required' })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Time
+                </label>
+                <input
+                  type="time"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  }`}
+                  disabled={!isAuthenticated}
+                  {...register('scheduledTime', { required: 'Time is required' })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Channel (optional)
               </label>
               <input
-                type="date"
+                type="text"
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                   !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
                 }`}
+                placeholder={isAuthenticated ? "e.g. farcaster, crypto, art" : "Sign in to use channels"}
                 disabled={!isAuthenticated}
-                {...register('scheduledDate', { required: 'Date is required' })}
+                {...register('channelId')}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Time
-              </label>
-              <input
-                type="time"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
-                }`}
-                disabled={!isAuthenticated}
-                {...register('scheduledTime', { required: 'Time is required' })}
-              />
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Channel (optional)
-            </label>
-            <input
-              type="text"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+            <button
+              type="submit"
+              disabled={!isAuthenticated || isSubmitting}
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors duration-200 ${
+                !isAuthenticated
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : isSubmitting
+                  ? 'bg-purple-400 text-white cursor-not-allowed'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
               }`}
-              placeholder={isAuthenticated ? "e.g. farcaster, crypto, art" : "Sign in to use channels"}
-              disabled={!isAuthenticated}
-              {...register('channelId')}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={!isAuthenticated || isSubmitting}
-            className={`w-full py-3 px-4 rounded-lg font-medium transition-colors duration-200 ${
-              !isAuthenticated
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : isSubmitting
-                ? 'bg-purple-400 text-white cursor-not-allowed'
-                : 'bg-purple-600 text-white hover:bg-purple-700'
-            }`}
-          >
-            {!isAuthenticated 
-              ? 'Sign in to Schedule Cast' 
-              : isSubmitting 
-              ? 'Scheduling...' 
-              : 'Schedule Cast'
-            }
-          </button>
-        </form>
+            >
+              {!isAuthenticated 
+                ? 'Sign in to Schedule Cast' 
+                : isSubmitting 
+                ? 'Scheduling...' 
+                : 'Schedule Cast'
+              }
+            </button>
+          </form>
+        </SignerApprovalChecker>
 
         {!isAuthenticated && (
           <div className="text-center mt-4">

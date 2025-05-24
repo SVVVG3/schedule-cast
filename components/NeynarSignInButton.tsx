@@ -33,8 +33,8 @@ export default function NeynarSignInButton({
           // Update auth context
           await updateAuthFromSIWN(data);
           
-          // Store signer in Supabase
-          await fetch('/api/signer/store', {
+          // Store signer in Supabase and check approval status
+          const storeResponse = await fetch('/api/signer/store', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -47,10 +47,31 @@ export default function NeynarSignInButton({
             }),
           });
           
-          console.log('SIWN auth complete!');
+          // Check signer approval status
+          const approvalResponse = await fetch(`/api/signer/approval-status?fid=${data.fid}`);
+          const approvalData = await approvalResponse.json();
+          
+          console.log('SIWN auth complete! Signer status:', approvalData);
+          
+          // If signer needs approval, show the user a message
+          if (approvalData.needs_approval && approvalData.approval_url) {
+            alert(`🎉 Sign-in successful! 
+            
+However, you need to approve Schedule-Cast to post on your behalf.
+
+Click OK to be redirected to Warpcast for approval (this is a one-time step).
+
+After approval, you can schedule casts!`);
+            
+            // Open approval URL
+            window.open(approvalData.approval_url, '_blank');
+          } else if (approvalData.status === 'approved') {
+            alert('🎉 Sign-in successful! Your signer is approved and ready to use!');
+          }
         }
       } catch (error) {
         console.error('Error handling SIWN success:', error);
+        alert('Sign-in successful, but there was an issue checking signer status. You may need to approve your signer in Warpcast.');
       }
     };
 
