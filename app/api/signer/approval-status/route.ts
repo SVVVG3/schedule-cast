@@ -1,62 +1,66 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { getSignerInfo, createSignerDirect } from '@/lib/neynar';
+import { getSignerInfo, postCastDirect } from '@/lib/neynar';
 
 /**
  * API endpoint to check a user's signer approval status
  * and provide approval URLs if needed
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const fid = url.searchParams.get('fid');
+    const { searchParams } = new URL(request.url);
+    const fid = searchParams.get('fid');
     
     if (!fid) {
-      return NextResponse.json(
-        { error: 'Missing fid parameter' },
-        { status: 400 }
-      );
+      return NextResponse.json({ 
+        error: 'fid query parameter is required' 
+      }, { status: 400 });
     }
     
     console.log(`[signer/approval-status] Checking signer status for FID ${fid}`);
     
-    // Get the user record
-    const { data: user, error: userError } = await supabase
+    // Get the user's current signer from database
+    const { data: userData, error } = await supabase
       .from('users')
-      .select('signer_uuid, signer_status, signer_approval_url, needs_signer_approval')
+      .select('*')
       .eq('fid', parseInt(fid))
-      .maybeSingle();
+      .single();
     
-    if (userError) {
-      console.error(`[signer/approval-status] Error fetching user:`, userError);
-      return NextResponse.json(
-        { error: `Error fetching user: ${userError.message}` },
-        { status: 500 }
-      );
-    }
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: `No user found with FID: ${fid}` },
-        { status: 404 }
-      );
-    }
-    
-    // If the user doesn't have a signer, this shouldn't happen with SIWN
-    if (!user.signer_uuid) {
+    if (error || !userData) {
       return NextResponse.json({
-        error: 'User has no signer - this should not happen with SIWN authentication',
         needs_approval: true,
-        status: 'missing'
-      }, { status: 400 });
+        message: 'User not found. Please sign in with Neynar first.',
+        signer_uuid: null,
+        approval_url: null
+      });
     }
     
-    // Check the current SIWN signer's status
+    const signerUuid = userData.signer_uuid;
+    
+    if (!signerUuid) {
+      return NextResponse.json({
+        needs_approval: true,
+        message: 'No signer found. Please sign in with Neynar.',
+        signer_uuid: null,
+        approval_url: null
+      });
+    }
+    
+    console.log(`[signer/approval-status] Testing signer: ${signerUuid}`);
+    
+    // For SIWN signers, test actual posting capability instead of relying on signer info API
+    // This is because SIWN signers may not appear in the signer info API but can still post
     try {
-      const signerInfo = await getSignerInfo(user.signer_uuid);
+      // Try to post a test cast to verify the signer works
+      const testCast = await postCastDirect(
+        signerUuid,
+        `🧪 Signer approval test - ${new Date().toISOString().slice(0, 19)} (this cast verifies your signer is working)`
+      );
       
-      // If the signer is approved, update the user record
-      if (signerInfo.status === 'approved') {
+      if (testCast?.success) {
+        console.log(`[signer/approval-status] SIWN signer ${signerUuid} can post successfully`);
+        
+        // Update database to reflect approved status
         await supabase
           .from('users')
           .update({
@@ -66,84 +70,80 @@ export async function GET(request: Request) {
             last_signer_check: new Date().toISOString()
           })
           .eq('fid', parseInt(fid));
-          
+        
         return NextResponse.json({
-          status: 'approved',
-          message: 'Signer is approved and ready to use',
-          needs_approval: false
-        });
-      } else {
-        // SIWN signer exists but isn't approved - guide user to approve it
-        return NextResponse.json({
-          status: signerInfo.status || 'generated',
-          message: `Your SIWN signer needs approval in Warpcast (status: ${signerInfo.status})`,
-          needs_approval: true,
-          approval_url: user.signer_approval_url || null,
-          signer_uuid: user.signer_uuid
+          needs_approval: false,
+          message: 'Signer is approved and working! Test cast posted successfully.',
+          signer_uuid: signerUuid,
+          signer_status: 'approved',
+          test_cast_hash: testCast.cast?.hash,
+          approval_url: null
         });
       }
-    } catch (error) {
-      console.error(`[signer/approval-status] Error checking SIWN signer:`, error);
+    } catch (postError: any) {
+      console.log(`[signer/approval-status] SIWN signer ${signerUuid} cannot post:`, postError.message);
       
-      // If SIWN signer is not found, it probably needs approval
-      // Don't create a new signer - guide user to approve the SIWN one
-      return NextResponse.json({
-        status: 'generated',
-        message: 'Your SIWN signer needs approval in Warpcast',
-        needs_approval: true,
-        approval_url: user.signer_approval_url || null,
-        signer_uuid: user.signer_uuid,
-        error: `SIWN signer not found in Neynar - likely needs approval`
-      });
+      // If posting fails, try to get signer info for more details
+      try {
+        const signerInfo = await getSignerInfo(signerUuid);
+        console.log(`[signer/approval-status] Signer info:`, signerInfo);
+        
+        if (signerInfo.status === 'approved') {
+          return NextResponse.json({
+            needs_approval: false,
+            message: 'Signer is approved according to Neynar API',
+            signer_uuid: signerUuid,
+            signer_status: signerInfo.status,
+            approval_url: null
+          });
+        } else {
+          // Signer exists but not approved
+          const approvalUrl = `https://client.warpcast.com/deeplinks/signed-key-request?token=${signerInfo.public_key}`;
+          
+          return NextResponse.json({
+            needs_approval: true,
+            message: `Signer status is "${signerInfo.status}". Please approve it in Warpcast.`,
+            signer_uuid: signerUuid,
+            signer_status: signerInfo.status,
+            approval_url: approvalUrl
+          });
+        }
+      } catch (signerInfoError: any) {
+        console.log(`[signer/approval-status] Error checking SIWN signer:`, signerInfoError.message);
+        
+        // For SIWN signers, if both posting and signer info fail, 
+        // it might be a timing issue. Guide user to approve if needed.
+        if (postError.message?.includes('SignerNotApproved') || postError.message?.includes('generated')) {
+          // Create a Warpcast approval URL for SIWN signer
+          const approvalUrl = userData.signer_approval_url || `https://client.warpcast.com/deeplinks/signed-key-request?token=0x${signerUuid.replace(/-/g, '')}`;
+          
+          return NextResponse.json({
+            needs_approval: true,
+            message: 'Your SIWN signer needs manual approval in Warpcast. This sometimes happens even after SIWN sign-in.',
+            signer_uuid: signerUuid,
+            signer_status: 'generated',
+            approval_url: approvalUrl,
+            help_text: 'Click the approval URL and approve the signer in Warpcast. Then refresh this page.'
+          });
+        }
+        
+        // Unknown error
+        return NextResponse.json({
+          needs_approval: true,
+          message: `Unable to verify signer status: ${postError.message}`,
+          signer_uuid: signerUuid,
+          approval_url: null,
+          error: postError.message
+        });
+      }
     }
-  } catch (error) {
-    console.error(`[signer/approval-status] Unexpected error:`, error);
-    return NextResponse.json(
-      { error: `An unexpected error occurred: ${(error as Error).message}` },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    console.error('[signer/approval-status] Error:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
-/**
- * Helper function to create a new signer for a user
- */
-async function createNewSigner(fid: number) {
-  try {
-    // Create a new signer
-    const signerData = await createSignerDirect();
-    
-    // Update the user record
-    await supabase
-      .from('users')
-      .update({
-        signer_uuid: signerData.signer_uuid,
-        signer_status: signerData.status || 'generated',
-        signer_approval_url: signerData.signer_approval_url || null,
-        needs_signer_approval: signerData.status !== 'approved',
-        last_signer_check: new Date().toISOString()
-      })
-      .eq('fid', fid);
-      
-    if (signerData.status === 'approved') {
-      return NextResponse.json({
-        status: 'approved',
-        message: 'New signer created and approved',
-        needs_approval: false
-      });
-    } else {
-      return NextResponse.json({
-        status: signerData.status || 'generated',
-        message: 'New signer created, needs approval',
-        needs_approval: true,
-        approval_url: signerData.signer_approval_url || null
-      });
-    }
-  } catch (error) {
-    console.error(`[signer/approval-status] Error creating new signer:`, error);
-    return NextResponse.json(
-      { error: `Failed to create new signer: ${(error as Error).message}` },
-      { status: 500 }
-    );
-  }
-} 
+ 
