@@ -49,6 +49,16 @@ export default function NeynarSignInButton({
     const siwnFid = urlParams.get('fid');
     const siwnSigner = urlParams.get('signer_uuid');
     const siwnComplete = urlParams.get('siwn_complete');
+    const siwnError = urlParams.get('siwn_error');
+    
+    if (siwnError) {
+      addDebugMessage(`❌ SIWN completion error: ${siwnError}`);
+      // Clean up the URL parameter
+      if (window.history.replaceState) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+    }
     
     if (siwnComplete === 'true') {
       addDebugMessage("🎉 Detected return from SIWN completion!");
