@@ -231,9 +231,10 @@ export async function createSigner(fid: number) {
  * 
  * @param signerUuid The signer UUID to validate
  * @param fid The Farcaster ID associated with the signer
+ * @param skipTestPost Whether to skip posting actual test casts (default: false)
  * @returns An object with the valid signer UUID and whether it was refreshed
  */
-export async function validateAndRefreshSigner(signerUuid: string, fid: number): Promise<SignerValidationResult> {
+export async function validateAndRefreshSigner(signerUuid: string, fid: number, skipTestPost: boolean = false): Promise<SignerValidationResult> {
   if (!process.env.NEYNAR_API_KEY) {
     throw new NeynarError('Neynar API key is missing', 500);
   }
@@ -242,160 +243,110 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number):
     throw new NeynarError('Signer UUID and FID are required', 400);
   }
 
-  console.log(`[validateAndRefreshSigner] Validating signer ${signerUuid} for FID ${fid}`);
+  console.log(`[validateAndRefreshSigner] Validating signer ${signerUuid} for FID ${fid} (skipTestPost: ${skipTestPost})`);
   
   try {
-    // For SIWN signers, test actual posting capability instead of relying on signer info API
-    // This is because SIWN signers may not appear in the signer info API but can still post
+    // For SIWN signers, we'll assume they're valid if they exist in our database
+    // and only test posting capability when explicitly requested
+    if (skipTestPost) {
+      console.log(`[validateAndRefreshSigner] Skipping test post - assuming SIWN signer is valid`);
+      return {
+        signerUuid: signerUuid,
+        refreshed: false,
+        approved: true
+      };
+    }
+    
+    // Only perform actual posting test when explicitly requested (e.g., from approval-status endpoint)
     try {
       console.log(`[validateAndRefreshSigner] Testing posting capability for signer ${signerUuid}`);
       
       // Try to post a test cast to verify the signer works
       const testCast = await postCastDirect(
         signerUuid,
-        `🧪 Signer validation test - ${new Date().toISOString().slice(0, 19)}`
+        `🧪 Signer validation test - ${new Date().toISOString().slice(0, 19)} (this cast verifies your signer is working)`
       );
       
-      if (testCast?.success) {
-        console.log(`[validateAndRefreshSigner] Signer ${signerUuid} can post successfully - it's approved!`);
+      if (testCast?.hash) {
+        console.log(`[validateAndRefreshSigner] SIWN signer ${signerUuid} can post successfully`);
+        return {
+          signerUuid: signerUuid,
+          refreshed: false,
+          approved: true
+        };
+      } else {
+        console.log(`[validateAndRefreshSigner] Test post failed - no hash returned`);
+        throw new NeynarError('Test post failed', 400);
+      }
+    } catch (postError: any) {
+      console.log(`[validateAndRefreshSigner] Test post failed:`, postError.message);
+      
+      // If the test post fails, try to create a new signer
+      if (postError.message?.includes('SignerNotApproved') || postError.status === 401) {
+        console.log(`[validateAndRefreshSigner] Signer needs approval, checking for other valid signers...`);
         
-        // Update database to reflect approved status
+        // Check if user has any other signers in the database
+        const { data: userData } = await supabase
+          .from('users')
+          .select('signer_uuid')
+          .eq('fid', fid)
+          .single();
+          
+        if (userData?.signer_uuid && userData.signer_uuid !== signerUuid) {
+          console.log(`[validateAndRefreshSigner] Found different signer in database: ${userData.signer_uuid}`);
+          
+          // Test the database signer
+          try {
+            const dbTestCast = await postCastDirect(
+              userData.signer_uuid,
+              `🧪 Database signer test - ${new Date().toISOString().slice(0, 19)}`
+            );
+            
+            if (dbTestCast?.hash) {
+              console.log(`[validateAndRefreshSigner] Database signer ${userData.signer_uuid} works`);
+              return {
+                signerUuid: userData.signer_uuid,
+                refreshed: true,
+                approved: true
+              };
+            }
+          } catch (dbSignerError: any) {
+            console.log(`[validateAndRefreshSigner] Database signer also doesn't work:`, dbSignerError.message);
+          }
+        }
+        
+        // Create a new signer as last resort
+        console.log(`[validateAndRefreshSigner] No valid approved signer found, creating new signer for FID ${fid}`);
+        const newSignerData = await createSignerDirect();
+        
+        // Update the user's signer information
         await supabase
           .from('users')
           .update({
-            signer_status: 'approved',
-            needs_signer_approval: false,
-            signer_approval_url: null,
+            signer_uuid: newSignerData.signer_uuid,
+            signer_status: newSignerData.status || 'generated',
+            signer_approval_url: newSignerData.signer_approval_url || null,
+            needs_signer_approval: newSignerData.status !== 'approved',
             last_signer_check: new Date().toISOString()
           })
           .eq('fid', fid);
         
-        return { signerUuid, refreshed: false, approved: true };
-      }
-    } catch (postError: any) {
-      console.log(`[validateAndRefreshSigner] Signer ${signerUuid} cannot post:`, postError.message);
-      
-      // If posting fails, check if it's due to approval status
-      if (postError.message?.includes('SignerNotApproved') || postError.message?.includes('generated')) {
-        console.log(`[validateAndRefreshSigner] SIWN signer needs approval`);
+        console.log(`[validateAndRefreshSigner] New signer created: ${newSignerData.signer_uuid}, status: ${newSignerData.status}`);
         
-        // Get user data to check for approval URL
-        const { data: userData } = await supabase
-          .from('users')
-          .select('signer_approval_url')
-          .eq('fid', fid)
-          .single();
-        
-        const approvalUrl = userData?.signer_approval_url || 
-          `https://client.warpcast.com/deeplinks/signed-key-request?token=0x${signerUuid.replace(/-/g, '')}`;
-        
-        throw new NeynarError(
-          `Signer needs approval. Please visit: ${approvalUrl}`,
-          403
-        );
-      }
-      
-      // For other errors, try the fallback approach with signer info API
-      try {
-        const signerInfo = await retryWithBackoff(() => getSignerInfo(signerUuid));
-        console.log(`[validateAndRefreshSigner] Fallback: Signer info API returned status:`, signerInfo.status || 'unknown');
-        
-        if (signerInfo.status === 'approved') {
-          return { signerUuid, refreshed: false, approved: true };
+        if (newSignerData.status === 'approved') {
+          return {
+            signerUuid: newSignerData.signer_uuid,
+            refreshed: true,
+            approved: true
+          };
         } else {
-          throw new NeynarError(`Signer is not approved, status: ${signerInfo.status}`, 403);
+          throw new NeynarError(
+            `Signer needs approval. Please visit: ${newSignerData.signer_approval_url}`,
+            403
+          );
         }
-      } catch (signerInfoError) {
-        console.log(`[validateAndRefreshSigner] Both posting and signer info failed - signer is invalid`);
-        
-        // Before creating a new signer, check if there's already a different signer in the database for this FID
-        console.log(`[validateAndRefreshSigner] Checking for existing signer for FID ${fid}`);
-        
-        try {
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('signer_uuid, signer_status, signer_approval_url')
-            .eq('fid', fid)
-            .single();
-          
-          if (userError) {
-            console.log(`[validateAndRefreshSigner] No user found in database for FID ${fid}:`, userError);
-          } else if (userData && userData.signer_uuid && userData.signer_uuid !== signerUuid) {
-            console.log(`[validateAndRefreshSigner] Found different signer in database: ${userData.signer_uuid}, status: ${userData.signer_status}`);
-            
-            // Test the database signer with posting
-            try {
-              const testCast = await postCastDirect(
-                userData.signer_uuid,
-                `🧪 Database signer validation test - ${new Date().toISOString().slice(0, 19)}`
-              );
-              
-              if (testCast?.success) {
-                console.log(`[validateAndRefreshSigner] Database signer ${userData.signer_uuid} works! Using it instead.`);
-                return { signerUuid: userData.signer_uuid, refreshed: true, approved: true };
-              }
-            } catch (dbSignerError: any) {
-              console.log(`[validateAndRefreshSigner] Database signer also doesn't work:`, dbSignerError.message);
-              
-              if (userData.signer_status === 'generated' && userData.signer_approval_url) {
-                console.log(`[validateAndRefreshSigner] User has pending signer that needs approval`);
-                throw new NeynarError(
-                  `Signer needs approval. Please visit: ${userData.signer_approval_url}`,
-                  403
-                );
-              }
-            }
-          }
-        } catch (dbError) {
-          console.error(`[validateAndRefreshSigner] Error checking database for existing signer:`, dbError);
-          // If it's a NeynarError (like approval needed), re-throw it
-          if (dbError instanceof NeynarError) {
-            throw dbError;
-          }
-        }
-
-        // Only create a new signer if no valid approved signer exists
-        console.log(`[validateAndRefreshSigner] No valid approved signer found, creating new signer for FID ${fid}`);
-        
-        // Signer is invalid, create a new one
-        try {
-          const newSignerData = await retryWithBackoff(() => createSignerDirect());
-          const newSignerUuid = newSignerData.signer_uuid;
-          
-          console.log(`[validateAndRefreshSigner] New signer created: ${newSignerUuid}, status: ${newSignerData.status}`);
-          
-          // Update the user record in the database
-          const { error } = await supabase
-            .from('users')
-            .update({ 
-              signer_uuid: newSignerUuid,
-              signer_approval_url: newSignerData.signer_approval_url || null,
-              signer_status: newSignerData.status || 'generated'
-            })
-            .eq('fid', fid);
-          
-          if (error) {
-            console.error(`[validateAndRefreshSigner] Failed to update user record with new signer:`, error);
-            throw new NeynarError(`Failed to update user record with new signer: ${error.message}`, 500);
-          }
-          
-          // Check if the signer is approved
-          const isApproved = newSignerData.status === 'approved';
-          
-          // If it's not approved, throw an error with the approval URL
-          if (!isApproved) {
-            throw new NeynarError(
-              `Signer needs approval. Please visit: ${newSignerData.signer_approval_url}`,
-              403
-            );
-          }
-          
-          console.log(`[validateAndRefreshSigner] Refreshed signer for FID ${fid}: ${newSignerUuid}`);
-          return { signerUuid: newSignerUuid, refreshed: true, approved: isApproved };
-        } catch (createError) {
-          console.error(`[validateAndRefreshSigner] Failed to create new signer:`, createError);
-          throw new NeynarError(`Failed to create new signer: ${(createError as Error).message}`, 500);
-        }
+      } else {
+        throw postError;
       }
     }
   } catch (error) {

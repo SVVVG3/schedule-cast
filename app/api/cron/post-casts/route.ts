@@ -252,10 +252,10 @@ export async function GET(request: NextRequest) {
             
             console.log(`[${timestamp}] Using current user signer: ${userData.signer_uuid} (status: ${userData.signer_status})`);
             
-            // Validate the user's current signer
+            // Validate the user's current signer (skip test posting to avoid spam)
             if (cast.fid) {
               try {
-                const signerValidation = await validateAndRefreshSigner(userData.signer_uuid, cast.fid);
+                const signerValidation = await validateAndRefreshSigner(userData.signer_uuid, cast.fid, true);
                 const { signerUuid: validSignerUuid, refreshed } = signerValidation;
                 
                 if (refreshed) {
