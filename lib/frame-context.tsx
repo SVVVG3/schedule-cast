@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { isFrameEnvironment } from './frame-utils';
 
 // Types for Frame SDK (these will be available when SDK loads)
 interface FrameContext {
@@ -26,6 +25,7 @@ interface FrameContext {
 
 interface FrameContextState {
   isFrameApp: boolean;
+  isMiniApp: boolean;
   frameContext: FrameContext | null;
   isLoading: boolean;
   sdk: any | null;
@@ -35,16 +35,15 @@ interface FrameContextState {
 
 const FrameContextContext = createContext<FrameContextState>({
   isFrameApp: false,
+  isMiniApp: false,
   frameContext: null,
   isLoading: true,
   sdk: null,
-  signIn: async () => null,
+  signIn: async () => {},
   ready: async () => {},
 });
 
-export function useFrameContext() {
-  return useContext(FrameContextContext);
-}
+export const useFrameContext = () => useContext(FrameContextContext);
 
 interface FrameContextProviderProps {
   children: ReactNode;
@@ -52,98 +51,83 @@ interface FrameContextProviderProps {
 
 export function FrameContextProvider({ children }: FrameContextProviderProps) {
   const [isFrameApp, setIsFrameApp] = useState(false);
+  const [isMiniApp, setIsMiniApp] = useState(false);
   const [frameContext, setFrameContext] = useState<FrameContext | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sdk, setSdk] = useState<any>(null);
 
   useEffect(() => {
-    let mounted = true;
-
-    async function initializeFrameSDK() {
-      try {
-        // Only proceed if we're in a client environment
-        if (typeof window === 'undefined') {
-          if (mounted) {
-            setIsLoading(false);
-          }
-          return;
-        }
-
-        // Detect if we're in a frame environment
-        const isMiniApp = isFrameEnvironment();
-
-        console.log('Frame environment detection:', { isMiniApp, pathname: window.location.pathname, search: window.location.search });
-
-        if (isMiniApp) {
-          // Only import SDK if we're actually in a frame environment
-          try {
-            const { sdk: frameSDK } = await import('@farcaster/frame-sdk');
-            
-            if (mounted) {
-              console.log('Frame SDK loaded, initializing...');
-              setSdk(frameSDK);
-              setIsFrameApp(true);
-
-              // Get frame context
-              if (frameSDK.context) {
-                const context = await frameSDK.context;
-                console.log('Frame context available:', context);
-                setFrameContext(context);
-              }
-
-              // Call ready to indicate the app is loaded
-              await frameSDK.actions.ready();
-              console.log('Frame SDK ready() called');
-            }
-          } catch (sdkError) {
-            console.warn('Failed to load Frame SDK:', sdkError);
-            setIsFrameApp(false);
-          }
-        } else {
-          console.log('Not in frame environment, using regular web mode');
-          setIsFrameApp(false);
-        }
-      } catch (error) {
-        console.error('Error initializing Frame SDK:', error);
-        setIsFrameApp(false);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
+    const initializeFrameSDK = async () => {
+      if (typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
       }
-    }
+
+      try {
+        console.log('[FrameContext] Initializing Frame SDK...');
+        
+        // Dynamic import of Frame SDK
+        const { sdk: frameSdk } = await import('@farcaster/frame-sdk');
+        setSdk(frameSdk);
+        
+        // Proper mini app detection using official SDK method
+        const isMiniAppEnv = await frameSdk.isInMiniApp();
+        setIsMiniApp(isMiniAppEnv);
+        
+        console.log('[FrameContext] Mini app detection result:', isMiniAppEnv);
+        
+        if (isMiniAppEnv) {
+          // We're in a mini app - get user context
+          console.log('[FrameContext] In mini app environment, getting context...');
+          
+          const context = await frameSdk.context;
+          console.log('[FrameContext] Frame context:', context);
+          
+          if (context?.user) {
+            setFrameContext(context);
+            setIsFrameApp(true);
+            console.log('[FrameContext] User context loaded:', context.user);
+          }
+          
+          // Signal ready to Farcaster client
+          await frameSdk.actions.ready();
+          console.log('[FrameContext] Frame SDK ready signal sent');
+        } else {
+          console.log('[FrameContext] Not in mini app environment');
+        }
+        
+      } catch (error) {
+        console.error('[FrameContext] Error initializing Frame SDK:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     initializeFrameSDK();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
 
   const signIn = async () => {
-    if (!sdk || !isFrameApp) {
-      throw new Error('Frame SDK not available for sign-in');
+    if (!sdk) {
+      throw new Error('Frame SDK not initialized');
     }
-
-    try {
-      const nonce = Date.now().toString();
-      const result = await sdk.actions.signIn({ nonce });
-      console.log('Frame sign-in result:', result);
-      return result;
-    } catch (error) {
-      console.error('Frame sign-in error:', error);
-      throw error;
-    }
+    
+    console.log('[FrameContext] Initiating Frame SDK sign-in...');
+    return await sdk.actions.signIn();
   };
 
   const ready = async () => {
-    if (sdk && isFrameApp) {
-      await sdk.actions.ready();
+    if (!sdk) {
+      console.warn('[FrameContext] SDK not available for ready signal');
+      return;
     }
+    
+    console.log('[FrameContext] Sending ready signal...');
+    await sdk.actions.ready();
   };
 
   const value: FrameContextState = {
     isFrameApp,
+    isMiniApp,
     frameContext,
     isLoading,
     sdk,

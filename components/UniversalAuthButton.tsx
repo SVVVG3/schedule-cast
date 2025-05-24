@@ -3,6 +3,7 @@
 import { useAuth } from '@/lib/auth-context';
 import { useFrameContext } from '@/lib/frame-context';
 import NeynarSignInButton from './NeynarSignInButton';
+import MiniAppAuth from './MiniAppAuth';
 import { useState } from 'react';
 
 interface UniversalAuthButtonProps {
@@ -11,8 +12,7 @@ interface UniversalAuthButtonProps {
 
 export default function UniversalAuthButton({ className = '' }: UniversalAuthButtonProps) {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
-  const { isFrameApp, frameContext } = useFrameContext();
-  const [needsSignerDelegation, setNeedsSignerDelegation] = useState(false);
+  const { isFrameApp, isMiniApp, frameContext } = useFrameContext();
 
   if (isLoading) {
     return (
@@ -69,31 +69,26 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
             <p className="text-sm text-yellow-200 mb-2">
               To schedule casts, you need to grant posting permissions:
             </p>
-            <NeynarSignInButton 
-              theme="dark" 
-              className="w-full"
-              showAsSignerDelegation={true}
-            />
+            {isMiniApp ? (
+              <MiniAppAuth className="w-full" />
+            ) : (
+              <NeynarSignInButton 
+                theme="dark" 
+                className="w-full"
+                showAsSignerDelegation={true}
+              />
+            )}
           </div>
         )}
       </div>
     );
   }
 
-  // Handle Frame environment - user context available but not authenticated in our system
-  if (isFrameApp && frameContext?.user?.fid) {
+  // Handle Mini App environment - user context available but not authenticated in our system
+  if (isMiniApp && frameContext?.user?.fid) {
     return (
       <div className={`flex flex-col space-y-2 ${className}`}>
-        <div className="bg-blue-900/50 border border-blue-600 rounded-lg p-3">
-          <p className="text-sm text-blue-200 mb-2">
-            Welcome! To use Schedule-Cast, please sign in to grant posting permissions:
-          </p>
-          <NeynarSignInButton 
-            theme="dark" 
-            className="w-full"
-            frameUserFid={frameContext.user.fid}
-          />
-        </div>
+        <MiniAppAuth />
       </div>
     );
   }
