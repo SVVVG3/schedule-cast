@@ -19,6 +19,15 @@ export default function NeynarSignInButton({
   const containerRef = useRef<HTMLDivElement>(null);
   const updateAuthFromSIWN = useUpdateAuthFromSIWN();
   const [isClient, setIsClient] = useState(false);
+  const [debugMessages, setDebugMessages] = useState<string[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const addDebugMessage = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    const fullMessage = `[${timestamp}] ${message}`;
+    setDebugMessages(prev => [...prev.slice(-10), fullMessage]); // Keep last 10 messages
+    console.log(fullMessage);
+  };
 
   useEffect(() => {
     // Set client-side flag to prevent hydration issues
@@ -28,37 +37,27 @@ export default function NeynarSignInButton({
   useEffect(() => {
     if (!isClient) return;
 
-    console.log("[SIWN] Initializing NeynarSignInButton...");
-    console.log("[SIWN] Current URL:", window.location.href);
-    console.log("[SIWN] Frame User FID:", frameUserFid);
-    console.log("[SIWN] Show as Signer Delegation:", showAsSignerDelegation);
+    addDebugMessage("🔧 Initializing NeynarSignInButton...");
+    addDebugMessage(`📍 Current URL: ${window.location.href}`);
+    addDebugMessage(`👤 Frame User FID: ${frameUserFid}`);
+    addDebugMessage(`🎯 Show as Signer Delegation: ${showAsSignerDelegation}`);
 
     // Define the global callback function exactly as Neynar docs specify
     (window as any).onSignInSuccess = async (data: any) => {
-      console.log("===== SIWN SUCCESS CALLBACK TRIGGERED =====");
-      console.log("Timestamp:", new Date().toISOString());
-      console.log("Current URL:", window.location.href);
-      console.log("Full SIWN response:", JSON.stringify(data, null, 2));
-      console.log("FID:", data.fid);
-      console.log("Signer UUID:", data.signer_uuid);
-      console.log("User data:", data.user);
-      console.log("===========================================");
+      addDebugMessage("🎉 SIWN SUCCESS CALLBACK TRIGGERED!");
+      addDebugMessage(`📊 FID: ${data.fid}, Signer: ${data.signer_uuid}`);
+      setIsProcessing(true);
       
       try {
         if (data.fid && data.signer_uuid) {
-          console.log("[SIWN] Starting authentication process...");
+          addDebugMessage("🔄 Starting authentication process...");
           
           // Update auth context first
           await updateAuthFromSIWN(data);
-          console.log("[SIWN] Auth context updated");
+          addDebugMessage("✅ Auth context updated");
           
           // Store signer in Supabase
-          console.log("[SIWN] About to call /api/signer/store with data:", {
-            fid: data.fid,
-            signer_uuid: data.signer_uuid,
-            username: data.user?.username,
-            display_name: data.user?.display_name || data.user?.displayName
-          });
+          addDebugMessage("💾 Storing signer in database...");
           
           const storeResponse = await fetch('/api/signer/store', {
             method: 'POST',
@@ -73,61 +72,41 @@ export default function NeynarSignInButton({
             }),
           });
           
-          console.log("[SIWN] Store API response status:", storeResponse.status);
-          console.log("[SIWN] Store API response ok:", storeResponse.ok);
+          addDebugMessage(`📡 Store API Response: ${storeResponse.status} ${storeResponse.ok ? 'OK' : 'ERROR'}`);
           
           const storeResponseText = await storeResponse.text();
-          console.log("[SIWN] Store API response body (raw):", storeResponseText);
-          
-          let storeResponseData;
-          try {
-            storeResponseData = JSON.parse(storeResponseText);
-            console.log("[SIWN] Store API response body (parsed):", storeResponseData);
-          } catch (e) {
-            console.error("[SIWN] Failed to parse store API response as JSON:", e);
-          }
           
           if (!storeResponse.ok) {
-            console.error("[SIWN] Store API failed with status:", storeResponse.status);
-            console.error("[SIWN] Store API error response:", storeResponseText);
+            addDebugMessage(`❌ Store API Error: ${storeResponseText}`);
             alert(`Failed to store signer data. Status: ${storeResponse.status}. Please try again.`);
           } else {
-            console.log("[SIWN] Signer stored successfully:", storeResponseData);
+            addDebugMessage("✅ Signer stored successfully!");
             
             // Let's also call the debug endpoint to verify data was stored
-            console.log("[SIWN] Verifying data was stored...");
+            addDebugMessage("🔍 Verifying data in database...");
             try {
               const debugResponse = await fetch(`/api/debug-user?fid=${data.fid}`);
               const debugData = await debugResponse.json();
-              console.log("[SIWN] Database verification:", debugData);
               
               if (debugData.has_signer && debugData.is_delegated) {
-                console.log("🎉 SUCCESS: Data confirmed in database!");
+                addDebugMessage("🎉 SUCCESS: Data confirmed in database!");
               } else {
-                console.warn("⚠️ WARNING: Data not properly stored in database");
+                addDebugMessage("⚠️ WARNING: Data not properly stored in database");
               }
             } catch (debugError) {
-              console.error("[SIWN] Debug verification failed:", debugError);
+              addDebugMessage("❌ Debug verification failed");
             }
           }
           
-          // Show appropriate success message
-          if (showAsSignerDelegation) {
-            console.log('🎉 Posting permissions granted! You can now schedule casts.');
-          } else if (frameUserFid && data.fid === frameUserFid) {
-            console.log('🎉 Sign-in successful! You can now schedule casts.');
-          } else {
-            console.log('🎉 Sign-in successful! You can now schedule casts.');
-          }
-          
-          // Do NOT reload the page - let the auth context handle the state update
-          console.log("[SIWN] Authentication complete - state should update automatically");
+          addDebugMessage("🎉 Authentication process complete!");
         } else {
-          console.error("[SIWN] Missing required data:", { fid: data.fid, signer_uuid: data.signer_uuid });
+          addDebugMessage(`❌ Missing required data: FID=${data.fid}, Signer=${data.signer_uuid}`);
         }
       } catch (error) {
-        console.error('Error handling SIWN success:', error);
+        addDebugMessage(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
         alert('Sign-in successful, but there was an issue processing your signer. You may need to approve it manually.');
+      } finally {
+        setIsProcessing(false);
       }
     };
 
@@ -138,17 +117,17 @@ export default function NeynarSignInButton({
       script.src = 'https://neynarxyz.github.io/siwn/raw/1.2.0/index.js';
       script.async = true;
       document.body.appendChild(script);
-      console.log("[SIWN] Neynar script loaded");
+      addDebugMessage("📦 Neynar script loaded");
     }
 
     // Add message listener for SIWN popup messages
     const handleMessage = (event: MessageEvent) => {
-      console.log("[SIWN] Received window message:", event.origin, event.data);
+      addDebugMessage(`📨 Window message from: ${event.origin}`);
       if (event.origin === 'https://app.neynar.com' || event.origin === 'https://neynar.com') {
-        console.log("[SIWN] Message from Neynar:", event.data);
+        addDebugMessage("📩 Message from Neynar received");
         if (event.data && typeof event.data === 'object') {
           if (event.data.type === 'SIWN_SUCCESS' || event.data.fid) {
-            console.log("[SIWN] Triggering success callback from message");
+            addDebugMessage("🚀 Triggering success callback from message");
             (window as any).onSignInSuccess?.(event.data);
           }
         }
@@ -156,7 +135,7 @@ export default function NeynarSignInButton({
     };
     
     window.addEventListener('message', handleMessage);
-    console.log("[SIWN] Message listener added");
+    addDebugMessage("👂 Message listener added");
 
     // Create the SIWN widget div using standard configuration
     if (containerRef.current) {
@@ -188,6 +167,8 @@ export default function NeynarSignInButton({
           data-height="44px">
         </div>
       `;
+      
+      addDebugMessage(`🎨 SIWN widget created: ${buttonText}`);
     }
 
     // Cleanup
@@ -210,6 +191,28 @@ export default function NeynarSignInButton({
   return (
     <div className={className}>
       <div ref={containerRef}></div>
+      
+      {/* Debug Panel - only show if there are messages */}
+      {debugMessages.length > 0 && (
+        <div className="mt-4 p-3 bg-gray-100 rounded-lg border">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-sm font-semibold text-gray-700">Debug Log</h4>
+            {isProcessing && (
+              <div className="flex items-center gap-1 text-blue-600">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                <span className="text-xs">Processing...</span>
+              </div>
+            )}
+          </div>
+          <div className="space-y-1 max-h-32 overflow-y-auto">
+            {debugMessages.map((message, index) => (
+              <div key={index} className="text-xs text-gray-600 font-mono">
+                {message}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
