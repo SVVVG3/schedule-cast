@@ -14,10 +14,20 @@ export const metadata: Metadata = {
     }],
   },
   other: {
-    'fc:frame': 'vNext',
-    'fc:frame:image': 'https://schedule-cast.vercel.app/ScheduleCastEmbed.png',
-    'fc:frame:button:1': '📅 Open Schedule Cast',
-    'fc:frame:post_url': 'https://schedule-cast.vercel.app/miniapp',
+    'fc:frame': JSON.stringify({
+      "version": "next",
+      "imageUrl": "https://schedule-cast.vercel.app/ScheduleCastEmbed.png",
+      "button": {
+        "title": "📅 Schedule Cast",
+        "action": {
+          "type": "launch_frame",
+          "name": "Schedule Cast",
+          "url": "https://schedule-cast.vercel.app/miniapp",
+          "splashImageUrl": "https://schedule-cast.vercel.app/ScheduleCastLogo.png",
+          "splashBackgroundColor": "#000000"
+        }
+      }
+    })
   }
 }
 
