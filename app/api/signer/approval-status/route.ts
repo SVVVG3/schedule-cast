@@ -53,9 +53,8 @@ export async function GET(request: NextRequest) {
       await supabase
         .from('users')
         .update({
-          signer_status: 'approved',
-          needs_signer_approval: false,
-          last_signer_check: new Date().toISOString()
+          delegated: true,
+          updated_at: new Date().toISOString()
         })
         .eq('fid', parseInt(fid));
       
@@ -82,10 +81,8 @@ export async function GET(request: NextRequest) {
         await supabase
           .from('users')
           .update({
-            signer_status: 'approved',
-            needs_signer_approval: false,
-            signer_approval_url: null,
-            last_signer_check: new Date().toISOString()
+            delegated: true,
+            updated_at: new Date().toISOString()
           })
           .eq('fid', parseInt(fid));
         
@@ -115,10 +112,8 @@ export async function GET(request: NextRequest) {
         await supabase
           .from('users')
           .update({
-            signer_status: 'generated',
-            needs_signer_approval: true,
-            signer_approval_url: approvalUrl,
-            last_signer_check: new Date().toISOString()
+            delegated: false,
+            updated_at: new Date().toISOString()
           })
           .eq('fid', parseInt(fid));
         
