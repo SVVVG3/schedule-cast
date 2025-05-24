@@ -208,22 +208,61 @@ export async function GET(request: NextRequest) {
             }
           }
           
-          // Try to post directly using the signer UUID from the cast
-          // This is more reliable than looking for a separate user_signers table that doesn't exist
+          // Always look up the user's current signer instead of using the one from the cast
+          // SIWN signers need approval after creation, so the cast's signer might be outdated
+          let userData: any = null;
           try {
-            console.log(`[${timestamp}] Attempting to post directly using cast's signer_uuid: ${cast[signerIdField]}`);
+            console.log(`[${timestamp}] Looking up current approved signer for FID ${cast.fid}`);
             
-            // First validate and refresh the signer if needed
+            const { data: userDataResult, error: userError } = await supabase
+              .from('users')
+              .select('signer_uuid, signer_status')
+              .eq('fid', cast.fid)
+              .single();
+              
+            if (userError) {
+              console.error(`[${timestamp}] No user found for FID ${cast.fid}:`, userError);
+              failCount++;
+              failureReasons.push({ 
+                id: cast.id, 
+                reason: `No user found for FID ${cast.fid}` 
+              });
+              continue;
+            }
+            
+                          userData = userDataResult;
+              
+              if (!userData.signer_uuid) {
+              console.error(`[${timestamp}] No signer found for user FID ${cast.fid}`);
+              await supabase
+                .from('scheduled_casts')
+                .update({ 
+                  error: 'No signer found - user needs to sign in with Neynar again',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', cast.id);
+              
+              failCount++;
+              failureReasons.push({ 
+                id: cast.id, 
+                reason: 'No signer found for user' 
+              });
+              continue;
+            }
+            
+            console.log(`[${timestamp}] Using current user signer: ${userData.signer_uuid} (status: ${userData.signer_status})`);
+            
+            // Validate the user's current signer
             if (cast.fid) {
               try {
-                const { signerUuid: validSignerUuid, refreshed } = await validateAndRefreshSigner(cast[signerIdField], cast.fid);
+                const { signerUuid: validSignerUuid, refreshed } = await validateAndRefreshSigner(userData.signer_uuid, cast.fid);
                 
                 if (refreshed) {
-                  console.log(`[${timestamp}] Signer was invalid and has been refreshed to: ${validSignerUuid}`);
-                  // Update the signerIdField value with the new valid signer
-                  cast[signerIdField] = validSignerUuid;
+                  console.log(`[${timestamp}] User's signer was refreshed to: ${validSignerUuid}`);
+                  // Update the userData with the new valid signer for posting
+                  userData.signer_uuid = validSignerUuid;
                 } else {
-                  console.log(`[${timestamp}] Signer is valid and doesn't need refreshing`);
+                  console.log(`[${timestamp}] User's signer is valid and approved`);
                 }
               } catch (refreshError) {
                 console.error(`[${timestamp}] Error validating/refreshing signer:`, refreshError);
@@ -253,14 +292,14 @@ export async function GET(request: NextRequest) {
               }
             }
             
-            // Use our direct API method instead of the SDK
+            // Use our direct API method with the user's current approved signer
             const response = await postCastDirect(
-              cast[signerIdField],
+              userData.signer_uuid,
               cast.content,
               cast.channel_id
             );
             
-            console.log(`[${timestamp}] Successfully posted cast ${cast.id} using direct cast signer_uuid`);
+            console.log(`[${timestamp}] Successfully posted cast ${cast.id} using user's current signer: ${userData.signer_uuid}`);
             
             // Mark as posted in database
             try {
@@ -328,76 +367,7 @@ export async function GET(request: NextRequest) {
               continue;
             }
             
-            // If we have a FID, try to look up the current signer from the users table
-            if (cast.fid) {
-              try {
-                console.log(`[${timestamp}] Looking up current signer for FID ${cast.fid} in users table`);
-                const { data: userData, error: userError } = await supabase
-                  .from('users')
-                  .select('signer_uuid')
-                  .eq('fid', cast.fid)
-                  .single();
-                  
-                if (userError) {
-                  console.error(`[${timestamp}] Error looking up user:`, userError);
-                } else if (userData && userData.signer_uuid && userData.signer_uuid !== cast[signerIdField]) {
-                  // User exists and has a different signer UUID than the one in the cast
-                  console.log(`[${timestamp}] Found different signer_uuid in users table: ${userData.signer_uuid}`);
-                  
-                  try {
-                    // Use our direct API method instead of the SDK
-                    const userSignerResponse = await postCastDirect(
-                      userData.signer_uuid,
-                      cast.content,
-                      cast.channel_id
-                    );
-                    
-                    console.log(`[${timestamp}] Successfully posted cast ${cast.id} with user's current signer`);
-                    
-                    // Mark as posted in database
-                    const { error: updateError } = await supabase
-                      .from('scheduled_casts')
-                      .update({ 
-                        posted: true, 
-                        posted_at: new Date().toISOString() 
-                      })
-                      .eq('id', cast.id);
-                      
-                    if (updateError) {
-                      console.error(`[${timestamp}] Error marking cast ${cast.id} as posted:`, updateError);
-                    }
-                    
-                    successCount++;
-                    continue;
-                  } catch (userSignerError: any) {
-                    console.error(`[${timestamp}] Failed to post with user's current signer:`, userSignerError);
-                    
-                    // If the user's signer is also not approved, skip this cast completely
-                    if (userSignerError.message && userSignerError.message.includes('SignerNotApproved')) {
-                      console.log(`[${timestamp}] User's signer also not approved, skipping cast ${cast.id}`);
-                      
-                      // Mark this cast with an error to prevent retrying
-                      await supabase
-                        .from('scheduled_casts')
-                        .update({ 
-                          error: 'User signer needs approval in Warpcast before this cast can be posted',
-                          updated_at: new Date().toISOString()
-                        })
-                        .eq('id', cast.id);
-                      
-                      failCount++;
-                      failureReasons.push({ 
-                        id: cast.id, 
-                        reason: 'User signer not approved in Warpcast' 
-                      });
-                      continue;
-                    }
-                  }
-                }
-              } catch (userLookupError) {
-                console.error(`[${timestamp}] Error looking up user:`, userLookupError);
-              }
-            }
+            // User lookup was already done at the top, so this fallback is no longer needed
             
             // If all else fails and we have a fallback, try it again as last resort
             if (fallbackSignerUuid) {
@@ -435,7 +405,7 @@ export async function GET(request: NextRequest) {
             failCount++;
             failureReasons.push({ 
               id: cast.id, 
-              reason: `No signer found with ${signerIdField}: ${cast[signerIdField]} and direct post failed` 
+              reason: `Failed to post with user's current signer: ${userData?.signer_uuid || 'none'}` 
             });
           }
         } catch (castError: any) {

@@ -139,6 +139,8 @@ export async function POST(request: Request) {
     }
     
     // Insert into database
+    // NOTE: We don't store signer_uuid here because SIWN signers need approval after creation
+    // The cron job will look up the user's current approved signer when posting
     const { data, error } = await supabase
       .from('scheduled_casts')
       .insert({
@@ -146,8 +148,8 @@ export async function POST(request: Request) {
         content,
         scheduled_at,
         channel_id,
-        fid: user.fid,
-        signer_uuid: user.signer_uuid
+        fid: user.fid
+        // signer_uuid removed - will be looked up dynamically when posting
       })
       .select()
       .single();

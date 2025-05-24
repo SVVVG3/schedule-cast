@@ -42,12 +42,16 @@ export async function GET(request: Request) {
       );
     }
     
-    // If the user doesn't have a signer, create one
+    // If the user doesn't have a signer, this shouldn't happen with SIWN
     if (!user.signer_uuid) {
-      return await createNewSigner(parseInt(fid));
+      return NextResponse.json({
+        error: 'User has no signer - this should not happen with SIWN authentication',
+        needs_approval: true,
+        status: 'missing'
+      }, { status: 400 });
     }
     
-    // Check the current signer's status
+    // Check the current SIWN signer's status
     try {
       const signerInfo = await getSignerInfo(user.signer_uuid);
       
@@ -69,19 +73,28 @@ export async function GET(request: Request) {
           needs_approval: false
         });
       } else {
-        // Signer exists but isn't approved
+        // SIWN signer exists but isn't approved - guide user to approve it
         return NextResponse.json({
-          status: signerInfo.status || 'unknown',
-          message: `Signer needs approval (status: ${signerInfo.status})`,
+          status: signerInfo.status || 'generated',
+          message: `Your SIWN signer needs approval in Warpcast (status: ${signerInfo.status})`,
           needs_approval: true,
-          approval_url: user.signer_approval_url || null
+          approval_url: user.signer_approval_url || null,
+          signer_uuid: user.signer_uuid
         });
       }
     } catch (error) {
-      console.error(`[signer/approval-status] Error checking signer:`, error);
+      console.error(`[signer/approval-status] Error checking SIWN signer:`, error);
       
-      // If we can't get the signer info, it might be invalid - create a new one
-      return await createNewSigner(parseInt(fid));
+      // If SIWN signer is not found, it probably needs approval
+      // Don't create a new signer - guide user to approve the SIWN one
+      return NextResponse.json({
+        status: 'generated',
+        message: 'Your SIWN signer needs approval in Warpcast',
+        needs_approval: true,
+        approval_url: user.signer_approval_url || null,
+        signer_uuid: user.signer_uuid,
+        error: `SIWN signer not found in Neynar - likely needs approval`
+      });
     }
   } catch (error) {
     console.error(`[signer/approval-status] Unexpected error:`, error);
