@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useFrameContext } from '@/lib/frame-context';
+import NeynarSignInButton from './NeynarSignInButton';
 
 interface SignerStatus {
   status: string;
@@ -123,20 +124,36 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
             Before you can schedule casts, you need to approve Schedule-Cast to post on your behalf. 
             This is a one-time security step required by Farcaster.
           </p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={handleApproval}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium"
-            >
-              Open Warpcast to Approve
-            </button>
-            <button
-              onClick={checkSignerStatus}
-              className="px-4 py-2 bg-white border border-orange-300 text-orange-800 rounded-lg hover:bg-orange-50 text-sm"
-            >
-              Check Status Again
-            </button>
-          </div>
+          
+          {/* Show SIWN for mini app users, Warpcast approval for web users */}
+          {isMiniApp ? (
+            <div className="space-y-3">
+              <p className="text-sm text-orange-700">
+                Complete authentication with Neynar to get posting permissions:
+              </p>
+              <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-3">
+                <NeynarSignInButton 
+                  theme="dark"
+                  className="w-full"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={handleApproval}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium"
+              >
+                Open Warpcast to Approve
+              </button>
+              <button
+                onClick={checkSignerStatus}
+                className="px-4 py-2 bg-white border border-orange-300 text-orange-800 rounded-lg hover:bg-orange-50 text-sm"
+              >
+                Check Status Again
+              </button>
+            </div>
+          )}
         </div>
         {fallback || (
           <div className="opacity-50 pointer-events-none">
