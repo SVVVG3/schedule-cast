@@ -53,7 +53,13 @@ export default function NeynarSignInButton({
           console.log("[SIWN] Auth context updated");
           
           // Store signer in Supabase
-          console.log("[SIWN] Storing signer in database...");
+          console.log("[SIWN] About to call /api/signer/store with data:", {
+            fid: data.fid,
+            signer_uuid: data.signer_uuid,
+            username: data.user?.username,
+            display_name: data.user?.display_name || data.user?.displayName
+          });
+          
           const storeResponse = await fetch('/api/signer/store', {
             method: 'POST',
             headers: {
@@ -67,10 +73,42 @@ export default function NeynarSignInButton({
             }),
           });
           
+          console.log("[SIWN] Store API response status:", storeResponse.status);
+          console.log("[SIWN] Store API response ok:", storeResponse.ok);
+          
+          const storeResponseText = await storeResponse.text();
+          console.log("[SIWN] Store API response body (raw):", storeResponseText);
+          
+          let storeResponseData;
+          try {
+            storeResponseData = JSON.parse(storeResponseText);
+            console.log("[SIWN] Store API response body (parsed):", storeResponseData);
+          } catch (e) {
+            console.error("[SIWN] Failed to parse store API response as JSON:", e);
+          }
+          
           if (!storeResponse.ok) {
-            console.error("[SIWN] Failed to store signer:", await storeResponse.text());
+            console.error("[SIWN] Store API failed with status:", storeResponse.status);
+            console.error("[SIWN] Store API error response:", storeResponseText);
+            alert(`Failed to store signer data. Status: ${storeResponse.status}. Please try again.`);
           } else {
-            console.log("[SIWN] Signer stored successfully");
+            console.log("[SIWN] Signer stored successfully:", storeResponseData);
+            
+            // Let's also call the debug endpoint to verify data was stored
+            console.log("[SIWN] Verifying data was stored...");
+            try {
+              const debugResponse = await fetch(`/api/debug-user?fid=${data.fid}`);
+              const debugData = await debugResponse.json();
+              console.log("[SIWN] Database verification:", debugData);
+              
+              if (debugData.has_signer && debugData.is_delegated) {
+                console.log("🎉 SUCCESS: Data confirmed in database!");
+              } else {
+                console.warn("⚠️ WARNING: Data not properly stored in database");
+              }
+            } catch (debugError) {
+              console.error("[SIWN] Debug verification failed:", debugError);
+            }
           }
           
           // Show appropriate success message
