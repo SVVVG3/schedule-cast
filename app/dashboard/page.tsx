@@ -23,10 +23,10 @@ export default function Dashboard() {
 
   if (authLoading || userLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-700">Loading your dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-300">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -37,18 +37,18 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gray-900">
       <div className="mx-auto max-w-2xl px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent mb-3">
             Dashboard
           </h1>
-          <p className="text-gray-600">Schedule and manage your Farcaster casts</p>
+          <p className="text-gray-300 text-lg">Schedule and manage your Farcaster casts</p>
         </div>
         
         {supabaseUser ? (
-          <div className="space-y-8 w-full">
+          <div className="space-y-12 w-full">
             {/* Cast Form - Removed redundant heading */}
             <div className="w-full flex justify-center">
               <SimpleCastForm />
@@ -56,13 +56,12 @@ export default function Dashboard() {
             
             {/* Scheduled Casts */}
             <div className="w-full">
-              <h2 className="text-xl font-semibold mb-4 text-center">Your Scheduled Casts</h2>
               <ScheduledCasts />
             </div>
           </div>
         ) : (
           <div className="mx-auto max-w-lg">
-            <div className="rounded-2xl bg-yellow-50 border border-yellow-200 p-6">
+            <div className="rounded-2xl bg-yellow-900 border border-yellow-700 p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <svg
@@ -78,8 +77,8 @@ export default function Dashboard() {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">Profile Loading</h3>
-                  <p className="text-sm text-yellow-700">
+                  <h3 className="text-sm font-medium text-yellow-200">Profile Loading</h3>
+                  <p className="text-sm text-yellow-300">
                     Unable to load your user profile. Please try refreshing the page.
                   </p>
                 </div>

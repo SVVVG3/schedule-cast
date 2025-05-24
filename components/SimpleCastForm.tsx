@@ -84,69 +84,69 @@ export default function SimpleCastForm() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full max-w-md mx-auto">
-      <h3 className="mb-6 text-lg font-semibold text-gray-900">
+    <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-lg w-full max-w-lg mx-auto">
+      <h3 className="mb-8 text-2xl font-semibold text-white text-center">
         Schedule a Cast
       </h3>
 
       {submitSuccess && (
-        <div className="bg-green-50 text-green-700 p-3 rounded-md mb-4 text-sm">
+        <div className="bg-green-900 text-green-200 p-4 rounded-lg mb-6 border border-green-700">
           ✅ Your cast has been scheduled successfully!
         </div>
       )}
 
       {submitError && (
-        <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4 text-sm">
+        <div className="bg-red-900 text-red-200 p-4 rounded-lg mb-6 border border-red-700">
           ❌ {submitError}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-lg font-medium text-gray-300 mb-3">
             What's on your mind?
           </label>
           <textarea
-            rows={4}
-            className="w-full p-3 border border-gray-300 rounded-md text-sm resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            rows={5}
+            className="w-full p-4 border border-gray-600 rounded-lg text-base resize-none bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="Share your thoughts with the world..."
             maxLength={320}
             {...register('content', { required: 'Content is required' })}
           />
           {errors.content && (
-            <p className="text-red-600 text-xs mt-1">
+            <p className="text-red-400 text-sm mt-2">
               {errors.content.message}
             </p>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-lg font-medium text-gray-300 mb-3">
               Date
             </label>
             <input
               type="date"
-              className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full p-4 border border-gray-600 rounded-lg text-base bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledDate', { required: 'Date is required' })}
             />
             {errors.scheduledDate && (
-              <p className="text-red-600 text-xs mt-1">
+              <p className="text-red-400 text-sm mt-2">
                 {errors.scheduledDate.message}
               </p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-lg font-medium text-gray-300 mb-3">
               Time
             </label>
             <input
               type="time"
-              className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full p-4 border border-gray-600 rounded-lg text-base bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledTime', { required: 'Time is required' })}
             />
             {errors.scheduledTime && (
-              <p className="text-red-600 text-xs mt-1">
+              <p className="text-red-400 text-sm mt-2">
                 {errors.scheduledTime.message}
               </p>
             )}
@@ -154,12 +154,12 @@ export default function SimpleCastForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-lg font-medium text-gray-300 mb-3">
             Channel (optional)
           </label>
           <input
             type="text"
-            className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full p-4 border border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="e.g. farcaster, crypto, art"
             {...register('channelId')}
           />
@@ -168,9 +168,9 @@ export default function SimpleCastForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full py-3 px-4 rounded-md text-white font-medium text-sm transition-colors ${
+          className={`w-full py-4 px-6 rounded-lg text-white font-semibold text-lg transition-colors ${
             isSubmitting 
-              ? 'bg-gray-400 cursor-not-allowed' 
+              ? 'bg-gray-600 cursor-not-allowed' 
               : 'bg-purple-600 hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
           }`}
         >
