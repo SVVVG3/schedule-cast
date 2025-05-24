@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useUpdateAuthFromSIWN } from '@/lib/auth-context';
 
 interface NeynarSignInButtonProps {
@@ -14,8 +14,16 @@ export default function NeynarSignInButton({
 }: NeynarSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const updateAuthFromSIWN = useUpdateAuthFromSIWN();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // Set client-side flag to prevent hydration issues
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     // Define the global callback function exactly as Neynar docs specify
     (window as any).onSignInSuccess = async (data: any) => {
       console.log("Sign-in success with data:", data);
@@ -75,7 +83,7 @@ export default function NeynarSignInButton({
         delete (window as any).onSignInSuccess;
       }
     };
-  }, [theme, updateAuthFromSIWN]);
+  }, [isClient, theme, updateAuthFromSIWN]);
 
   return (
     <div className={className}>

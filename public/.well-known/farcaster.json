@@ -1,0 +1,20 @@
+{
+  "frame": {
+    "version": "1",
+    "name": "Schedule Cast",
+    "iconUrl": "https://schedule-cast.vercel.app/icon-512.png",
+    "homeUrl": "https://schedule-cast.vercel.app/miniapp",
+    "imageUrl": "https://schedule-cast.vercel.app/og-image.png",
+    "buttonTitle": "📅 Schedule Cast",
+    "splashImageUrl": "https://schedule-cast.vercel.app/splash-200.png",
+    "splashBackgroundColor": "#7c3aed",
+    "subtitle": "Schedule your Farcaster casts",
+    "description": "Plan and schedule your Farcaster casts for optimal engagement. Schedule posts in advance and never miss a beat.",
+    "primaryCategory": "social",
+    "tags": ["scheduling", "farcaster", "social", "productivity", "automation"],
+    "requiredCapabilities": [
+      "actions.signIn",
+      "actions.ready"
+    ]
+  }
+} 
