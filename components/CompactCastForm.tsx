@@ -88,9 +88,6 @@ export default function CompactCastForm() {
   return (
     <div className="w-full max-w-sm sm:max-w-lg mx-auto">
       <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-8 sm:p-10" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
-        <h2 className="text-3xl font-bold text-white mb-8 text-center">
-          Schedule Your Cast
-        </h2>
 
         {submitSuccess && (
           <div className="bg-green-900 border border-green-700 text-green-200 px-6 py-6 rounded-lg mb-8 text-xl">

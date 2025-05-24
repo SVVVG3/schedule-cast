@@ -37,7 +37,11 @@ export default function ScheduledCasts() {
           throw new Error(result.error || 'Failed to fetch scheduled casts');
         }
 
-        setCasts(result.data || []);
+        // Sort casts by scheduled_at in descending order (most recent first)
+        const sortedCasts = (result.data || []).sort((a: ScheduledCast, b: ScheduledCast) => 
+          new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime()
+        );
+        setCasts(sortedCasts);
       } catch (err) {
         console.error('Error fetching casts:', err);
         setError((err as Error)?.message || 'An unexpected error occurred');
@@ -95,11 +99,11 @@ export default function ScheduledCasts() {
               </div>
               <div className="ml-0 sm:ml-6 flex-shrink-0 flex justify-end sm:justify-start">
                 {cast.posted ? (
-                  <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-medium bg-green-900 text-green-200 border border-green-700">
+                  <span className="inline-flex items-center px-4 py-2 rounded-lg text-base font-medium bg-green-900 text-green-200 border border-green-700">
                     Posted
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-medium bg-blue-900 text-blue-200 border border-blue-700">
+                  <span className="inline-flex items-center px-4 py-2 rounded-lg text-base font-medium bg-blue-900 text-blue-200 border border-blue-700">
                     Scheduled
                   </span>
                 )}
