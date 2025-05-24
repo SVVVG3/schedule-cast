@@ -1,0 +1,25 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjQ2NjExMSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDQ0ZDRjNThlZmNCYjQ0NjM5RDY0NDIwMTc1Q2Y1MTlhQTMxOTFhODYifQ",
+    "payload": "eyJkb21haW4iOiJzY2hlZHVsZS1jYXN0LnZlcmNlbC5hcHAifQ",
+    "signature": "MHgyZjcyODQ5MTEzOWVkOGE5ZjcyZmU0MGJjODVhMzgxMmI2OWIwNTQxNTI5NjFmYzIyOGY4MDY5YzAxY2I2MWM3NzliZjkyZjBiMGExZjYwMWU1NzE5OWI0ZWM3ZjRiZTZjNWMwODA1YzdiMGYxODY0MWZkMjdiMDFhZGZiMTJjYjFj"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Schedule Cast",
+    "iconUrl": "https://schedule-cast.vercel.app/ScheduleCastLogo.png",
+    "homeUrl": "https://schedule-cast.vercel.app/miniapp",
+    "imageUrl": "https://schedule-cast.vercel.app/ScheduleCastEmbed.png",
+    "buttonTitle": "📅 Schedule Cast",
+    "splashImageUrl": "https://schedule-cast.vercel.app/ScheduleCastLogo.png",
+    "splashBackgroundColor": "#000000",
+    "subtitle": "Schedule your Farcaster casts",
+    "description": "Plan and schedule your Farcaster casts for optimal engagement. Schedule posts in advance and never miss a beat.",
+    "primaryCategory": "social",
+    "tags": ["scheduling", "farcaster", "social", "productivity", "automation"],
+    "requiredCapabilities": [
+      "actions.signIn",
+      "actions.ready"
+    ]
+  }
+} 
