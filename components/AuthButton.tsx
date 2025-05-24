@@ -26,7 +26,7 @@ export default function AuthButton({ className = '' }: AuthButtonProps) {
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
           {user.avatar && (
-            <div className="w-5 h-5 overflow-hidden rounded-full flex-shrink-0 border border-gray-200">
+            <div className="w-5 h-5 overflow-hidden rounded-full flex-shrink-0 border border-gray-600">
               <img
                 src={user.avatar}
                 alt={user.displayName || user.username || `User ${user.fid}`}
