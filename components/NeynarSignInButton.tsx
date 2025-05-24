@@ -42,6 +42,52 @@ export default function NeynarSignInButton({
     addDebugMessage(`👤 Frame User FID: ${frameUserFid}`);
     addDebugMessage(`🎯 Show as Signer Delegation: ${showAsSignerDelegation}`);
 
+    // Check URL parameters for SIWN completion data (backup method)
+    const urlParams = new URLSearchParams(window.location.search);
+    const siwnToken = urlParams.get('siwn_token');
+    const siwnFid = urlParams.get('fid');
+    const siwnSigner = urlParams.get('signer_uuid');
+    
+    if (siwnToken || (siwnFid && siwnSigner)) {
+      addDebugMessage("🔍 Found SIWN completion data in URL parameters!");
+      addDebugMessage(`📊 URL Params - FID: ${siwnFid}, Signer: ${siwnSigner}, Token: ${siwnToken}`);
+      
+      // If we have basic SIWN data in URL, try to process it
+      if (siwnFid && siwnSigner) {
+        const siwnData = {
+          fid: parseInt(siwnFid),
+          signer_uuid: siwnSigner,
+          user: {
+            username: urlParams.get('username') || '',
+            display_name: urlParams.get('display_name') || ''
+          }
+        };
+        
+        addDebugMessage("🚀 Processing SIWN data from URL parameters");
+        (window as any).onSignInSuccess?.(siwnData);
+      }
+    }
+
+    // Check localStorage for SIWN completion data (another backup method)
+    try {
+      const siwnData = localStorage.getItem('neynar_siwn_data') || localStorage.getItem('siwn_data');
+      if (siwnData) {
+        addDebugMessage("🔍 Found SIWN completion data in localStorage!");
+        const parsedData = JSON.parse(siwnData);
+        addDebugMessage(`📊 LocalStorage Data: ${JSON.stringify(parsedData)}`);
+        
+        if (parsedData.fid && parsedData.signer_uuid) {
+          addDebugMessage("🚀 Processing SIWN data from localStorage");
+          (window as any).onSignInSuccess?.(parsedData);
+          // Clear the localStorage data after processing
+          localStorage.removeItem('neynar_siwn_data');
+          localStorage.removeItem('siwn_data');
+        }
+      }
+    } catch (e) {
+      addDebugMessage("⚠️ Error checking localStorage for SIWN data");
+    }
+
     // Define the global callback function exactly as Neynar docs specify
     (window as any).onSignInSuccess = async (data: any) => {
       addDebugMessage("🎉 SIWN SUCCESS CALLBACK TRIGGERED!");
@@ -123,14 +169,36 @@ export default function NeynarSignInButton({
     // Add message listener for SIWN popup messages
     const handleMessage = (event: MessageEvent) => {
       addDebugMessage(`📨 Window message from: ${event.origin}`);
-      if (event.origin === 'https://app.neynar.com' || event.origin === 'https://neynar.com') {
-        addDebugMessage("📩 Message from Neynar received");
+      addDebugMessage(`📦 Message data: ${JSON.stringify(event.data)}`);
+      
+      // Accept messages from various Neynar domains
+      const neynarDomains = [
+        'https://app.neynar.com',
+        'https://neynar.com',
+        'https://www.neynar.com',
+        'https://api.neynar.com'
+      ];
+      
+      if (neynarDomains.includes(event.origin)) {
+        addDebugMessage("📩 Message from Neynar domain confirmed");
+        
         if (event.data && typeof event.data === 'object') {
-          if (event.data.type === 'SIWN_SUCCESS' || event.data.fid) {
-            addDebugMessage("🚀 Triggering success callback from message");
+          // Check for various types of success indicators
+          const isSuccess = event.data.type === 'SIWN_SUCCESS' || 
+                           event.data.type === 'success' ||
+                           event.data.success === true ||
+                           event.data.fid ||
+                           event.data.signer_uuid;
+          
+          if (isSuccess) {
+            addDebugMessage("🚀 Success message detected - triggering callback");
             (window as any).onSignInSuccess?.(event.data);
+          } else {
+            addDebugMessage("ℹ️ Non-success message from Neynar");
           }
         }
+      } else {
+        addDebugMessage("⚠️ Message from non-Neynar origin - ignoring");
       }
     };
     
@@ -149,17 +217,14 @@ export default function NeynarSignInButton({
         buttonText = 'Connect to Schedule-Cast';
       }
       
-      // Detect current URL for redirect - use mini app URL if available
-      const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-      const isInMiniApp = currentUrl.includes('/miniapp') || currentUrl.includes('schedule-cast.vercel.app');
-      const redirectUri = isInMiniApp ? 'https://schedule-cast.vercel.app/miniapp' : currentUrl;
+      // For mini app environment, we don't want redirect - we want the callback to fire in the same context
+      addDebugMessage(`🔧 Configuring SIWN for mini app environment`);
       
       containerRef.current.innerHTML = `
         <div
           class="neynar_signin"
           data-client_id="${clientId}"
           data-success-callback="onSignInSuccess"
-          data-redirect_uri="${redirectUri}"
           data-theme="${theme}"
           data-variant="neynar"
           data-text="${buttonText}"
@@ -168,7 +233,7 @@ export default function NeynarSignInButton({
         </div>
       `;
       
-      addDebugMessage(`🎨 SIWN widget created: ${buttonText}`);
+      addDebugMessage(`🎨 SIWN widget created: ${buttonText} (no redirect_uri)`);
     }
 
     // Cleanup
