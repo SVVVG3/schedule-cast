@@ -1,10 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useFrameContext } from '@/lib/frame-context';
 import NeynarSignInButton from './NeynarSignInButton';
-import MobileNeynarSignIn from './MobileNeynarSignIn';
 
 interface UniversalAuthButtonProps {
   className?: string;
@@ -12,23 +9,6 @@ interface UniversalAuthButtonProps {
 
 export default function UniversalAuthButton({ className = '' }: UniversalAuthButtonProps) {
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
-  const frameContext = useFrameContext();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    // Detect mobile environment
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent;
-      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-      const isFrameEnv = window.location.pathname.startsWith('/miniapp') || 
-                        window.location.search.includes('miniApp=true') ||
-                        window.parent !== window;
-      
-      return isMobileDevice || isFrameEnv;
-    };
-
-    setIsMobile(checkMobile());
-  }, []);
 
   if (isLoading) {
     return (
@@ -79,17 +59,7 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
     );
   }
 
-  // Show appropriate sign-in method based on environment
-  // Use mobile-friendly sign-in for mobile/frame environments
-  if (isMobile) {
-    return (
-      <div className={className}>
-        <MobileNeynarSignIn theme="dark" />
-      </div>
-    );
-  }
-
-  // Use regular SIWN for desktop
+  // Use standard SIWN for all environments
   return (
     <div className={className}>
       <NeynarSignInButton theme="dark" />

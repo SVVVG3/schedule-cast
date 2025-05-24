@@ -5,7 +5,6 @@ import { useAuth } from '@/lib/auth-context';
 import CompactCastForm from '@/components/CompactCastForm';
 import CompactScheduledCasts from '@/components/CompactScheduledCasts';
 import UniversalAuthButton from '@/components/UniversalAuthButton';
-import MobileAuthHandler from '@/components/MobileAuthHandler';
 
 export default function MiniAppPage() {
   const { isFrameApp, frameContext, isLoading } = useFrameContext();
@@ -32,8 +31,6 @@ export default function MiniAppPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      <MobileAuthHandler />
-      
       {/* Header */}
       <header className="w-full py-6 px-6 border-b border-gray-700 backdrop-blur-sm bg-gray-900/50">
         <div className="flex items-center justify-between max-w-sm mx-auto">
