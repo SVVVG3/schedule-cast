@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   other: {
     'fc:frame': JSON.stringify({
       "version": "next",
-      "imageUrl": "https://schedule-cast.vercel.app/ScheduleCastEmbed.png",
+      "imageUrl": "https://yoink.party/framesV2/opengraph-image",
       "button": {
         "title": "📅 Schedule Cast",
         "action": {
