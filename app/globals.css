@@ -2,10 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global mobile-first styles */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 /* Custom utilities for mobile-first design */
 .line-clamp-3 {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Ensure no elements can cause horizontal overflow */
+.container, .max-w-2xl, .max-w-md {
+  max-width: calc(100vw - 2rem);
 } 

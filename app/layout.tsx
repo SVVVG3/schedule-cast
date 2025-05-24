@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { AuthProvider } from '@/lib/auth-context'
 import { UserProvider } from '@/lib/user-context'
 import { FrameContextProvider } from '@/lib/frame-context'
@@ -10,6 +10,12 @@ export const metadata: Metadata = {
   description: 'Schedule your Farcaster casts for future posting',
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -17,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="overflow-x-hidden">
         <FrameContextProvider>
           <AuthProvider>
             <UserProvider>

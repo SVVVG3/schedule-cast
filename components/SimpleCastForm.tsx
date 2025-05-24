@@ -84,113 +84,82 @@ export default function SimpleCastForm() {
   };
 
   return (
-    <div style={{ 
-      backgroundColor: 'white', 
-      padding: '20px', 
-      borderRadius: '8px', 
-      border: '1px solid #e5e7eb',
-      maxWidth: '500px',
-      width: '100%',
-      margin: '0 auto'
-    }}>
-      <h3 style={{ marginBottom: '20px', fontSize: '18px', fontWeight: 'bold' }}>
+    <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm w-full max-w-md mx-auto">
+      <h3 className="mb-6 text-lg font-semibold text-gray-900">
         Schedule a Cast
       </h3>
 
       {submitSuccess && (
-        <div style={{ 
-          backgroundColor: '#f0fdf4', 
-          color: '#166534', 
-          padding: '10px', 
-          borderRadius: '4px',
-          marginBottom: '16px' 
-        }}>
+        <div className="bg-green-50 text-green-700 p-3 rounded-md mb-4 text-sm">
           ✅ Your cast has been scheduled successfully!
         </div>
       )}
 
       {submitError && (
-        <div style={{ 
-          backgroundColor: '#fef2f2', 
-          color: '#991b1b', 
-          padding: '10px', 
-          borderRadius: '4px',
-          marginBottom: '16px' 
-        }}>
+        <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4 text-sm">
           ❌ {submitError}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             What's on your mind?
           </label>
           <textarea
             rows={4}
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #d1d5db',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
+            className="w-full p-3 border border-gray-300 rounded-md text-sm resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="Share your thoughts with the world..."
             maxLength={320}
             {...register('content', { required: 'Content is required' })}
           />
           {errors.content && (
-            <p style={{ color: '#dc2626', fontSize: '12px', marginTop: '4px' }}>
+            <p className="text-red-600 text-xs mt-1">
               {errors.content.message}
             </p>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Date
             </label>
             <input
               type="date"
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px'
-              }}
+              className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledDate', { required: 'Date is required' })}
             />
+            {errors.scheduledDate && (
+              <p className="text-red-600 text-xs mt-1">
+                {errors.scheduledDate.message}
+              </p>
+            )}
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Time
             </label>
             <input
               type="time"
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #d1d5db',
-                borderRadius: '4px'
-              }}
+              className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledTime', { required: 'Time is required' })}
             />
+            {errors.scheduledTime && (
+              <p className="text-red-600 text-xs mt-1">
+                {errors.scheduledTime.message}
+              </p>
+            )}
           </div>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Channel (optional)
           </label>
           <input
             type="text"
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #d1d5db',
-              borderRadius: '4px'
-            }}
+            className="w-full p-3 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="e.g. farcaster, crypto, art"
             {...register('channelId')}
           />
@@ -199,17 +168,11 @@ export default function SimpleCastForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: isSubmitting ? '#9ca3af' : '#7c3aed',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '16px',
-            fontWeight: '500',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer'
-          }}
+          className={`w-full py-3 px-4 rounded-md text-white font-medium text-sm transition-colors ${
+            isSubmitting 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-purple-600 hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
+          }`}
         >
           {isSubmitting ? 'Scheduling...' : 'Schedule Cast'}
         </button>
