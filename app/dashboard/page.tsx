@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
-import WorkingModernCastForm from '@/components/WorkingModernCastForm';
-import WorkingModernScheduledCasts from '@/components/WorkingModernScheduledCasts';
+import SimpleCastForm from '@/components/SimpleCastForm';
+import ScheduledCasts from '@/components/ScheduledCasts';
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
@@ -23,7 +23,7 @@ export default function Dashboard() {
 
   if (authLoading || userLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <p className="text-lg text-gray-700">Loading your dashboard...</p>
@@ -37,7 +37,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-2xl px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
@@ -51,12 +51,13 @@ export default function Dashboard() {
           <div className="space-y-8 w-full">
             {/* Cast Form - Removed redundant heading */}
             <div className="w-full flex justify-center">
-              <WorkingModernCastForm />
+              <SimpleCastForm />
             </div>
             
             {/* Scheduled Casts */}
             <div className="w-full">
-              <WorkingModernScheduledCasts />
+              <h2 className="text-xl font-semibold mb-4 text-center">Your Scheduled Casts</h2>
+              <ScheduledCasts />
             </div>
           </div>
         ) : (
