@@ -63,6 +63,14 @@ export function FrameContextProvider({ children }: FrameContextProviderProps) {
         return;
       }
 
+      // Set a maximum timeout for SDK initialization
+      const timeoutId = setTimeout(() => {
+        console.log('[FrameContext] SDK initialization timeout - assuming web environment');
+        setIsLoading(false);
+        setIsMiniApp(false);
+        setIsFrameApp(false);
+      }, 3000); // 3 second timeout
+
       try {
         console.log('[FrameContext] Initializing Frame SDK...');
         
@@ -96,8 +104,13 @@ export function FrameContextProvider({ children }: FrameContextProviderProps) {
           console.log('[FrameContext] Not in mini app environment');
         }
         
+        // Clear timeout since initialization completed
+        clearTimeout(timeoutId);
+        
       } catch (error) {
         console.error('[FrameContext] Error initializing Frame SDK:', error);
+        console.log('[FrameContext] Falling back to web environment');
+        clearTimeout(timeoutId);
       } finally {
         setIsLoading(false);
       }

@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useFrameContext } from '@/lib/frame-context';
 import NeynarSignInButton from './NeynarSignInButton';
 import MiniAppAuth from './MiniAppAuth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface UniversalAuthButtonProps {
   className?: string;
@@ -14,7 +14,20 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
   const { user, isAuthenticated, isLoading, signOut } = useAuth();
   const { isFrameApp, isMiniApp, frameContext } = useFrameContext();
 
+  // Add debugging to understand the routing logic
+  useEffect(() => {
+    console.log('[UniversalAuthButton] State debug:', {
+      isLoading,
+      isAuthenticated,
+      user: user ? { fid: user.fid, signer_uuid: user.signer_uuid, delegated: user.delegated } : null,
+      isMiniApp,
+      isFrameApp,
+      frameContext: frameContext ? { userFid: frameContext.user?.fid } : null
+    });
+  }, [isLoading, isAuthenticated, user, isMiniApp, isFrameApp, frameContext]);
+
   if (isLoading) {
+    console.log('[UniversalAuthButton] Rendering loading state');
     return (
       <div className={`flex items-center space-x-2 ${className}`}>
         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
@@ -24,8 +37,10 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
   }
 
   if (isAuthenticated && user) {
+    console.log('[UniversalAuthButton] User is authenticated, checking signer needs');
     // Check if user needs signer delegation for cast permissions
     const needsSigner = !user.signer_uuid || !user.delegated;
+    console.log('[UniversalAuthButton] User needs signer:', needsSigner);
     
     return (
       <div className={`flex flex-col space-y-2 ${className}`}>
@@ -86,6 +101,7 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
 
   // Handle Mini App environment - user context available but not authenticated in our system
   if (isMiniApp && frameContext?.user?.fid) {
+    console.log('[UniversalAuthButton] Rendering mini app auth for frame user:', frameContext.user.fid);
     return (
       <div className={`flex flex-col space-y-2 ${className}`}>
         <MiniAppAuth />
@@ -94,6 +110,7 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
   }
 
   // Standard web environment - use SIWN for both auth and signer delegation
+  console.log('[UniversalAuthButton] Rendering standard SIWN button for web environment');
   return (
     <div className={className}>
       <NeynarSignInButton theme="dark" />
