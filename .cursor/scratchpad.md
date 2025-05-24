@@ -142,6 +142,34 @@ The user has identified Farcaster mini app functionality as the **main priority*
 
 **Next Test**: Mini app user should see SIWN button instead of "Open Warpcast to Approve" when they need signer permissions.
 
+### **🚨 LATEST SIWN CALLBACK ISSUE IDENTIFIED AND FIXED**:
+
+#### **SIWN Completion Problem Discovered:**
+- **Issue**: User completes SIWN (QR code → Safari → Farcaster → "All done!") but "Continue with schedule-cast" button doesn't work
+- **Root Cause**: `onSignInSuccess` callback was using `window.location.reload()` which breaks mini app context
+- **Evidence**: User gets stuck on success screen after completing authentication
+
+#### **The Broken Flow:**
+1. ✅ User clicks SIWN → QR code → Safari → Farcaster authentication 
+2. ✅ User sees "All done! Continue with schedule-cast" success screen
+3. ❌ Clicks "Continue" button → **nothing happens** (stuck on success screen)
+4. ❌ Page reload breaks mini app context and authentication state
+
+#### **✅ THE FIX** (`components/NeynarSignInButton.tsx` + `lib/auth-context.tsx`):
+- **Before**: `onSignInSuccess` used `window.location.reload()` and alert() popups
+- **After**: Removed page reload, added smooth `refreshAuth()` function with 1-second delay
+- **Logic**: Store data → wait for database → refresh authentication state seamlessly
+
+### **🎯 EXPECTED OUTCOME**:
+- ✅ **User completes SIWN** → No page reload, smooth transition
+- ✅ **Authentication state updates automatically** within 1-2 seconds  
+- ✅ **Mini app context preserved** → User sees scheduling form
+- ✅ **No more stuck "Continue" buttons** → Seamless flow
+
+**Deployment Status**: ✅ Critical SIWN callback fix committed and pushed to GitHub (auto-deploying to Vercel)
+
+**Next Test**: Complete SIWN in mini app and verify smooth transition to scheduling form without page reload or stuck buttons.
+
 ## Executor's Feedback or Assistance Requests
 
 **🚨 ROOT CAUSES IDENTIFIED AND CRITICAL FIXES DEPLOYED**:
