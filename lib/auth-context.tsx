@@ -87,17 +87,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (frameContext?.user?.fid) {
               console.log('[AuthContext] Frame user detected:', frameContext.user);
               
-              // Try to fetch user data from Supabase, but don't require it for frame auth
+              // Check if user exists in Supabase with valid signer delegation
               const userData = await fetchUserFromSupabase(frameContext.user.fid);
               
-              setUser({
-                fid: frameContext.user.fid,
-                username: frameContext.user.username || userData?.username,
-                displayName: frameContext.user.displayName || userData?.display_name,
-                avatar: frameContext.user.pfpUrl || userData?.avatar,
-                signer_uuid: userData?.signer_uuid,
-                delegated: userData?.delegated ?? true, // Frame users are considered authenticated
-              });
+              // Only set user as authenticated if they exist in database with valid signer
+              if (userData && userData.signer_uuid && userData.delegated) {
+                setUser({
+                  fid: frameContext.user.fid,
+                  username: frameContext.user.username || userData.username,
+                  displayName: frameContext.user.displayName || userData.display_name,
+                  avatar: frameContext.user.pfpUrl || userData.avatar,
+                  signer_uuid: userData.signer_uuid,
+                  delegated: userData.delegated,
+                });
+                
+                console.log('[AuthContext] Frame user authenticated from database');
+              } else {
+                console.log('[AuthContext] Frame user not in database or missing signer - requiring sign in');
+                // Don't set user - they'll need to sign in with Neynar
+              }
               
               setIsLoading(false);
               return;

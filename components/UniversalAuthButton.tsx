@@ -75,26 +75,7 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
   }
 
   // Show appropriate sign-in method based on environment
-  if (isFrameApp) {
-    return (
-      <button
-        onClick={handleSignIn}
-        disabled={isSigningIn}
-        className={`px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition duration-150 disabled:opacity-50 flex items-center space-x-2 ${className}`}
-      >
-        {isSigningIn ? (
-          <>
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            <span>Signing in...</span>
-          </>
-        ) : (
-          <span>Sign in with Farcaster</span>
-        )}
-      </button>
-    );
-  }
-
-  // Fallback to Neynar SIWN for web
+  // Always use Neynar SIWN for proper signer delegation, even in frame environment
   return (
     <div className={className}>
       <NeynarSignInButton theme="dark" />

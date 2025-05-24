@@ -110,29 +110,69 @@ export default function MiniAppPage() {
             <CompactScheduledCasts />
           </div>
         ) : (
-          <div className="text-center py-16">
-            <div className="w-20 h-20 bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-purple-700">
-              <svg
-                className="w-10 h-10 text-purple-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+          <div className="text-center py-16 space-y-8 max-w-sm w-full mx-auto">
+            {/* Show frame user info if available, even if not authenticated */}
+            {frameContext?.user && (
+              <div className="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700">
+                <div className="flex items-center justify-between px-2">
+                  <span className="text-base text-gray-300 font-medium">Continue as</span>
+                  <div className="flex items-center space-x-3">
+                    {frameContext.user.pfpUrl && (
+                      <div className="w-12 h-12 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
+                        <img
+                          src={frameContext.user.pfpUrl}
+                          alt={frameContext.user.displayName || frameContext.user.username || 'User'}
+                          className="w-full h-full object-cover"
+                          style={{ 
+                            width: '48px !important', 
+                            height: '48px !important',
+                            maxWidth: '48px',
+                            maxHeight: '48px',
+                            minWidth: '48px',
+                            minHeight: '48px'
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="text-right min-w-0">
+                      <p className="font-medium text-white text-base truncate">
+                        {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
+                      </p>
+                      <p className="text-xs text-gray-400 -mt-1">FID: {frameContext.user.fid}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div>
+              <div className="w-20 h-20 bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-purple-700">
+                <svg
+                  className="w-10 h-10 text-purple-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-3">
+                {frameContext?.user ? 'Complete Setup' : 'Welcome to Schedule Cast'}
+              </h2>
+              <p className="text-gray-300 mb-8 max-w-md mx-auto text-lg leading-relaxed">
+                {frameContext?.user 
+                  ? 'Sign in to grant Schedule Cast permission to post on your behalf and save your scheduled casts.'
+                  : 'Plan and schedule your Farcaster casts for optimal engagement. Sign in to get started.'
+                }
+              </p>
+              <UniversalAuthButton className="inline-block" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-3">Welcome to Schedule Cast</h2>
-            <p className="text-gray-300 mb-8 max-w-md mx-auto text-lg leading-relaxed">
-              Plan and schedule your Farcaster casts for optimal engagement. 
-              Sign in to get started.
-            </p>
-            <UniversalAuthButton className="inline-block" />
           </div>
         )}
       </main>
