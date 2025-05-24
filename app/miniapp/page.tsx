@@ -73,30 +73,32 @@ export default function MiniAppPage() {
           <div className="space-y-8 max-w-sm w-full">
             {frameContext?.user && (
               <div className="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700">
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-300 font-medium">Signed in as</span>
-                  {frameContext.user.pfpUrl && (
-                    <div className="w-12 h-12 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
-                      <img
-                        src={frameContext.user.pfpUrl}
-                        alt={frameContext.user.displayName || frameContext.user.username || 'User'}
-                        className="w-full h-full object-cover"
-                        style={{ 
-                          width: '48px !important', 
-                          height: '48px !important',
-                          maxWidth: '48px',
-                          maxHeight: '48px',
-                          minWidth: '48px',
-                          minHeight: '48px'
-                        }}
-                      />
+                <div className="flex items-center justify-between">
+                  <span className="text-base text-gray-300 font-medium">Signed in as</span>
+                  <div className="flex items-center space-x-3">
+                    {frameContext.user.pfpUrl && (
+                      <div className="w-12 h-12 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
+                        <img
+                          src={frameContext.user.pfpUrl}
+                          alt={frameContext.user.displayName || frameContext.user.username || 'User'}
+                          className="w-full h-full object-cover"
+                          style={{ 
+                            width: '48px !important', 
+                            height: '48px !important',
+                            maxWidth: '48px',
+                            maxHeight: '48px',
+                            minWidth: '48px',
+                            minHeight: '48px'
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="text-right min-w-0">
+                      <p className="font-medium text-white text-base truncate">
+                        {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
+                      </p>
+                      <p className="text-xs text-gray-400 -mt-0.5">FID: {frameContext.user.fid}</p>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white text-base truncate">
-                      {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
-                    </p>
-                    <p className="text-sm text-gray-400">FID: {frameContext.user.fid}</p>
                   </div>
                 </div>
               </div>
