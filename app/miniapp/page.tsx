@@ -3,6 +3,7 @@
 import { useFrameContext } from '@/lib/frame-context';
 import { useAuth } from '@/lib/auth-context';
 import CompactCastForm from '@/components/CompactCastForm';
+import CompactScheduledCasts from '@/components/CompactScheduledCasts';
 import UniversalAuthButton from '@/components/UniversalAuthButton';
 
 export default function MiniAppPage() {
@@ -105,6 +106,8 @@ export default function MiniAppPage() {
             )}
             
             <CompactCastForm />
+            
+            <CompactScheduledCasts />
           </div>
         ) : (
           <div className="text-center py-16">
