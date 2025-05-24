@@ -30,7 +30,7 @@ export default function MiniAppPage() {
 
   return (
     <div 
-      className="min-h-screen bg-white"
+      className="min-h-screen bg-gray-900"
       style={{
         paddingTop: `${safeAreaInsets.top}px`,
         paddingBottom: `${safeAreaInsets.bottom}px`,
@@ -39,16 +39,16 @@ export default function MiniAppPage() {
       }}
     >
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+      <header className="bg-gray-800 shadow-sm border-b border-gray-700 px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-sm">SC</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Schedule Cast</h1>
+              <h1 className="text-xl font-bold text-white">Schedule Cast</h1>
               {isFrameApp && (
-                <p className="text-xs text-gray-500">Farcaster Mini App</p>
+                <p className="text-sm text-gray-300">Farcaster Mini App</p>
               )}
             </div>
           </div>
@@ -58,25 +58,25 @@ export default function MiniAppPage() {
       </header>
 
       {/* Main Content */}
-      <main className="px-3 py-4 w-full overflow-x-hidden">
+      <main className="px-4 py-6 w-full overflow-x-hidden">
         {isAuthenticated ? (
-          <div className="space-y-4 max-w-sm mx-auto">
+          <div className="space-y-6 max-w-sm mx-auto">
             {frameContext?.user && (
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                <h2 className="text-sm font-medium text-gray-700 mb-2">Signed in as</h2>
+              <div className="bg-gray-800 rounded-xl p-5 shadow-lg border border-gray-700">
+                <h2 className="text-base font-medium text-gray-300 mb-3">Signed in as</h2>
                 <div className="flex items-center space-x-3">
                   {frameContext.user.pfpUrl && (
                     <img
                       src={frameContext.user.pfpUrl}
                       alt={frameContext.user.displayName || frameContext.user.username || 'User'}
-                      className="w-10 h-10 rounded-full border border-gray-200"
+                      className="w-12 h-12 rounded-full border-2 border-gray-600"
                     />
                   )}
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-white text-base">
                       {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
                     </p>
-                    <p className="text-sm text-gray-500">FID: {frameContext.user.fid}</p>
+                    <p className="text-sm text-gray-400">FID: {frameContext.user.fid}</p>
                   </div>
                 </div>
               </div>
@@ -85,10 +85,10 @@ export default function MiniAppPage() {
             <CompactCastForm />
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-8 border-2 border-purple-700">
               <svg
-                className="w-8 h-8 text-purple-600"
+                className="w-10 h-10 text-purple-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -102,8 +102,8 @@ export default function MiniAppPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to Schedule Cast</h2>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-3">Welcome to Schedule Cast</h2>
+            <p className="text-gray-300 mb-8 max-w-md mx-auto text-lg leading-relaxed">
               Plan and schedule your Farcaster casts for optimal engagement. 
               Sign in to get started.
             </p>

@@ -87,41 +87,41 @@ export default function CompactCastForm() {
 
   return (
     <div className="w-full max-w-sm sm:max-w-lg mx-auto">
-      <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-3 sm:p-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">
+      <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6 sm:p-8">
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">
           Schedule Your Cast
         </h2>
 
         {submitSuccess && (
-          <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-green-900 border border-green-700 text-green-200 px-4 py-4 rounded-lg mb-6 text-lg">
             ✅ Your cast has been scheduled successfully!
           </div>
         )}
 
         {submitError && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4">
+          <div className="bg-red-900 border border-red-700 text-red-200 px-4 py-4 rounded-lg mb-6 text-lg">
             ❌ {submitError}
           </div>
         )}
 
         <SignerApprovalChecker
           fallback={
-            <div className="text-center py-8">
-              <p className="text-gray-600 mb-4">
+            <div className="text-center py-10">
+              <p className="text-gray-300 mb-6 text-lg">
                 Please approve your signer to start scheduling casts
               </p>
             </div>
           }
         >
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-lg font-medium text-gray-300 mb-3">
                 What's on your mind?
               </label>
               <textarea
-                rows={4}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none ${
-                  !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                rows={5}
+                className={`w-full px-4 py-4 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-base ${
+                  !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-700 text-white border-gray-600 placeholder-gray-400'
                 }`}
                 placeholder={isAuthenticated ? "Share your thoughts with the world..." : "Sign in to schedule casts..."}
                 maxLength={320}
@@ -129,34 +129,34 @@ export default function CompactCastForm() {
                 {...register('content', { required: 'Content is required' })}
               />
               {errors.content && (
-                <p className="text-red-600 text-sm mt-1">
+                <p className="text-red-400 text-sm mt-2">
                   {errors.content.message}
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-lg font-medium text-gray-300 mb-3">
                   Date
                 </label>
                 <input
                   type="date"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  className={`w-full px-4 py-4 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base ${
+                    !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-700 text-white border-gray-600'
                   }`}
                   disabled={!isAuthenticated}
                   {...register('scheduledDate', { required: 'Date is required' })}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-lg font-medium text-gray-300 mb-3">
                   Time
                 </label>
                 <input
                   type="time"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                  className={`w-full px-4 py-4 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base ${
+                    !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-700 text-white border-gray-600'
                   }`}
                   disabled={!isAuthenticated}
                   {...register('scheduledTime', { required: 'Time is required' })}
@@ -165,13 +165,13 @@ export default function CompactCastForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-lg font-medium text-gray-300 mb-3">
                 Channel (optional)
               </label>
               <input
                 type="text"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  !isAuthenticated ? 'bg-gray-100 text-gray-500' : 'border-gray-300'
+                className={`w-full px-4 py-4 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base ${
+                  !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600 placeholder-gray-500' : 'bg-gray-700 text-white border-gray-600 placeholder-gray-400'
                 }`}
                 placeholder={isAuthenticated ? "e.g. farcaster, crypto, art" : "Sign in to use channels"}
                 disabled={!isAuthenticated}
@@ -182,11 +182,11 @@ export default function CompactCastForm() {
             <button
               type="submit"
               disabled={!isAuthenticated || isSubmitting}
-              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors duration-200 ${
+              className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-colors duration-200 ${
                 !isAuthenticated
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                   : isSubmitting
-                  ? 'bg-purple-400 text-white cursor-not-allowed'
+                  ? 'bg-purple-500 text-white cursor-not-allowed'
                   : 'bg-purple-600 text-white hover:bg-purple-700'
               }`}
             >
@@ -201,8 +201,8 @@ export default function CompactCastForm() {
         </SignerApprovalChecker>
 
         {!isAuthenticated && (
-          <div className="text-center mt-4">
-            <p className="text-sm text-gray-600 mb-3">
+          <div className="text-center mt-6">
+            <p className="text-base text-gray-300 mb-4">
               Sign in with your Farcaster account to start scheduling casts
             </p>
             <NeynarSignInButton theme="dark" className="inline-block" />
