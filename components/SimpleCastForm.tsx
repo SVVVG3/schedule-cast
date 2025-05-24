@@ -84,31 +84,32 @@ export default function SimpleCastForm() {
   };
 
   return (
-    <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-lg w-full max-w-lg mx-auto">
-      <h3 className="mb-8 text-2xl font-semibold text-white text-center">
+    <div className="bg-gray-800 p-8 sm:p-10 rounded-xl border border-gray-700 shadow-lg w-full max-w-lg mx-auto" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+      <h3 className="mb-8 text-3xl font-semibold text-white text-center">
         Schedule a Cast
       </h3>
 
       {submitSuccess && (
-        <div className="bg-green-900 text-green-200 p-4 rounded-lg mb-6 border border-green-700">
+        <div className="bg-green-900 text-green-200 p-6 rounded-lg mb-8 border border-green-700 text-xl">
           ✅ Your cast has been scheduled successfully!
         </div>
       )}
 
       {submitError && (
-        <div className="bg-red-900 text-red-200 p-4 rounded-lg mb-6 border border-red-700">
+        <div className="bg-red-900 text-red-200 p-6 rounded-lg mb-8 border border-red-700 text-xl">
           ❌ {submitError}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div>
-          <label className="block text-lg font-medium text-gray-300 mb-3">
+          <label className="block text-xl font-medium text-gray-300 mb-4">
             What's on your mind?
           </label>
           <textarea
-            rows={5}
-            className="w-full p-4 border border-gray-600 rounded-lg text-base resize-none bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            rows={6}
+            style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', lineHeight: '1.5' }}
+            className="w-full p-6 border border-gray-600 rounded-lg text-lg resize-none bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="Share your thoughts with the world..."
             maxLength={320}
             {...register('content', { required: 'Content is required' })}
@@ -120,14 +121,15 @@ export default function SimpleCastForm() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
           <div>
-            <label className="block text-lg font-medium text-gray-300 mb-3">
+            <label className="block text-xl font-medium text-gray-300 mb-4">
               Date
             </label>
             <input
               type="date"
-              className="w-full p-4 border border-gray-600 rounded-lg text-base bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
+              className="w-full p-6 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledDate', { required: 'Date is required' })}
             />
             {errors.scheduledDate && (
@@ -137,12 +139,13 @@ export default function SimpleCastForm() {
             )}
           </div>
           <div>
-            <label className="block text-lg font-medium text-gray-300 mb-3">
+            <label className="block text-xl font-medium text-gray-300 mb-4">
               Time
             </label>
             <input
               type="time"
-              className="w-full p-4 border border-gray-600 rounded-lg text-base bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
+              className="w-full p-6 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledTime', { required: 'Time is required' })}
             />
             {errors.scheduledTime && (
@@ -154,12 +157,13 @@ export default function SimpleCastForm() {
         </div>
 
         <div>
-          <label className="block text-lg font-medium text-gray-300 mb-3">
+          <label className="block text-xl font-medium text-gray-300 mb-4">
             Channel (optional)
           </label>
           <input
             type="text"
-            className="w-full p-4 border border-gray-600 rounded-lg text-base bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
+            className="w-full p-6 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="e.g. farcaster, crypto, art"
             {...register('channelId')}
           />
@@ -168,7 +172,8 @@ export default function SimpleCastForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full py-4 px-6 rounded-lg text-white font-semibold text-lg transition-colors ${
+          style={{ minHeight: '64px', fontSize: '20px' }}
+          className={`w-full py-6 px-8 rounded-lg text-white font-semibold text-xl transition-colors ${
             isSubmitting 
               ? 'bg-gray-600 cursor-not-allowed' 
               : 'bg-purple-600 hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
