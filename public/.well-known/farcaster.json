@@ -1,4 +1,9 @@
 {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjQ2NjExMSwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDQ0ZDRjNThlZmNCYjQ0NjM5RDY0NDIwMTc1Q2Y1MTlhQTMxOTFhODYifQ",
+    "payload": "eyJkb21haW4iOiJzY2hlZHVsZS1jYXN0LnZlcmNlbC5hcHAifQ",
+    "signature": "MHgyZjcyODQ5MTEzOWVkOGE5ZjcyZmU0MGJjODVhMzgxMmI2OWIwNTQxNTI5NjFmYzIyOGY4MDY5YzAxY2I2MWM3NzliZjkyZjBiMGExZjYwMWU1NzE5OWI0ZWM3ZjRiZTZjNWMwODA1YzdiMGYxODY0MWZkMjdiMDFhZGZiMTJjYjFj"
+  },
   "frame": {
     "version": "1",
     "name": "Schedule Cast",
