@@ -21,6 +21,7 @@ export default function NeynarSignInButton({
   const [isClient, setIsClient] = useState(false);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
 
   const addDebugMessage = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -47,6 +48,21 @@ export default function NeynarSignInButton({
     const siwnToken = urlParams.get('siwn_token');
     const siwnFid = urlParams.get('fid');
     const siwnSigner = urlParams.get('signer_uuid');
+    const siwnComplete = urlParams.get('siwn_complete');
+    
+    if (siwnComplete === 'true') {
+      addDebugMessage("🎉 Detected return from SIWN completion!");
+      // Clean up the URL parameter
+      if (window.history.replaceState) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+      // Start polling to check for authentication
+      setTimeout(() => {
+        addDebugMessage("🔄 Auto-triggering polling after SIWN completion");
+        pollForAuthentication();
+      }, 1000);
+    }
     
     if (siwnToken || (siwnFid && siwnSigner)) {
       addDebugMessage("🔍 Found SIWN completion data in URL parameters!");
@@ -217,14 +233,16 @@ export default function NeynarSignInButton({
         buttonText = 'Connect to Schedule-Cast';
       }
       
-      // For mini app environment, we don't want redirect - we want the callback to fire in the same context
-      addDebugMessage(`🔧 Configuring SIWN for mini app environment`);
+      // Use our custom completion endpoint to handle SIWN data
+      const redirectUri = 'https://schedule-cast.vercel.app/api/siwn-complete';
+      addDebugMessage(`🔧 Using custom completion endpoint: ${redirectUri}`);
       
       containerRef.current.innerHTML = `
         <div
           class="neynar_signin"
           data-client_id="${clientId}"
           data-success-callback="onSignInSuccess"
+          data-redirect_uri="${redirectUri}"
           data-theme="${theme}"
           data-variant="neynar"
           data-text="${buttonText}"
@@ -233,7 +251,7 @@ export default function NeynarSignInButton({
         </div>
       `;
       
-      addDebugMessage(`🎨 SIWN widget created: ${buttonText} (no redirect_uri)`);
+      addDebugMessage(`🎨 SIWN widget created: ${buttonText} (with completion endpoint)`);
     }
 
     // Cleanup
@@ -244,6 +262,63 @@ export default function NeynarSignInButton({
       window.removeEventListener('message', handleMessage);
     };
   }, [isClient, theme, updateAuthFromSIWN, showAsSignerDelegation, frameUserFid]);
+
+  // Polling function to check if authentication completed
+  const pollForAuthentication = async () => {
+    if (!frameUserFid || isPolling) return;
+    
+    setIsPolling(true);
+    addDebugMessage("🔄 Started polling for authentication completion...");
+    
+    let attempts = 0;
+    const maxAttempts = 30; // Poll for 30 seconds (every 1 second)
+    
+    const poll = async () => {
+      attempts++;
+      addDebugMessage(`📡 Polling attempt ${attempts}/${maxAttempts}`);
+      
+      try {
+        const response = await fetch(`/api/debug-user?fid=${frameUserFid}`);
+        const data = await response.json();
+        
+        if (data.has_signer && data.is_delegated) {
+          addDebugMessage("🎉 Authentication detected via polling!");
+          setIsPolling(false);
+          
+          // Update auth context with the found data
+          const authData = {
+            fid: frameUserFid,
+            signer_uuid: data.user.signer_uuid,
+            user: {
+              username: data.user.username,
+              display_name: data.user.display_name
+            }
+          };
+          
+          await updateAuthFromSIWN(authData);
+          addDebugMessage("✅ Auth context updated from polling");
+          return;
+        }
+        
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 1000); // Poll every 1 second
+        } else {
+          addDebugMessage("⏰ Polling timeout - authentication not detected");
+          setIsPolling(false);
+        }
+      } catch (error) {
+        addDebugMessage(`❌ Polling error: ${error instanceof Error ? error.message : String(error)}`);
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 1000);
+        } else {
+          setIsPolling(false);
+        }
+      }
+    };
+    
+    // Start polling after a 2-second delay to allow for SIWN completion
+    setTimeout(poll, 2000);
+  };
 
   if (!isClient) {
     return (
@@ -262,12 +337,24 @@ export default function NeynarSignInButton({
         <div className="mt-4 p-3 bg-gray-100 rounded-lg border">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-sm font-semibold text-gray-700">Debug Log</h4>
-            {isProcessing && (
-              <div className="flex items-center gap-1 text-blue-600">
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                <span className="text-xs">Processing...</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {(isProcessing || isPolling) && (
+                <div className="flex items-center gap-1 text-blue-600">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                  <span className="text-xs">
+                    {isProcessing ? 'Processing...' : 'Polling...'}
+                  </span>
+                </div>
+              )}
+              {frameUserFid && !isPolling && (
+                <button
+                  onClick={pollForAuthentication}
+                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Check Auth Status
+                </button>
+              )}
+            </div>
           </div>
           <div className="space-y-1 max-h-32 overflow-y-auto">
             {debugMessages.map((message, index) => (
@@ -276,6 +363,11 @@ export default function NeynarSignInButton({
               </div>
             ))}
           </div>
+          {frameUserFid && (
+            <div className="mt-2 text-xs text-gray-500">
+              💡 If SIWN completes but callback doesn't work, click "Check Auth Status" above
+            </div>
+          )}
         </div>
       )}
     </div>
