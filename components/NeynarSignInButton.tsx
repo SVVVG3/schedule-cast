@@ -59,37 +59,25 @@ export default function NeynarSignInButton({
             console.log("[SIWN] Signer stored successfully");
           }
           
-          // Test the signer immediately after SIWN success
-          console.log("[SIWN] Testing signer immediately after sign-in...");
+          // Check signer status without posting test casts
+          console.log("[SIWN] Checking signer status after sign-in (no test posts)...");
           try {
-            const testResponse = await fetch(`/api/test-siwn-signer?fid=${data.fid}`);
-            const testData = await testResponse.json();
-            console.log("[SIWN] Immediate signer test result:", testData);
+            const statusResponse = await fetch(`/api/signer/approval-status?fid=${data.fid}`);
+            const statusData = await statusResponse.json();
+            console.log("[SIWN] Signer status check result:", statusData);
             
-            if (testData.results?.tests?.post_cast?.success) {
-              alert('🎉 Sign-in successful! Your signer is working and can post casts immediately!');
-            } else if (testData.results?.tests?.signer_info?.success) {
-              // Signer exists but can't post yet
-              const signerStatus = testData.results.tests.signer_info.status;
-              console.log("[SIWN] Signer exists but status is:", signerStatus);
-              
-              if (signerStatus === 'approved') {
-                alert('🎉 Sign-in successful! Your signer is approved and ready to use!');
-              } else {
-                alert(`⏳ Sign-in successful! Your signer status is "${signerStatus}". 
+            if (statusData.status === 'approved') {
+              alert('🎉 Sign-in successful! Your signer is ready to schedule casts!');
+            } else if (statusData.needs_approval) {
+              alert(`⏳ Sign-in successful! Your signer may need approval in Warpcast before posting.
 
-This might be temporary - SIWN signers should be approved automatically. Please try scheduling a cast, and if it fails, the app will guide you through manual approval.`);
-              }
+You can try scheduling casts now - if approval is needed, the app will guide you through the process.`);
             } else {
-              // Signer doesn't exist in Neynar yet
-              console.warn("[SIWN] Signer not found in Neynar immediately after SIWN success");
-              alert(`⏳ Sign-in successful! However, your signer isn't active in Neynar yet.
-
-This might be a temporary delay. Please try scheduling a cast in a few minutes. If it still fails, the app will guide you through manual approval.`);
+              alert('🎉 Sign-in successful! You can now schedule casts.');
             }
-          } catch (testError) {
-            console.error("[SIWN] Error testing signer immediately:", testError);
-            alert('🎉 Sign-in successful! We couldn\'t test your signer immediately, but you can try scheduling casts now.');
+          } catch (statusError) {
+            console.error("[SIWN] Error checking signer status:", statusError);
+            alert('🎉 Sign-in successful! You can now try scheduling casts.');
           }
         }
       } catch (error) {
