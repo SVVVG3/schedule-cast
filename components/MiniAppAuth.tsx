@@ -23,6 +23,7 @@ export default function MiniAppAuth({ className = '' }: MiniAppAuthProps) {
         <NeynarSignInButton 
           theme="dark"
           className="w-full"
+          frameUserFid={frameContext.user.fid}
         />
       </div>
     </div>

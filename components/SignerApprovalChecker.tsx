@@ -18,7 +18,7 @@ interface SignerApprovalCheckerProps {
 
 export default function SignerApprovalChecker({ children, fallback }: SignerApprovalCheckerProps) {
   const { user, isAuthenticated } = useAuth();
-  const { isMiniApp } = useFrameContext();
+  const { isMiniApp, frameContext } = useFrameContext();
   const [signerStatus, setSignerStatus] = useState<SignerStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +135,7 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
                 <NeynarSignInButton 
                   theme="dark"
                   className="w-full"
+                  frameUserFid={frameContext?.user?.fid || user?.fid}
                 />
               </div>
             </div>
