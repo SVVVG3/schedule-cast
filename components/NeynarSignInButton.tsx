@@ -246,8 +246,10 @@ export default function NeynarSignInButton({
       // Use our custom completion endpoint to handle SIWN data
       const redirectUri = 'https://schedule-cast.vercel.app/api/siwn-complete';
       addDebugMessage(`🔧 Using custom completion endpoint: ${redirectUri}`);
+      addDebugMessage(`🔑 Client ID: ${clientId}`);
+      addDebugMessage(`📝 Button text: ${buttonText}`);
       
-      containerRef.current.innerHTML = `
+      const siwnHtml = `
         <div
           class="neynar_signin"
           data-client_id="${clientId}"
@@ -261,7 +263,21 @@ export default function NeynarSignInButton({
         </div>
       `;
       
+      addDebugMessage(`🏗️ SIWN widget HTML: ${siwnHtml.trim()}`);
+      containerRef.current.innerHTML = siwnHtml;
+      
       addDebugMessage(`🎨 SIWN widget created: ${buttonText} (with completion endpoint)`);
+      
+      // Let's also inspect the actual DOM after the widget loads
+      setTimeout(() => {
+        const actualWidget = containerRef.current?.querySelector('.neynar_signin');
+        if (actualWidget) {
+          addDebugMessage(`🔍 Actual widget HTML: ${actualWidget.outerHTML}`);
+          addDebugMessage(`🔍 Widget attributes: ${Array.from(actualWidget.attributes).map(attr => `${attr.name}="${attr.value}"`).join(', ')}`);
+        } else {
+          addDebugMessage(`⚠️ No .neynar_signin element found after creation`);
+        }
+      }, 2000);
     }
 
     // Cleanup
@@ -341,6 +357,33 @@ export default function NeynarSignInButton({
   return (
     <div className={className}>
       <div ref={containerRef}></div>
+      
+      {/* Backup manual authentication */}
+      {frameUserFid && (
+        <div className="mt-2">
+          <button
+            onClick={() => {
+              const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
+              const redirectUri = encodeURIComponent('https://schedule-cast.vercel.app/api/siwn-complete');
+              const manualUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
+              
+              addDebugMessage(`🔗 Manual SIWN URL: ${manualUrl}`);
+              addDebugMessage(`🚀 Opening manual SIWN in new window`);
+              
+              // Try to open in new window
+              const newWindow = window.open(manualUrl, '_blank', 'width=400,height=600');
+              if (!newWindow) {
+                addDebugMessage(`⚠️ Popup blocked - will copy URL to clipboard`);
+                navigator.clipboard?.writeText(manualUrl);
+                alert('Popup blocked. URL copied to clipboard. Please paste in browser.');
+              }
+            }}
+            className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm"
+          >
+            🔧 Manual SIWN (Backup)
+          </button>
+        </div>
+      )}
       
       {/* Debug Panel - only show if there are messages */}
       {debugMessages.length > 0 && (
