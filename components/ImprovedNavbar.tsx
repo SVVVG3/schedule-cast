@@ -14,7 +14,7 @@ export default function ImprovedNavbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm shadow-sm">
+    <nav className="sticky top-0 z-50 border-b border-gray-700 bg-gray-800/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
           {/* Logo and App Name */}
@@ -36,7 +36,7 @@ export default function ImprovedNavbar() {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold text-gray-900">
+            <span className="text-xl font-bold text-white">
               Schedule Cast
             </span>
           </div>

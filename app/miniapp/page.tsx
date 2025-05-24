@@ -11,9 +11,9 @@ export default function MiniAppPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
         <div className="text-center text-white">
-          <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p>Loading Schedule Cast...</p>
         </div>
       </div>
