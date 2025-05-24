@@ -21,6 +21,7 @@ interface AuthContextType {
   signIn: () => void;
   signOut: () => void;
   updateAuthFromSIWN: (siwnData: any) => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   signIn: () => {},
   signOut: () => {},
   updateAuthFromSIWN: async () => {},
+  refreshAuth: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -156,6 +158,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth();
   }, [isMiniApp, frameContext]);
 
+  // Helper function to refresh authentication state (useful after SIWN completion)
+  const refreshAuth = async () => {
+    console.log('[AuthContext] Refreshing authentication state...');
+    setIsLoading(true);
+    
+    if (isMiniApp && frameContext?.user?.fid) {
+      // In mini app, re-check database for updated user data
+      const userData = await fetchUserFromSupabase(frameContext.user.fid);
+      if (userData) {
+        setUser({
+          ...userData,
+          username: frameContext.user.username || userData.username,
+          displayName: frameContext.user.displayName || userData.displayName,
+          avatar: frameContext.user.pfpUrl || userData.avatar,
+        });
+        setIsAuthenticated(true);
+        console.log('[AuthContext] Mini app auth refreshed:', userData);
+      }
+    } else if (typeof window !== 'undefined') {
+      // In web environment, check localStorage
+      const storedAuthData = localStorage.getItem('siwn_auth_data');
+      if (storedAuthData) {
+        const siwnData = JSON.parse(storedAuthData);
+        if (siwnData.fid) {
+          const userData = await fetchUserFromSupabase(siwnData.fid);
+          if (userData) {
+            setUser({
+              ...userData,
+              avatar: siwnData.user?.pfp_url || userData.avatar,
+            });
+            setIsAuthenticated(true);
+            console.log('[AuthContext] Web auth refreshed:', userData);
+          }
+        }
+      }
+    }
+    
+    setIsLoading(false);
+  };
+
   const updateAuthFromSIWN = async (siwnData: any) => {
     console.log('[AuthContext] Updating auth from SIWN data:', siwnData);
     
@@ -163,16 +205,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
     }
     
-    // Fetch the latest user data from Supabase
-    const userData = await fetchUserFromSupabase(siwnData.fid);
-    
-    if (userData) {
-      setUser({
-        ...userData,
-        avatar: siwnData.user?.pfp_url || userData.avatar,
-      });
-      setIsAuthenticated(true);
-    }
+    // Give the database a moment to update, then refresh authentication state
+    setTimeout(async () => {
+      await refreshAuth();
+    }, 1000);
   };
 
   const signIn = () => {
@@ -199,6 +235,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signOut,
     updateAuthFromSIWN,
+    refreshAuth,
   };
 
   return (

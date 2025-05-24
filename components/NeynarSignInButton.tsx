@@ -65,15 +65,15 @@ export default function NeynarSignInButton({
           
           // Show appropriate success message
           if (showAsSignerDelegation) {
-            alert('🎉 Posting permissions granted! You can now schedule casts.');
+            console.log('🎉 Posting permissions granted! You can now schedule casts.');
           } else if (frameUserFid && data.fid === frameUserFid) {
-            alert('🎉 Sign-in successful! You can now schedule casts.');
+            console.log('🎉 Sign-in successful! You can now schedule casts.');
           } else {
-            alert('🎉 Sign-in successful! You can now schedule casts.');
+            console.log('🎉 Sign-in successful! You can now schedule casts.');
           }
           
-          // Refresh the page to update the UI
-          window.location.reload();
+          // Do NOT reload the page - let the auth context handle the state update
+          console.log("[SIWN] Authentication complete - state should update automatically");
         }
       } catch (error) {
         console.error('Error handling SIWN success:', error);
