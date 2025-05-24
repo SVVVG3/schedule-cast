@@ -2,13 +2,45 @@
 
 import { useFrameContext } from '@/lib/frame-context';
 import { useAuth } from '@/lib/auth-context';
+import { useEffect, useState } from 'react';
 import CompactCastForm from '@/components/CompactCastForm';
 import CompactScheduledCasts from '@/components/CompactScheduledCasts';
 import UniversalAuthButton from '@/components/UniversalAuthButton';
 
 export default function MiniAppPage() {
   const { isFrameApp, frameContext, isLoading } = useFrameContext();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, refreshAuth } = useAuth();
+  const [siwnMessage, setSiwnMessage] = useState<string | null>(null);
+
+  // Check for SIWN completion on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const siwnComplete = urlParams.get('siwn_complete');
+    const siwnError = urlParams.get('siwn_error');
+    
+    if (siwnComplete === 'true') {
+      console.log('[MiniApp] SIWN completion detected - refreshing auth state');
+      setSiwnMessage('✅ Authentication successful! Refreshing...');
+      
+      // Clean URL
+      window.history.replaceState({}, '', '/miniapp');
+      
+      // Refresh auth state
+      setTimeout(() => {
+        refreshAuth?.();
+        setSiwnMessage(null);
+      }, 1500);
+    } else if (siwnError) {
+      console.log('[MiniApp] SIWN error detected:', siwnError);
+      setSiwnMessage(`❌ Authentication error: ${siwnError}`);
+      
+      // Clean URL
+      window.history.replaceState({}, '', '/miniapp');
+      
+      // Clear message after delay
+      setTimeout(() => setSiwnMessage(null), 3000);
+    }
+  }, [refreshAuth]);
 
   if (isLoading) {
     return (
@@ -40,6 +72,15 @@ export default function MiniAppPage() {
 
       {/* Main Content */}
       <main className="px-6 py-8 w-full overflow-x-hidden flex justify-center">
+        {/* SIWN Status Message */}
+        {siwnMessage && (
+          <div className="fixed top-20 left-4 right-4 z-50 max-w-sm mx-auto">
+            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-lg">
+              <p className="text-white text-center text-sm">{siwnMessage}</p>
+            </div>
+          </div>
+        )}
+
         {isAuthenticated ? (
           <div className="space-y-8 max-w-sm w-full mx-auto">
             {/* User Profile Section */}
