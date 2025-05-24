@@ -106,12 +106,13 @@ export async function GET(request: NextRequest) {
 
     console.log(`[${timestamp}] Using time column: ${timeColumn}`);
 
-    // Get all scheduled casts that are due
+    // Get all scheduled casts that are due (excluding ones with errors unless older than 24 hours)
     const { data: casts, error } = await supabase
       .from('scheduled_casts')
       .select('*')
       .lte(timeColumn, new Date().toISOString())
-      .eq('posted', false);
+      .eq('posted', false)
+      .or(`error.is.null,updated_at.lt.${new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()}`);
 
     if (error) {
       console.error(`[${timestamp}] Error fetching scheduled casts:`, error);
@@ -226,7 +227,29 @@ export async function GET(request: NextRequest) {
                 }
               } catch (refreshError) {
                 console.error(`[${timestamp}] Error validating/refreshing signer:`, refreshError);
-                // Continue with the original signer, it might still work
+                
+                // If the error is specifically about needing approval, skip this cast
+                if (refreshError instanceof Error && refreshError.message && refreshError.message.includes('Signer needs approval')) {
+                  console.log(`[${timestamp}] Skipping cast ${cast.id} - signer needs approval`);
+                  
+                  // Mark this cast with an error to prevent retrying
+                  await supabase
+                    .from('scheduled_casts')
+                    .update({ 
+                      error: 'Signer needs approval in Warpcast before this cast can be posted',
+                      updated_at: new Date().toISOString()
+                    })
+                    .eq('id', cast.id);
+                  
+                  failCount++;
+                  failureReasons.push({ 
+                    id: cast.id, 
+                    reason: 'Signer needs approval in Warpcast' 
+                  });
+                  continue;
+                }
+                
+                // Continue with the original signer for other errors
               }
             }
             
@@ -284,6 +307,27 @@ export async function GET(request: NextRequest) {
           } catch (directPostError: any) {
             console.error(`[${timestamp}] Failed to post with direct signer_uuid:`, directPostError);
             
+            // If the error is about signer not being approved, skip this cast
+            if (directPostError.message && directPostError.message.includes('SignerNotApproved')) {
+              console.log(`[${timestamp}] Skipping cast ${cast.id} - signer not approved`);
+              
+              // Mark this cast with an error to prevent retrying
+              await supabase
+                .from('scheduled_casts')
+                .update({ 
+                  error: 'Signer needs approval in Warpcast before this cast can be posted',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', cast.id);
+              
+              failCount++;
+              failureReasons.push({ 
+                id: cast.id, 
+                reason: 'Signer not approved in Warpcast' 
+              });
+              continue;
+            }
+            
             // If we have a FID, try to look up the current signer from the users table
             if (cast.fid) {
               try {
@@ -325,8 +369,29 @@ export async function GET(request: NextRequest) {
                     
                     successCount++;
                     continue;
-                  } catch (userSignerError) {
+                  } catch (userSignerError: any) {
                     console.error(`[${timestamp}] Failed to post with user's current signer:`, userSignerError);
+                    
+                    // If the user's signer is also not approved, skip this cast completely
+                    if (userSignerError.message && userSignerError.message.includes('SignerNotApproved')) {
+                      console.log(`[${timestamp}] User's signer also not approved, skipping cast ${cast.id}`);
+                      
+                      // Mark this cast with an error to prevent retrying
+                      await supabase
+                        .from('scheduled_casts')
+                        .update({ 
+                          error: 'User signer needs approval in Warpcast before this cast can be posted',
+                          updated_at: new Date().toISOString()
+                        })
+                        .eq('id', cast.id);
+                      
+                      failCount++;
+                      failureReasons.push({ 
+                        id: cast.id, 
+                        reason: 'User signer not approved in Warpcast' 
+                      });
+                      continue;
+                    }
                   }
                 }
               } catch (userLookupError) {
