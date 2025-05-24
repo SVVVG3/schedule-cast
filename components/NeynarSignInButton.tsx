@@ -26,14 +26,20 @@ export default function NeynarSignInButton({
 
     // Define the global callback function exactly as Neynar docs specify
     (window as any).onSignInSuccess = async (data: any) => {
-      console.log("Sign-in success with data:", data);
+      console.log("===== SIWN SUCCESS DATA =====");
+      console.log("Full SIWN response:", JSON.stringify(data, null, 2));
+      console.log("FID:", data.fid);
+      console.log("Signer UUID:", data.signer_uuid);
+      console.log("User data:", data.user);
+      console.log("============================");
       
       try {
         if (data.fid && data.signer_uuid) {
-          // Update auth context
+          // Update auth context first
           await updateAuthFromSIWN(data);
           
-          // Store signer in Supabase and check approval status
+          // Store signer in Supabase
+          console.log("[SIWN] Storing signer in database...");
           const storeResponse = await fetch('/api/signer/store', {
             method: 'POST',
             headers: {
@@ -47,31 +53,48 @@ export default function NeynarSignInButton({
             }),
           });
           
-          // Check signer approval status
-          const approvalResponse = await fetch(`/api/signer/approval-status?fid=${data.fid}`);
-          const approvalData = await approvalResponse.json();
+          if (!storeResponse.ok) {
+            console.error("[SIWN] Failed to store signer:", await storeResponse.text());
+          } else {
+            console.log("[SIWN] Signer stored successfully");
+          }
           
-          console.log('SIWN auth complete! Signer status:', approvalData);
-          
-          // If signer needs approval, show the user a message
-          if (approvalData.needs_approval && approvalData.approval_url) {
-            alert(`🎉 Sign-in successful! 
+          // Test the signer immediately after SIWN success
+          console.log("[SIWN] Testing signer immediately after sign-in...");
+          try {
+            const testResponse = await fetch(`/api/test-siwn-signer?fid=${data.fid}`);
+            const testData = await testResponse.json();
+            console.log("[SIWN] Immediate signer test result:", testData);
             
-However, you need to approve Schedule-Cast to post on your behalf.
+            if (testData.results?.tests?.post_cast?.success) {
+              alert('🎉 Sign-in successful! Your signer is working and can post casts immediately!');
+            } else if (testData.results?.tests?.signer_info?.success) {
+              // Signer exists but can't post yet
+              const signerStatus = testData.results.tests.signer_info.status;
+              console.log("[SIWN] Signer exists but status is:", signerStatus);
+              
+              if (signerStatus === 'approved') {
+                alert('🎉 Sign-in successful! Your signer is approved and ready to use!');
+              } else {
+                alert(`⏳ Sign-in successful! Your signer status is "${signerStatus}". 
 
-Click OK to be redirected to Warpcast for approval (this is a one-time step).
+This might be temporary - SIWN signers should be approved automatically. Please try scheduling a cast, and if it fails, the app will guide you through manual approval.`);
+              }
+            } else {
+              // Signer doesn't exist in Neynar yet
+              console.warn("[SIWN] Signer not found in Neynar immediately after SIWN success");
+              alert(`⏳ Sign-in successful! However, your signer isn't active in Neynar yet.
 
-After approval, you can schedule casts!`);
-            
-            // Open approval URL
-            window.open(approvalData.approval_url, '_blank');
-          } else if (approvalData.status === 'approved') {
-            alert('🎉 Sign-in successful! Your signer is approved and ready to use!');
+This might be a temporary delay. Please try scheduling a cast in a few minutes. If it still fails, the app will guide you through manual approval.`);
+            }
+          } catch (testError) {
+            console.error("[SIWN] Error testing signer immediately:", testError);
+            alert('🎉 Sign-in successful! We couldn\'t test your signer immediately, but you can try scheduling casts now.');
           }
         }
       } catch (error) {
         console.error('Error handling SIWN success:', error);
-        alert('Sign-in successful, but there was an issue checking signer status. You may need to approve your signer in Warpcast.');
+        alert('Sign-in successful, but there was an issue processing your signer. You may need to approve it manually.');
       }
     };
 
