@@ -42,16 +42,16 @@ export default function MiniAppPage() {
       }}
     >
       {/* Header */}
-      <header className="bg-gray-800 shadow-sm border-b border-gray-700 px-4 py-4" style={{ backgroundColor: '#1f2937 !important', borderColor: '#374151 !important' }}>
+      <header className="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-6" style={{ backgroundColor: '#1f2937 !important', borderColor: '#374151 !important' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-sm">SC</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Schedule Cast</h1>
+              <h1 className="text-2xl font-bold text-white">Schedule Cast</h1>
               {isFrameApp && (
-                <p className="text-sm text-gray-300">Farcaster Mini App</p>
+                <p className="text-base text-gray-300">Farcaster Mini App</p>
               )}
             </div>
           </div>
@@ -61,25 +61,25 @@ export default function MiniAppPage() {
       </header>
 
       {/* Main Content */}
-      <main className="px-4 py-6 w-full overflow-x-hidden">
+      <main className="px-6 py-8 w-full overflow-x-hidden">
         {isAuthenticated ? (
-          <div className="space-y-6 max-w-sm mx-auto">
+                      <div className="space-y-8 max-w-sm mx-auto">
             {frameContext?.user && (
-              <div className="bg-gray-800 rounded-xl p-5 shadow-lg border border-gray-700">
-                <h2 className="text-base font-medium text-gray-300 mb-3">Signed in as</h2>
-                <div className="flex items-center space-x-3">
+              <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
+                <h2 className="text-lg font-medium text-gray-300 mb-4">Signed in as</h2>
+                <div className="flex items-center space-x-4">
                   {frameContext.user.pfpUrl && (
                     <img
                       src={frameContext.user.pfpUrl}
                       alt={frameContext.user.displayName || frameContext.user.username || 'User'}
-                      className="w-12 h-12 rounded-full border-2 border-gray-600"
+                      className="w-16 h-16 rounded-full border-2 border-gray-600"
                     />
                   )}
                   <div>
-                    <p className="font-medium text-white text-base">
+                    <p className="font-medium text-white text-lg">
                       {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
                     </p>
-                    <p className="text-sm text-gray-400">FID: {frameContext.user.fid}</p>
+                    <p className="text-base text-gray-400">FID: {frameContext.user.fid}</p>
                   </div>
                 </div>
               </div>
