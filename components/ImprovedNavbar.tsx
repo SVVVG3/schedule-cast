@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
-import { useUser } from '@/lib/user-context';
+import AuthButton from './AuthButton';
 
 export default function ImprovedNavbar() {
   const { user: authUser, isAuthenticated, signOut } = useAuth();
-  const { supabaseUser } = useUser();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -19,14 +17,16 @@ export default function ImprovedNavbar() {
     <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600">
+          {/* Logo and App Name */}
+          <div className="flex items-center space-x-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 flex-shrink-0">
               <svg
-                className="h-5 w-5 text-white"
+                className="h-5 w-5 text-white flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                width="20"
+                height="20"
               >
                 <path
                   strokeLinecap="round"
@@ -39,25 +39,9 @@ export default function ImprovedNavbar() {
             <span className="text-xl font-bold text-gray-900">
               Schedule Cast
             </span>
-          </Link>
-
-          {/* Navigation Links */}
-          <div className="flex items-center space-x-6">
-            <Link
-              href="/dashboard"
-              className="text-gray-700 hover:text-purple-600 transition-colors duration-200 font-medium"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/api-test"
-              className="text-gray-700 hover:text-purple-600 transition-colors duration-200 font-medium"
-            >
-              API Test
-            </Link>
           </div>
 
-          {/* User Section */}
+          {/* Auth Section */}
           <div className="flex items-center">
             {isAuthenticated && authUser ? (
               <div className="relative">
@@ -124,15 +108,11 @@ export default function ImprovedNavbar() {
                 )}
               </div>
             ) : (
-              <div className="text-sm text-gray-600">
-                Not connected
-              </div>
+              <AuthButton className="px-4 py-2 text-sm" />
             )}
           </div>
         </div>
       </div>
-
-
     </nav>
   );
 } 
