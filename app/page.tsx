@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import SupabaseStatus from '@/components/SupabaseStatus';
+
 import CompactCastForm from '@/components/CompactCastForm';
 import { useAuth } from '@/lib/auth-context';
 
@@ -49,10 +49,7 @@ export default function Home() {
         {/* Cast Form */}
         <CompactCastForm />
 
-        {/* Status */}
-        <div className="mt-8 text-center">
-          <SupabaseStatus />
-        </div>
+
 
                  {/* Additional Info */}
          <div className="mt-12 text-center">
@@ -89,12 +86,7 @@ export default function Home() {
            </div>
          </div>
         
-        {/* Footer */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-gray-500">
-            A modern Farcaster mini app for scheduling casts
-          </p>
-        </div>
+
       </div>
     </div>
   )

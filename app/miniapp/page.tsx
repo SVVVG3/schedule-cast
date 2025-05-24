@@ -30,7 +30,7 @@ export default function MiniAppPage() {
 
   return (
     <div 
-      className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50"
+      className="min-h-screen bg-white"
       style={{
         paddingTop: `${safeAreaInsets.top}px`,
         paddingBottom: `${safeAreaInsets.bottom}px`,
@@ -58,9 +58,9 @@ export default function MiniAppPage() {
       </header>
 
       {/* Main Content */}
-      <main className="p-4">
+      <main className="px-3 py-4 w-full overflow-x-hidden">
         {isAuthenticated ? (
-          <div className="space-y-6">
+          <div className="space-y-4 max-w-sm mx-auto">
             {frameContext?.user && (
               <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
                 <h2 className="text-sm font-medium text-gray-700 mb-2">Signed in as</h2>

@@ -94,7 +94,7 @@ export default function SimpleCastForm() {
       margin: '0 auto'
     }}>
       <h3 style={{ marginBottom: '20px', fontSize: '18px', fontWeight: 'bold' }}>
-        Schedule a Cast (Simple Version)
+        Schedule a Cast
       </h3>
 
       {submitSuccess && (

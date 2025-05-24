@@ -85,9 +85,9 @@ export default function CompactCastForm() {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+    <div className="w-full max-w-sm sm:max-w-lg mx-auto">
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-200 p-3 sm:p-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 text-center">
           Schedule Your Cast
         </h2>
 
@@ -125,7 +125,7 @@ export default function CompactCastForm() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Date
