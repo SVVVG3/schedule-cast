@@ -72,31 +72,31 @@ export default function MiniAppPage() {
         {isAuthenticated ? (
           <div className="space-y-8 max-w-sm w-full">
             {frameContext?.user && (
-              <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
-                <h2 className="text-lg font-medium text-gray-300 mb-4">Signed in as</h2>
-                <div className="flex items-center space-x-4">
+              <div className="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-300 font-medium">Signed in as</span>
                   {frameContext.user.pfpUrl && (
-                    <div className="w-16 h-16 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
                       <img
                         src={frameContext.user.pfpUrl}
                         alt={frameContext.user.displayName || frameContext.user.username || 'User'}
                         className="w-full h-full object-cover"
                         style={{ 
-                          width: '64px !important', 
-                          height: '64px !important',
-                          maxWidth: '64px',
-                          maxHeight: '64px',
-                          minWidth: '64px',
-                          minHeight: '64px'
+                          width: '48px !important', 
+                          height: '48px !important',
+                          maxWidth: '48px',
+                          maxHeight: '48px',
+                          minWidth: '48px',
+                          minHeight: '48px'
                         }}
                       />
                     </div>
                   )}
-                  <div>
-                    <p className="font-medium text-white text-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-white text-base truncate">
                       {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
                     </p>
-                    <p className="text-base text-gray-400">FID: {frameContext.user.fid}</p>
+                    <p className="text-sm text-gray-400">FID: {frameContext.user.fid}</p>
                   </div>
                 </div>
               </div>
