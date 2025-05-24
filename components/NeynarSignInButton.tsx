@@ -24,6 +24,12 @@ export default function NeynarSignInButton({
   useEffect(() => {
     if (!isClient) return;
 
+    // Detect if we're in mobile/frame environment
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                    window.location.pathname.startsWith('/miniapp') ||
+                    window.location.search.includes('miniApp=true') ||
+                    window.parent !== window;
+
     // Define the global callback function exactly as Neynar docs specify
     (window as any).onSignInSuccess = async (data: any) => {
       console.log("===== SIWN SUCCESS DATA =====");
@@ -95,16 +101,23 @@ You can try scheduling casts now - if approval is needed, the app will guide you
       document.body.appendChild(script);
     }
 
-    // Create the SIWN widget div exactly as documented
+    // Create the SIWN widget div with mobile-optimized configuration
     if (containerRef.current) {
       const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
+      
+      // For mobile/frame environment, configure for direct redirect instead of QR code
+      // Use data-redirect_url to specify where mobile users should be redirected
+      const currentUrl = window.location.origin + window.location.pathname;
+      const mobileConfig = isMobile ? 
+        `data-modal="true" data-redirect_url="${currentUrl}"` : '';
       
       containerRef.current.innerHTML = `
         <div
           class="neynar_signin"
           data-client_id="${clientId}"
           data-success-callback="onSignInSuccess"
-          data-theme="${theme}">
+          data-theme="${theme}"
+          ${mobileConfig}>
         </div>
       `;
     }
