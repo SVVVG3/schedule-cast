@@ -15,14 +15,14 @@ export const metadata: Metadata = {
   },
   other: {
     'fc:frame': JSON.stringify({
-      "version": "1",
+      "version": "next",
       "imageUrl": "https://schedule-cast.vercel.app/ScheduleCastEmbed.png",
       "button": {
         "title": "📅 Schedule Cast",
         "action": {
           "type": "launch_frame",
-          "name": "Schedule Cast",
           "url": "https://schedule-cast.vercel.app/miniapp",
+          "name": "Schedule Cast",
           "splashImageUrl": "https://schedule-cast.vercel.app/ScheduleCastLogo.png",
           "splashBackgroundColor": "#000000"
         }
