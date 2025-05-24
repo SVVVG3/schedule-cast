@@ -1,19 +1,38 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabase.auth.getSession();
+    // Get FID from request headers or query params (set by SIWN)
+    const fid = request.headers.get('x-fid') || request.nextUrl.searchParams.get('fid');
     
-    if (error) {
-      console.error('Supabase session error:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!fid) {
+      return NextResponse.json({ session: null });
     }
     
-    // Return the session data (will be empty if no user is logged in)
-    return NextResponse.json({ session: data.session });
+    // Fetch user data from our custom users table
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('fid', parseInt(fid))
+      .single();
+    
+    if (error || !userData) {
+      console.log(`[session] User with FID ${fid} not found in database`);
+      return NextResponse.json({ session: null });
+    }
+    
+    // Return user data in the format expected by AuthContext
+    return NextResponse.json({
+      fid: userData.fid,
+      username: userData.username,
+      displayName: userData.display_name,
+      avatar: userData.avatar,
+      signer_uuid: userData.signer_uuid,
+      delegated: userData.delegated || false,
+    });
   } catch (err) {
-    console.error('Error fetching Supabase session:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('[session] Error fetching session:', err);
+    return NextResponse.json({ session: null });
   }
 } 

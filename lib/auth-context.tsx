@@ -113,19 +113,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(null);
         }
       } else {
-        // Regular web environment - check for SIWN session
+        // Regular web environment - check for SIWN session in localStorage
         try {
-          const response = await fetch('/api/auth/session');
-          if (response.ok) {
-            const userData = await response.json();
-            if (userData.fid) {
-              setUser(userData);
-              setIsAuthenticated(true);
-              console.log('[AuthContext] Web user authenticated:', userData);
+          if (typeof window !== 'undefined') {
+            const storedAuthData = localStorage.getItem('siwn_auth_data');
+            if (storedAuthData) {
+              const siwnData = JSON.parse(storedAuthData);
+              console.log('[AuthContext] Found stored SIWN data:', siwnData);
+              
+              // Fetch the latest user data from database
+              if (siwnData.fid) {
+                const userData = await fetchUserFromSupabase(siwnData.fid);
+                if (userData) {
+                  setUser({
+                    ...userData,
+                    avatar: siwnData.user?.pfp_url || userData.avatar,
+                  });
+                  setIsAuthenticated(true);
+                  console.log('[AuthContext] Web user authenticated from localStorage:', userData);
+                } else {
+                  // Stored data but no user in database - clear invalid data
+                  localStorage.removeItem('siwn_auth_data');
+                  console.log('[AuthContext] Cleared invalid stored auth data');
+                }
+              }
+            } else {
+              console.log('[AuthContext] No stored auth data found');
             }
           }
         } catch (error) {
           console.error('[AuthContext] Error checking web session:', error);
+          // Clear corrupted data
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('siwn_auth_data');
+          }
         }
       }
       
