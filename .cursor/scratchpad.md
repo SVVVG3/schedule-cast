@@ -113,7 +113,34 @@ The user has identified Farcaster mini app functionality as the **main priority*
 - ✅ Updated `UniversalAuthButton` to route between mini app and web flows
 - ✅ Enhanced `FrameContext` with proper `sdk.isInMiniApp()` detection
 
-**Deployment Status**: ✅ Successfully deployed to Vercel with the breakthrough fix!
+**Deployment Status**: ✅ Critical fixes committed and pushed to GitHub (auto-deploying to Vercel)
+
+**The Fix Summary**: We eliminated the wrong authentication system (Supabase Auth) and simplified the mini app flow to use SIWN directly as intended.
+
+### **🚨 LATEST MINI APP ISSUE IDENTIFIED AND FIXED**:
+
+#### **Mini App Flow Problem Discovered:**
+- **Issue**: User was authenticated (signed in as "Kat Karktel FID 481970") but stuck on "Signer Approval Required" screen
+- **Root Cause**: `SignerApprovalChecker` was showing "Open Warpcast to Approve" button for mini app users
+- **Problem**: Mini app users should see SIWN for signer delegation, not manual Warpcast approval
+
+#### **The Wrong Flow:**
+1. ✅ User authenticated in mini app (shows FID and name)  
+2. ❌ User has no `signer_uuid` yet (needs signer delegation)
+3. ❌ `SignerApprovalChecker` calls `/api/signer/approval-status` → returns `needs_approval: true`
+4. ❌ Shows "Open Warpcast to Approve" + "Check Status Again" buttons (don't work in mini app)
+
+#### **✅ THE FIX** (`components/SignerApprovalChecker.tsx`):
+- **Before**: Always showed Warpcast approval flow for `needs_approval: true`
+- **After**: Shows SIWN button for mini app users, Warpcast approval for web users
+- **Logic**: `isMiniApp ? <NeynarSignInButton> : <WarpcastApprovalButtons>`
+
+### **🎯 EXPECTED OUTCOME**:
+- ✅ **Mini app users** will now see **"Complete authentication with Neynar to get posting permissions"** with SIWN button
+- ✅ **Web users** still get the Warpcast approval flow (which works for web)
+- ✅ **One-step process** for mini app users: SIWN handles auth + signer creation + approval
+
+**Next Test**: Mini app user should see SIWN button instead of "Open Warpcast to Approve" when they need signer permissions.
 
 ## Executor's Feedback or Assistance Requests
 
