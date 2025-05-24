@@ -117,56 +117,64 @@ The user has identified Farcaster mini app functionality as the **main priority*
 
 ## Executor's Feedback or Assistance Requests
 
-**🚨 CRITICAL DATABASE ISSUE IDENTIFIED AND FIXED**:
+**🚨 ROOT CAUSES IDENTIFIED AND CRITICAL FIXES DEPLOYED**:
 
-### **🔍 THE REAL ROOT CAUSE - DATABASE COLUMN MISMATCH:**
+### **🔍 ACTUAL ROOT CAUSES OF AUTHENTICATION FAILURES:**
 
-You were absolutely right questioning why we're not using SIWN properly! The actual issue was:
+#### **1. Desktop Authentication Loop:**
+- **Root Cause**: `AuthContext` was calling `/api/auth/session` which used **Supabase Auth** (not our custom system)
+- **Problem**: Always returned empty session → user appeared unauthenticated after SIWN → endless reload loop
+- **Evidence**: User signs in, page reloads, appears signed out again
 
-#### **Database Schema Mismatch:**
-- The `signer/approval-status` API was trying to update **non-existent columns**:
-  - ❌ `signer_status` (doesn't exist)
-  - ❌ `needs_signer_approval` (doesn't exist)  
-  - ❌ `signer_approval_url` (doesn't exist)
+#### **2. Mini App Missing SIWN Button:**
+- **Root Cause**: Over-complicated `MiniAppAuth` component with broken "Grant Posting Permissions" button
+- **Problem**: API failure prevented showing SIWN → users stuck with non-functional button
+- **Evidence**: "Grant Posting Permissions" button did nothing when clicked
 
-#### **What Was Happening:**
-1. ✅ User completes SIWN → Gets `signer_uuid` + should set `delegated: true`
-2. ❌ Approval status API tries updating non-existent columns → **fails silently**
-3. ❌ `delegated` stays `FALSE` → User lands in `SignerApprovalChecker` 
-4. ❌ "Open Warpcast to Approve" button fails
+### ✅ **CRITICAL FIXES DEPLOYED**:
 
-### ✅ **CRITICAL FIX DEPLOYED**:
+#### **1. Fixed Desktop Authentication Loop** (`lib/auth-context.tsx`):
+- **Before**: Called Supabase Auth session API (wrong system)
+- **After**: Checks `localStorage.getItem('siwn_auth_data')` for our custom SIWN sessions
+- **Result**: SIWN sessions now persist correctly, no more reload loops
 
-#### **Database Column Correction** (`app/api/signer/approval-status/route.ts`):
-- **Before**: Tried updating `signer_status`, `needs_signer_approval`, `signer_approval_url`
-- **After**: Now correctly updates `delegated: true` using existing database schema
-- **Result**: SIWN signers are automatically approved without separate approval flow
+#### **2. Fixed Session API** (`app/api/auth/session/route.ts`):
+- **Before**: Used `supabase.auth.getSession()` (Supabase Auth we don't use)
+- **After**: Fetches from our custom users table using FID
+- **Result**: Returns actual user data instead of empty sessions
 
-#### **The Correct Flow Now:**
-1. ✅ User completes SIWN → Gets authenticated + `signer_uuid` + `delegated: true`
-2. ✅ Approval status API finds `delegated: true` → Returns "approved" 
-3. ✅ User skips `SignerApprovalChecker` → Goes straight to scheduling form
-4. ✅ **NO SEPARATE APPROVAL NEEDED** - SIWN handles everything!
+#### **3. Simplified Mini App Flow** (`components/MiniAppAuth.tsx`):
+- **Before**: Complex "Grant Posting Permissions" → API check → show SIWN flow
+- **After**: Shows SIWN button directly (SIWN handles everything in one step)
+- **Result**: No more broken intermediate buttons, direct path to authentication
 
 ### 📈 **EXPECTED OUTCOMES**:
 
-#### **Mini App Environment**:
-- ✅ **No more "Open Warpcast to Approve" button** - users skip approval step entirely
-- ✅ **SIWN handles authentication + signer permission in one step** (as it should)
-- ✅ **Direct access to scheduling form** after SIWN completion
-
 #### **Desktop Environment**:
-- ✅ **SIWN button should render properly** (logs show it's detecting correctly)
-- ✅ **Same one-step SIWN flow** for authentication + permissions
+- ✅ **No more authentication loops** - SIWN sessions persist properly
+- ✅ **Users stay logged in** after page reloads
+- ✅ **SIWN button works correctly** for authentication + signer delegation
 
-### 🔍 **TESTING STRATEGY**:
-1. **Mini App**: Complete SIWN and verify you go directly to scheduling form (no approval button)
-2. **Desktop**: Verify SIWN button renders and works properly
-3. **Both**: Check console logs for `[signer/approval-status] Skipping test post - assuming SIWN signer is approved`
+#### **Mini App Environment**:
+- ✅ **SIWN button shows immediately** when user needs authentication
+- ✅ **No more broken "Grant Posting Permissions" button**
+- ✅ **Direct authentication flow** - SIWN handles auth + signer in one step
 
-**Deployment Status**: ✅ Critical database fix committed and pushed to GitHub (auto-deploying to Vercel)
+### 🧪 **HOW TO TEST**:
 
-**Root Cause Summary**: You were 100% correct - SIWN should handle everything in one step. The database column mismatch was preventing this from working properly.
+#### **Desktop**:
+1. Refresh page → Should see SIWN button
+2. Complete SIWN → Should stay logged in (no reload loop)
+3. Refresh page again → Should remain authenticated
+
+#### **Mini App**:
+1. User without permissions → Should see SIWN button directly
+2. Complete SIWN → Should be authenticated with posting permissions
+3. No intermediate buttons or API failures
+
+**Deployment Status**: ✅ Critical fixes committed and pushed to GitHub (auto-deploying to Vercel)
+
+**The Fix Summary**: We eliminated the wrong authentication system (Supabase Auth) and simplified the mini app flow to use SIWN directly as intended.
 
 ## Lessons
 
