@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useFrameContext } from '@/lib/frame-context';
 
 interface SignerStatus {
   status: string;
@@ -16,6 +17,7 @@ interface SignerApprovalCheckerProps {
 
 export default function SignerApprovalChecker({ children, fallback }: SignerApprovalCheckerProps) {
   const { user, isAuthenticated } = useAuth();
+  const { isMiniApp } = useFrameContext();
   const [signerStatus, setSignerStatus] = useState<SignerStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,12 +56,23 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
 
   const handleApproval = () => {
     if (signerStatus?.approval_url) {
-      window.open(signerStatus.approval_url, '_blank');
+      console.log('[SignerApprovalChecker] Opening approval URL:', signerStatus.approval_url);
+      console.log('[SignerApprovalChecker] Is mini app:', isMiniApp);
+      
+      if (isMiniApp) {
+        // In mini app environment, try to open in current window which should stay in Farcaster
+        window.location.href = signerStatus.approval_url;
+      } else {
+        // In web environment, open in new tab
+        window.open(signerStatus.approval_url, '_blank');
+      }
       
       // Recheck status after a short delay to see if user approved
       setTimeout(() => {
         checkSignerStatus();
       }, 3000);
+    } else {
+      console.error('[SignerApprovalChecker] No approval URL available');
     }
   };
 

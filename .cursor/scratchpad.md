@@ -117,29 +117,48 @@ The user has identified Farcaster mini app functionality as the **main priority*
 
 ## Executor's Feedback or Assistance Requests
 
-**DEPLOYMENT ISSUE RESOLVED**: The Vercel deployment errors have been successfully fixed! Here's what was causing the issues and how they were resolved:
+**🚨 CRITICAL BUGS IDENTIFIED AND FIXED**:
 
-### 🚨 **Issues Found**:
-1. **Route Conflict**: Had duplicate `page.tsx` files in both `app/` and `app/(home)/` causing build conflicts
-2. **Solana Dependencies**: Farcaster Frame SDK was importing Solana packages that weren't properly resolved during build
+### Issues Found in Screenshots:
+1. **Mini App "Failed to create user" Error**: ❌ Database column mismatch - API was trying to insert non-existent `avatar` column
+2. **Desktop Missing SIWN Button**: ❌ FrameContext perpetual loading state preventing fallback to web authentication
 
-### ✅ **Solutions Implemented**:
-1. **Removed Route Group**: Deleted the conflicting `app/(home)` directory - only need root `app/page.tsx`
-2. **Improved Frame Detection**: Created `lib/frame-utils.ts` for better environment detection
-3. **Conditional Imports**: Made Frame SDK imports more conditional to avoid server-side bundling issues
-4. **Webpack Configuration**: Added aliases to exclude problematic Solana dependencies (`@solana/buffer-layout`, `@solana/codecs-numbers`, `@solana/web3.js`)
+### ✅ **FIXES IMPLEMENTED**:
 
-### 🎉 **Result**:
-- ✅ Build now succeeds locally (`npm run build` passes)
-- ✅ Changes pushed to GitHub to trigger new Vercel deployment
-- ✅ App should now deploy successfully to Vercel
+#### 1. **Database Column Fix** (`app/api/mini-app-auth/route.ts`):
+- **Problem**: API was trying to insert `avatar: pfpUrl` but `avatar` column doesn't exist in users table
+- **Solution**: Removed the problematic `avatar` column from insert statement
+- **Result**: Should eliminate "Failed to create user" error in mini app
 
-**Next Steps**: The deployment should complete successfully. Once deployed, please test:
-1. **Web Version**: Regular site functionality
-2. **Mini App Version**: `/miniapp` route for Farcaster integration
-3. **Authentication**: Both SIWN and Frame SDK authentication flows
+#### 2. **Authentication Flow Debugging** (`components/UniversalAuthButton.tsx`):
+- **Problem**: No visibility into why SIWN button wasn't rendering on desktop
+- **Solution**: Added comprehensive console logging to debug routing logic
+- **Result**: Can now trace authentication flow decisions
 
-The app is now ready for production use as a Farcaster mini app!
+#### 3. **FrameContext Timeout Fix** (`lib/frame-context.tsx`):
+- **Problem**: Frame SDK initialization could hang indefinitely, preventing web fallback
+- **Solution**: Added 3-second timeout mechanism to force fallback to web environment
+- **Result**: Desktop users should now see SIWN button after max 3 seconds
+
+### 🔍 **DEBUGGING STRATEGY**:
+The deployed version now includes extensive console logging to help diagnose:
+- Authentication state transitions
+- Frame vs web environment detection
+- User authentication status
+- Signer requirements
+
+### 📈 **EXPECTED OUTCOMES**:
+1. **Mini App Users**: Should no longer see "Failed to create user" error
+2. **Desktop Users**: Should see SIWN button within 3 seconds of page load
+3. **Both Environments**: Console logs will show exactly which authentication path is taken
+
+### ⚠️ **NEXT STEPS**:
+After deployment completes, test both environments and check browser console logs to verify:
+1. Mini app users can click "Grant Posting Permissions" without database errors
+2. Desktop users see SIWN button render properly
+3. Console logs show correct environment detection and routing
+
+**Deployment Status**: ✅ Fixes committed and pushed to GitHub (auto-deploying to Vercel)
 
 ## Lessons
 

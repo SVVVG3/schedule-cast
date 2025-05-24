@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
-import NeynarSignInButton from './NeynarSignInButton';
+import UniversalAuthButton from './UniversalAuthButton';
 import SignerApprovalChecker from './SignerApprovalChecker';
 
 interface CastFormData {
@@ -207,7 +207,7 @@ export default function CompactCastForm() {
             <p className="text-lg text-gray-300 mb-6">
               Sign in with your Farcaster account to start scheduling casts
             </p>
-            <NeynarSignInButton theme="dark" className="inline-block" />
+            <UniversalAuthButton className="inline-block" />
           </div>
         )}
       </div>
