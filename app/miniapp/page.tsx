@@ -69,12 +69,12 @@ export default function MiniAppPage() {
       </header>
 
       {/* Main Content */}
-      <main className="px-4 py-8 w-full overflow-x-hidden flex justify-center">
+      <main className="px-6 py-8 w-full overflow-x-hidden flex justify-center">
         {isAuthenticated ? (
-          <div className="space-y-8 max-w-sm w-full">
+          <div className="space-y-8 max-w-sm w-full mx-auto">
             {frameContext?.user && (
               <div className="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between px-2">
                   <span className="text-base text-gray-300 font-medium">Signed in as</span>
                   <div className="flex items-center space-x-3">
                     {frameContext.user.pfpUrl && (
@@ -98,7 +98,7 @@ export default function MiniAppPage() {
                       <p className="font-medium text-white text-base truncate">
                         {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
                       </p>
-                      <p className="text-xs text-gray-400 -mt-0.5">FID: {frameContext.user.fid}</p>
+                      <p className="text-xs text-gray-400 -mt-1">FID: {frameContext.user.fid}</p>
                     </div>
                   </div>
                 </div>
