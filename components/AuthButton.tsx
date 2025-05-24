@@ -50,9 +50,11 @@ export default function AuthButton({ className = '' }: AuthButtonProps) {
   }
   
   return (
-    <NeynarSignInButton 
-      theme="dark"
-      className={className}
-    />
+    <div className="flex items-center">
+      <NeynarSignInButton 
+        theme="dark"
+        className={`${className} min-w-[120px]`}
+      />
+    </div>
   );
 } 

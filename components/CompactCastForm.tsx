@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
+import NeynarSignInButton from './NeynarSignInButton';
 
 interface CastFormData {
   content: string;
@@ -189,9 +190,12 @@ export default function CompactCastForm() {
         </form>
 
         {!isAuthenticated && (
-          <p className="text-center text-sm text-gray-600 mt-4">
-            Sign in with your Farcaster account to start scheduling casts
-          </p>
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600 mb-3">
+              Sign in with your Farcaster account to start scheduling casts
+            </p>
+            <NeynarSignInButton theme="dark" className="inline-block" />
+          </div>
         )}
       </div>
     </div>
