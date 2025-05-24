@@ -28,19 +28,29 @@ export default function NeynarSignInButton({
   useEffect(() => {
     if (!isClient) return;
 
+    console.log("[SIWN] Initializing NeynarSignInButton...");
+    console.log("[SIWN] Current URL:", window.location.href);
+    console.log("[SIWN] Frame User FID:", frameUserFid);
+    console.log("[SIWN] Show as Signer Delegation:", showAsSignerDelegation);
+
     // Define the global callback function exactly as Neynar docs specify
     (window as any).onSignInSuccess = async (data: any) => {
-      console.log("===== SIWN SUCCESS DATA =====");
+      console.log("===== SIWN SUCCESS CALLBACK TRIGGERED =====");
+      console.log("Timestamp:", new Date().toISOString());
+      console.log("Current URL:", window.location.href);
       console.log("Full SIWN response:", JSON.stringify(data, null, 2));
       console.log("FID:", data.fid);
       console.log("Signer UUID:", data.signer_uuid);
       console.log("User data:", data.user);
-      console.log("============================");
+      console.log("===========================================");
       
       try {
         if (data.fid && data.signer_uuid) {
+          console.log("[SIWN] Starting authentication process...");
+          
           // Update auth context first
           await updateAuthFromSIWN(data);
+          console.log("[SIWN] Auth context updated");
           
           // Store signer in Supabase
           console.log("[SIWN] Storing signer in database...");
@@ -74,6 +84,8 @@ export default function NeynarSignInButton({
           
           // Do NOT reload the page - let the auth context handle the state update
           console.log("[SIWN] Authentication complete - state should update automatically");
+        } else {
+          console.error("[SIWN] Missing required data:", { fid: data.fid, signer_uuid: data.signer_uuid });
         }
       } catch (error) {
         console.error('Error handling SIWN success:', error);
@@ -88,7 +100,25 @@ export default function NeynarSignInButton({
       script.src = 'https://neynarxyz.github.io/siwn/raw/1.2.0/index.js';
       script.async = true;
       document.body.appendChild(script);
+      console.log("[SIWN] Neynar script loaded");
     }
+
+    // Add message listener for SIWN popup messages
+    const handleMessage = (event: MessageEvent) => {
+      console.log("[SIWN] Received window message:", event.origin, event.data);
+      if (event.origin === 'https://app.neynar.com' || event.origin === 'https://neynar.com') {
+        console.log("[SIWN] Message from Neynar:", event.data);
+        if (event.data && typeof event.data === 'object') {
+          if (event.data.type === 'SIWN_SUCCESS' || event.data.fid) {
+            console.log("[SIWN] Triggering success callback from message");
+            (window as any).onSignInSuccess?.(event.data);
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    console.log("[SIWN] Message listener added");
 
     // Create the SIWN widget div using standard configuration
     if (containerRef.current) {
@@ -102,11 +132,17 @@ export default function NeynarSignInButton({
         buttonText = 'Connect to Schedule-Cast';
       }
       
+      // Detect current URL for redirect - use mini app URL if available
+      const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+      const isInMiniApp = currentUrl.includes('/miniapp') || currentUrl.includes('schedule-cast.vercel.app');
+      const redirectUri = isInMiniApp ? 'https://schedule-cast.vercel.app/miniapp' : currentUrl;
+      
       containerRef.current.innerHTML = `
         <div
           class="neynar_signin"
           data-client_id="${clientId}"
           data-success-callback="onSignInSuccess"
+          data-redirect_uri="${redirectUri}"
           data-theme="${theme}"
           data-variant="neynar"
           data-text="${buttonText}"
@@ -121,6 +157,7 @@ export default function NeynarSignInButton({
       if ((window as any).onSignInSuccess) {
         delete (window as any).onSignInSuccess;
       }
+      window.removeEventListener('message', handleMessage);
     };
   }, [isClient, theme, updateAuthFromSIWN, showAsSignerDelegation, frameUserFid]);
 
