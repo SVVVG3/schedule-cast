@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from './supabase';
+import { isFrameEnvironment } from './frame-utils';
 
 // Define the user type for the authentication context
 interface AuthUser {
@@ -73,12 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initializeAuth = async () => {
       setIsLoading(true);
       
-      // Check if we're in a frame environment first
-      const isFrameEnv = window.location.pathname.startsWith('/miniapp') || 
-                        window.location.search.includes('miniApp=true') ||
-                        window.parent !== window;
+      // Check if we're in a frame environment
+      const isFrameEnv = isFrameEnvironment();
       
-      if (isFrameEnv) {
+      if (isFrameEnv && typeof window !== 'undefined') {
         try {
           // In frame environment, try to get context from Frame SDK
           const { sdk } = await import('@farcaster/frame-sdk');
@@ -117,30 +116,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // Fallback to SIWN auth data in localStorage for web environment
-      const siwnData = localStorage.getItem('siwn_auth_data');
-      
-      if (siwnData) {
-        try {
-          const parsedData = JSON.parse(siwnData);
-          
-          if (parsedData.fid) {
-            // Fetch the latest user data from Supabase
-            const userData = await fetchUserFromSupabase(parsedData.fid);
+      if (typeof window !== 'undefined') {
+        const siwnData = localStorage.getItem('siwn_auth_data');
+        
+        if (siwnData) {
+          try {
+            const parsedData = JSON.parse(siwnData);
             
-            if (userData) {
-              setUser({
-                fid: userData.fid,
-                username: userData.username,
-                displayName: userData.display_name,
-                avatar: parsedData.user?.pfp_url, // Use the avatar from SIWN data
-                signer_uuid: userData.signer_uuid,
-                delegated: userData.delegated,
-              });
+            if (parsedData.fid) {
+              // Fetch the latest user data from Supabase
+              const userData = await fetchUserFromSupabase(parsedData.fid);
+              
+              if (userData) {
+                setUser({
+                  fid: userData.fid,
+                  username: userData.username,
+                  displayName: userData.display_name,
+                  avatar: parsedData.user?.pfp_url, // Use the avatar from SIWN data
+                  signer_uuid: userData.signer_uuid,
+                  delegated: userData.delegated,
+                });
+              }
             }
+          } catch (error) {
+            console.error('[AuthContext] Error parsing stored auth data:', error);
+            localStorage.removeItem('siwn_auth_data');
           }
-        } catch (error) {
-          console.error('[AuthContext] Error parsing stored auth data:', error);
-          localStorage.removeItem('siwn_auth_data');
         }
       }
       
@@ -155,11 +156,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('[AuthContext] Sign in initiated');
     
     // Check if we're in a frame environment
-    const isFrameEnv = window.location.pathname.startsWith('/miniapp') || 
-                      window.location.search.includes('miniApp=true') ||
-                      window.parent !== window;
+    const isFrameEnv = isFrameEnvironment();
     
-    if (isFrameEnv) {
+    if (isFrameEnv && typeof window !== 'undefined') {
       try {
         // In frame environment, get user from context (user should already be authenticated)
         const { sdk } = await import('@farcaster/frame-sdk');

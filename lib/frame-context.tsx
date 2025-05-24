@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { isFrameEnvironment } from './frame-utils';
 
 // Types for Frame SDK (these will be available when SDK loads)
 interface FrameContext {
@@ -60,33 +61,43 @@ export function FrameContextProvider({ children }: FrameContextProviderProps) {
 
     async function initializeFrameSDK() {
       try {
+        // Only proceed if we're in a client environment
+        if (typeof window === 'undefined') {
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
+        }
+
         // Detect if we're in a frame environment
-        const isMiniApp = 
-          window.location.pathname.startsWith('/miniapp') ||
-          window.location.search.includes('miniApp=true') ||
-          window.parent !== window; // Basic iframe detection
+        const isMiniApp = isFrameEnvironment();
 
         console.log('Frame environment detection:', { isMiniApp, pathname: window.location.pathname, search: window.location.search });
 
         if (isMiniApp) {
-          // Dynamically import the Frame SDK
-          const { sdk: frameSDK } = await import('@farcaster/frame-sdk');
-          
-          if (mounted) {
-            console.log('Frame SDK loaded, initializing...');
-            setSdk(frameSDK);
-            setIsFrameApp(true);
+          // Only import SDK if we're actually in a frame environment
+          try {
+            const { sdk: frameSDK } = await import('@farcaster/frame-sdk');
+            
+            if (mounted) {
+              console.log('Frame SDK loaded, initializing...');
+              setSdk(frameSDK);
+              setIsFrameApp(true);
 
-            // Get frame context
-            if (frameSDK.context) {
-              const context = await frameSDK.context;
-              console.log('Frame context available:', context);
-              setFrameContext(context);
+              // Get frame context
+              if (frameSDK.context) {
+                const context = await frameSDK.context;
+                console.log('Frame context available:', context);
+                setFrameContext(context);
+              }
+
+              // Call ready to indicate the app is loaded
+              await frameSDK.actions.ready();
+              console.log('Frame SDK ready() called');
             }
-
-            // Call ready to indicate the app is loaded
-            await frameSDK.actions.ready();
-            console.log('Frame SDK ready() called');
+          } catch (sdkError) {
+            console.warn('Failed to load Frame SDK:', sdkError);
+            setIsFrameApp(false);
           }
         } else {
           console.log('Not in frame environment, using regular web mode');
