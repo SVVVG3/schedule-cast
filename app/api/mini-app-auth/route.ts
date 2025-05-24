@@ -74,58 +74,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create a managed signer using Neynar API
-    console.log('[MiniAppAuth] Creating managed signer for FID:', fid);
+    // For mini app users, we need to direct them to use SIWN
+    // Since SIWN creates the signer and gets it approved in one flow
+    console.log('[MiniAppAuth] User needs SIWN authentication for signer creation');
     
-    const neynarResponse = await fetch('https://api.neynar.com/v2/farcaster/signer', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'api_key': process.env.NEYNAR_API_KEY!,
-      },
-    });
-
-    if (!neynarResponse.ok) {
-      const errorText = await neynarResponse.text();
-      console.error('[MiniAppAuth] Failed to create signer:', errorText);
-      return NextResponse.json(
-        { error: 'Failed to create signer' },
-        { status: 500 }
-      );
-    }
-
-    const signerData = await neynarResponse.json();
-    console.log('[MiniAppAuth] Signer created:', signerData);
-
-    // Update user with new signer information
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        signer_uuid: signerData.signer_uuid,
-        delegated: false, // Will be updated to true when approved
-        updated_at: new Date().toISOString(),
-      })
-      .eq('fid', fid);
-
-    if (updateError) {
-      console.error('[MiniAppAuth] Error updating user with signer:', updateError);
-      return NextResponse.json(
-        { error: 'Failed to update user' },
-        { status: 500 }
-      );
-    }
-
-    // Return the approval URL for the user to approve the signer
     return NextResponse.json({
-      success: true,
-      message: 'Signer created, approval required',
-      signer_uuid: signerData.signer_uuid,
-      signer_approval_url: signerData.signer_approval_url,
-      user: {
-        ...userData,
-        signer_uuid: signerData.signer_uuid,
-        delegated: false,
-      },
+      success: false,
+      needsSIWN: true,
+      message: 'User needs to complete SIWN authentication to get signer permissions',
+      user: userData,
     });
 
   } catch (error) {
