@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
           fid: fid,
           username: username || `user${fid}`,
           display_name: displayName,
-          avatar: pfpUrl,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
