@@ -32,6 +32,9 @@ export default function MiniAppPage() {
     <div 
       className="min-h-screen bg-gray-900"
       style={{
+        backgroundColor: '#111827 !important',
+        color: '#ffffff !important',
+        minHeight: '100vh',
         paddingTop: `${safeAreaInsets.top}px`,
         paddingBottom: `${safeAreaInsets.bottom}px`,
         paddingLeft: `${safeAreaInsets.left}px`,
@@ -39,7 +42,7 @@ export default function MiniAppPage() {
       }}
     >
       {/* Header */}
-      <header className="bg-gray-800 shadow-sm border-b border-gray-700 px-4 py-4">
+      <header className="bg-gray-800 shadow-sm border-b border-gray-700 px-4 py-4" style={{ backgroundColor: '#1f2937 !important', borderColor: '#374151 !important' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">

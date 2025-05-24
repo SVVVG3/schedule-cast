@@ -87,7 +87,7 @@ export default function CompactCastForm() {
 
   return (
     <div className="w-full max-w-sm sm:max-w-lg mx-auto">
-      <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6 sm:p-8">
+      <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-6 sm:p-8" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
         <h2 className="text-2xl font-bold text-white mb-6 text-center">
           Schedule Your Cast
         </h2>
@@ -120,6 +120,7 @@ export default function CompactCastForm() {
               </label>
               <textarea
                 rows={5}
+                style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important' }}
                 className={`w-full px-4 py-4 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-base ${
                   !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-700 text-white border-gray-600 placeholder-gray-400'
                 }`}

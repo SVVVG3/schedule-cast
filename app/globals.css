@@ -24,4 +24,22 @@ html, body {
 /* Ensure no elements can cause horizontal overflow */
 .container, .max-w-2xl, .max-w-md {
   max-width: calc(100vw - 2rem);
-} 
+}
+
+/* Force dark mode override for embedded frames */
+body, html {
+  background-color: #111827 !important;
+  color: #ffffff !important;
+}
+
+/* Force dark inputs and forms */
+input, textarea, select {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  border-color: #4b5563 !important;
+}
+
+/* Force dark backgrounds */
+div, main, section, header, footer {
+  background-color: inherit !important;
+}

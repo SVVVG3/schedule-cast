@@ -33,7 +33,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-12 px-4">
+    <div className="min-h-screen bg-gray-900 py-12 px-4" style={{ backgroundColor: '#111827 !important', color: '#ffffff !important', minHeight: '100vh' }}>
       <div className="max-w-4xl mx-auto">
         
         {/* Header Section */}
