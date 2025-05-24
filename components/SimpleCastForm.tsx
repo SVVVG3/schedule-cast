@@ -85,9 +85,6 @@ export default function SimpleCastForm() {
 
   return (
     <div className="bg-gray-800 p-8 sm:p-10 rounded-xl border border-gray-700 shadow-lg w-full max-w-lg mx-auto" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
-      <h3 className="mb-8 text-3xl font-semibold text-white text-center">
-        Schedule a Cast
-      </h3>
 
       {submitSuccess && (
         <div className="bg-green-900 text-green-200 p-6 rounded-lg mb-8 border border-green-700 text-xl">

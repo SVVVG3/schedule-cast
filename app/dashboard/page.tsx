@@ -41,10 +41,28 @@ export default function Dashboard() {
       <div className="mx-auto max-w-2xl px-4 py-8">
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent mb-3">
-            Dashboard
-          </h1>
-          <p className="text-gray-300 text-lg">Schedule and manage your Farcaster casts</p>
+          <div className="flex items-center justify-center space-x-4 mb-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 flex-shrink-0">
+              <svg
+                className="h-7 w-7 text-white flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                width="28"
+                height="28"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+              Schedule Cast
+            </h1>
+          </div>
         </div>
         
         {supabaseUser ? (
