@@ -30,9 +30,12 @@ export async function GET(request: NextRequest) {
     const finalSigner = signer_uuid || alt_signer;
     
     if (!finalFid || !finalSigner) {
-      console.log('[siwn-complete] Missing required data - redirecting back anyway');
-      // Even if we don't have the data, redirect back so user doesn't get stuck
-      return NextResponse.redirect('https://schedule-cast.vercel.app/miniapp?siwn_error=missing_data');
+      console.log('[siwn-complete] Missing required data');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Missing required authentication data',
+        received: { fid: finalFid, signer_uuid: finalSigner }
+      }, { status: 400 });
     }
     
     console.log('[siwn-complete] Processing with:', { fid: finalFid, signer_uuid: finalSigner });
@@ -65,7 +68,11 @@ export async function GET(request: NextRequest) {
       
       if (updateError) {
         console.error('[siwn-complete] Error updating user:', updateError);
-        return NextResponse.redirect('https://schedule-cast.vercel.app/miniapp?siwn_error=update_failed');
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Failed to update user',
+          details: updateError 
+        }, { status: 500 });
       }
       
       console.log('[siwn-complete] User updated successfully');
@@ -89,19 +96,32 @@ export async function GET(request: NextRequest) {
       
       if (createError) {
         console.error('[siwn-complete] Error creating user:', createError);
-        return NextResponse.redirect('https://schedule-cast.vercel.app/miniapp?siwn_error=create_failed');
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Failed to create user',
+          details: createError 
+        }, { status: 500 });
       }
       
       console.log('[siwn-complete] User created successfully');
     }
     
-    console.log('[siwn-complete] SIWN completion stored successfully - redirecting back');
+    console.log('[siwn-complete] SIWN completion stored successfully');
     
-    // Redirect back to mini app with success flag
-    return NextResponse.redirect('https://schedule-cast.vercel.app/miniapp?siwn_complete=true');
+    // Return success JSON instead of redirect
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Authentication completed successfully',
+      fid: finalFid,
+      signer_uuid: finalSigner 
+    });
     
   } catch (error) {
     console.error('[siwn-complete] Unexpected error:', error);
-    return NextResponse.redirect('https://schedule-cast.vercel.app/miniapp?siwn_error=unexpected');
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Unexpected error during authentication',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 } 

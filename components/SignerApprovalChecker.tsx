@@ -135,7 +135,7 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
                 <button
                   onClick={() => {
                     const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
-                    const redirectUri = encodeURIComponent('https://schedule-cast.vercel.app/api/siwn-complete');
+                    const redirectUri = encodeURIComponent('https://schedule-cast.vercel.app/siwn-bridge');
                     const siwnUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
                     
                     // Navigate the entire mini app to SIWN
