@@ -26,6 +26,13 @@ export class NeynarError extends Error {
   }
 }
 
+// Return type for validateAndRefreshSigner
+export interface SignerValidationResult {
+  signerUuid: string;
+  refreshed: boolean;
+  approved: boolean;
+}
+
 // Rate limiting utilities
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -226,7 +233,7 @@ export async function createSigner(fid: number) {
  * @param fid The Farcaster ID associated with the signer
  * @returns An object with the valid signer UUID and whether it was refreshed
  */
-export async function validateAndRefreshSigner(signerUuid: string, fid: number) {
+export async function validateAndRefreshSigner(signerUuid: string, fid: number): Promise<SignerValidationResult> {
   if (!process.env.NEYNAR_API_KEY) {
     throw new NeynarError('Neynar API key is missing', 500);
   }
@@ -395,6 +402,9 @@ export async function validateAndRefreshSigner(signerUuid: string, fid: number) 
     console.error(`[validateAndRefreshSigner] Error:`, error);
     throw error instanceof NeynarError ? error : new NeynarError(`Unexpected error: ${(error as Error).message}`, 500);
   }
+  
+  // This should never be reached, but TypeScript requires it
+  throw new NeynarError('Unknown error in validateAndRefreshSigner', 500);
 }
 
 /**
