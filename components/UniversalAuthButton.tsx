@@ -10,22 +10,18 @@ interface UniversalAuthButtonProps {
 }
 
 export default function UniversalAuthButton({ className = '' }: UniversalAuthButtonProps) {
-  const { user, isAuthenticated, signOut } = useAuth();
-  const { isFrameApp, frameContext, signIn: frameSignIn } = useFrameContext();
+  const { user, isAuthenticated, signOut, signIn } = useAuth();
+  const { isFrameApp, frameContext } = useFrameContext();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const handleFrameSignIn = async () => {
-    if (!isFrameApp) return;
-    
+  const handleSignIn = async () => {
     setIsSigningIn(true);
     try {
-      const result = await frameSignIn();
-      console.log('Frame authentication successful:', result);
-      // Handle the authentication result...
-      // This would typically update the auth context
+      await signIn();
+      console.log('Authentication successful');
     } catch (error) {
-      console.error('Frame authentication failed:', error);
+      console.error('Authentication failed:', error);
     } finally {
       setIsSigningIn(false);
     }
@@ -75,7 +71,7 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
   if (isFrameApp) {
     return (
       <button
-        onClick={handleFrameSignIn}
+        onClick={handleSignIn}
         disabled={isSigningIn}
         className={`px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition duration-150 disabled:opacity-50 flex items-center space-x-2 ${className}`}
       >

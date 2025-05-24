@@ -73,7 +73,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initializeAuth = async () => {
       setIsLoading(true);
       
-      // Check for SIWN auth data in localStorage
+      // Check if we're in a frame environment first
+      const isFrameEnv = window.location.pathname.startsWith('/miniapp') || 
+                        window.location.search.includes('miniApp=true') ||
+                        window.parent !== window;
+      
+      if (isFrameEnv) {
+        try {
+          // In frame environment, try to get context from Frame SDK
+          const { sdk } = await import('@farcaster/frame-sdk');
+          if (sdk.context) {
+            const frameContext = await sdk.context;
+            if (frameContext?.user?.fid) {
+              console.log('[AuthContext] Frame user detected:', frameContext.user);
+              
+              // Try to fetch user data from Supabase, but don't require it for frame auth
+              const userData = await fetchUserFromSupabase(frameContext.user.fid);
+              
+              setUser({
+                fid: frameContext.user.fid,
+                username: frameContext.user.username || userData?.username,
+                displayName: frameContext.user.displayName || userData?.display_name,
+                avatar: frameContext.user.pfpUrl || userData?.avatar,
+                signer_uuid: userData?.signer_uuid,
+                delegated: userData?.delegated ?? true, // Frame users are considered authenticated
+              });
+              
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (error) {
+          console.log('[AuthContext] Frame SDK not available or no context:', error);
+        }
+      }
+      
+      // Fallback to SIWN auth data in localStorage for web environment
       const siwnData = localStorage.getItem('siwn_auth_data');
       
       if (siwnData) {
@@ -107,12 +142,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
   }, []);
   
-  // Sign in function - this is mostly a placeholder since the actual sign-in
-  // happens through the NeynarSignInButton component
+  // Sign in function - handles both frame and web environments
   const signIn = async () => {
-    // We don't need to do anything here - the NeynarSignInButton component
-    // handles the sign-in flow and updates the auth state
     console.log('[AuthContext] Sign in initiated');
+    
+    // Check if we're in a frame environment
+    const isFrameEnv = window.location.pathname.startsWith('/miniapp') || 
+                      window.location.search.includes('miniApp=true') ||
+                      window.parent !== window;
+    
+    if (isFrameEnv) {
+      try {
+        // In frame environment, get user from context (user should already be authenticated)
+        const { sdk } = await import('@farcaster/frame-sdk');
+        if (sdk.context) {
+          const frameContext = await sdk.context;
+          if (frameContext?.user?.fid) {
+            const userData = await fetchUserFromSupabase(frameContext.user.fid);
+            
+            setUser({
+              fid: frameContext.user.fid,
+              username: frameContext.user.username || userData?.username,
+              displayName: frameContext.user.displayName || userData?.display_name,
+              avatar: frameContext.user.pfpUrl || userData?.avatar,
+              signer_uuid: userData?.signer_uuid,
+              delegated: userData?.delegated ?? true,
+            });
+            
+            console.log('[AuthContext] Frame user signed in:', frameContext.user.fid);
+            return;
+          }
+        }
+        throw new Error('No frame context available');
+      } catch (error) {
+        console.error('[AuthContext] Frame sign-in failed:', error);
+        throw error;
+      }
+    }
+    
+    // For web environment, the NeynarSignInButton component handles the sign-in flow
   };
   
   // Sign out function
