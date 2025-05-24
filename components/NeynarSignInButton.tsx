@@ -6,11 +6,15 @@ import { useUpdateAuthFromSIWN } from '@/lib/auth-context';
 interface NeynarSignInButtonProps {
   theme?: 'light' | 'dark';
   className?: string;
+  showAsSignerDelegation?: boolean;
+  frameUserFid?: number;
 }
 
 export default function NeynarSignInButton({
   theme = 'dark',
-  className = ''
+  className = '',
+  showAsSignerDelegation = false,
+  frameUserFid
 }: NeynarSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const updateAuthFromSIWN = useUpdateAuthFromSIWN();
@@ -59,26 +63,17 @@ export default function NeynarSignInButton({
             console.log("[SIWN] Signer stored successfully");
           }
           
-          // Check signer status without posting test casts
-          console.log("[SIWN] Checking signer status after sign-in (no test posts)...");
-          try {
-            const statusResponse = await fetch(`/api/signer/approval-status?fid=${data.fid}`);
-            const statusData = await statusResponse.json();
-            console.log("[SIWN] Signer status check result:", statusData);
-            
-            if (statusData.status === 'approved') {
-              alert('🎉 Sign-in successful! Your signer is ready to schedule casts!');
-            } else if (statusData.needs_approval) {
-              alert(`⏳ Sign-in successful! Your signer may need approval in Warpcast before posting.
-
-You can try scheduling casts now - if approval is needed, the app will guide you through the process.`);
-            } else {
-              alert('🎉 Sign-in successful! You can now schedule casts.');
-            }
-          } catch (statusError) {
-            console.error("[SIWN] Error checking signer status:", statusError);
-            alert('🎉 Sign-in successful! You can now try scheduling casts.');
+          // Show appropriate success message
+          if (showAsSignerDelegation) {
+            alert('🎉 Posting permissions granted! You can now schedule casts.');
+          } else if (frameUserFid && data.fid === frameUserFid) {
+            alert('🎉 Sign-in successful! You can now schedule casts.');
+          } else {
+            alert('🎉 Sign-in successful! You can now schedule casts.');
           }
+          
+          // Refresh the page to update the UI
+          window.location.reload();
         }
       } catch (error) {
         console.error('Error handling SIWN success:', error);
@@ -99,12 +94,24 @@ You can try scheduling casts now - if approval is needed, the app will guide you
     if (containerRef.current) {
       const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
       
+      // Configure button text based on context
+      let buttonText = 'Sign in with Neynar';
+      if (showAsSignerDelegation) {
+        buttonText = 'Grant Posting Permissions';
+      } else if (frameUserFid) {
+        buttonText = 'Connect to Schedule-Cast';
+      }
+      
       containerRef.current.innerHTML = `
         <div
           class="neynar_signin"
           data-client_id="${clientId}"
           data-success-callback="onSignInSuccess"
-          data-theme="${theme}">
+          data-theme="${theme}"
+          data-variant="neynar"
+          data-text="${buttonText}"
+          data-width="100%"
+          data-height="44px">
         </div>
       `;
     }
@@ -115,7 +122,15 @@ You can try scheduling casts now - if approval is needed, the app will guide you
         delete (window as any).onSignInSuccess;
       }
     };
-  }, [isClient, theme, updateAuthFromSIWN]);
+  }, [isClient, theme, updateAuthFromSIWN, showAsSignerDelegation, frameUserFid]);
+
+  if (!isClient) {
+    return (
+      <div className={`flex items-center justify-center h-11 bg-purple-600 rounded-lg ${className}`}>
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className={className}>
