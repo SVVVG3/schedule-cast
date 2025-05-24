@@ -76,11 +76,21 @@ export default function MiniAppPage() {
                 <h2 className="text-lg font-medium text-gray-300 mb-4">Signed in as</h2>
                 <div className="flex items-center space-x-4">
                   {frameContext.user.pfpUrl && (
-                    <img
-                      src={frameContext.user.pfpUrl}
-                      alt={frameContext.user.displayName || frameContext.user.username || 'User'}
-                      className="w-16 h-16 rounded-full border-2 border-gray-600"
-                    />
+                    <div className="w-16 h-16 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
+                      <img
+                        src={frameContext.user.pfpUrl}
+                        alt={frameContext.user.displayName || frameContext.user.username || 'User'}
+                        className="w-full h-full object-cover"
+                        style={{ 
+                          width: '64px !important', 
+                          height: '64px !important',
+                          maxWidth: '64px',
+                          maxHeight: '64px',
+                          minWidth: '64px',
+                          minHeight: '64px'
+                        }}
+                      />
+                    </div>
                   )}
                   <div>
                     <p className="font-medium text-white text-lg">

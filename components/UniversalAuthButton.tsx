@@ -42,12 +42,19 @@ export default function UniversalAuthButton({ className = '' }: UniversalAuthBut
       <div className="flex items-center space-x-3">
         <div className="flex items-center space-x-2">
           {user.avatar && (
-            <div className="w-5 h-5 overflow-hidden rounded-full flex-shrink-0 border border-gray-600">
+            <div className="w-8 h-8 overflow-hidden rounded-full flex-shrink-0 border border-gray-600">
               <img
                 src={user.avatar}
                 alt={user.displayName || user.username || `User ${user.fid}`}
                 className="w-full h-full object-cover"
-                style={{ maxWidth: '40px', maxHeight: '40px' }}
+                style={{ 
+                  width: '32px !important', 
+                  height: '32px !important',
+                  maxWidth: '32px', 
+                  maxHeight: '32px',
+                  minWidth: '32px',
+                  minHeight: '32px'
+                }}
               />
             </div>
           )}
