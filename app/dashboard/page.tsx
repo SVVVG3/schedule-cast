@@ -59,7 +59,7 @@ export default function Dashboard() {
                 />
               </svg>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold text-white">
               Schedule Cast
             </h1>
           </div>
