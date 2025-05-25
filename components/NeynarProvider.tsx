@@ -61,10 +61,18 @@ function NeynarAuthIntegration({ children }: { children: React.ReactNode }) {
             await updateAuthFromSIWN(authData);
             console.log('✅ updateAuthFromSIWN completed successfully');
             
-            // Store in localStorage (no redirect - let page handle it naturally)
+            // Store in localStorage and redirect to dashboard
             if (typeof window !== 'undefined') {
               localStorage.setItem('siwn_auth_data', JSON.stringify(authData));
-              console.log('✅ Auth data stored in localStorage - NO FORCED REDIRECT');
+              console.log('✅ Auth data stored in localStorage');
+              
+              // Only redirect if we're not already on dashboard
+              if (!window.location.pathname.includes('/dashboard')) {
+                console.log('🚀 Redirecting to dashboard after successful auth...');
+                setTimeout(() => {
+                  window.location.href = '/dashboard';
+                }, 1000);
+              }
             }
             
           } catch (error) {
