@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,9 +15,6 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create Supabase client inside function
-    const supabase = createSupabaseClient();
-    
     // Fetch user data from our custom users table
     const { data: userData, error } = await supabase
       .from('users')

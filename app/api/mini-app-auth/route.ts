@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface MiniAppAuthRequest {
   fid: number;
@@ -22,7 +22,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Supabase client inside function
-    const supabase = createSupabaseClient();
 
     // Check if user already exists in our database
     let { data: userData, error: fetchError } = await supabase

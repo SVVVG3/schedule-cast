@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
-import { createClient } from '@supabase/supabase-js';
 
 // Create Neynar client
 const config = new Configuration({
   apiKey: process.env.NEYNAR_API_KEY!,
 });
 const neynarClient = new NeynarAPIClient(config);
-
-// Create Supabase client inside function to avoid build-time errors
-function createSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 // Function to post a cast using managed signer via Neynar
 async function postCastWithManagedSigner(signerUuid: string, castContent: string) {
@@ -47,7 +39,6 @@ export async function POST(request: NextRequest) {
 
     console.log('[process-scheduled-casts] Processing due scheduled casts...');
 
-    const supabase = createSupabaseClient();
     const now = new Date();
     
     // Get all pending scheduled casts that are due
@@ -169,4 +160,4 @@ export async function GET(request: NextRequest) {
     message: 'Scheduled cast processor endpoint. Use POST to process due casts.',
     timestamp: new Date().toISOString()
   });
-} 
+}

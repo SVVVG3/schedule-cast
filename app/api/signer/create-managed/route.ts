@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
-import { createClient } from '@supabase/supabase-js';
 
 // Create Neynar client with proper configuration
 const config = new Configuration({
   apiKey: process.env.NEYNAR_API_KEY!,
 });
 const neynarClient = new NeynarAPIClient(config);
-
-// Create Supabase client inside function to avoid build-time errors
-function createSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +21,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has an approved managed signer
-    const supabase = createSupabaseClient();
     const { data: existingSigner, error: checkError } = await supabase
       .from('managed_signers')
       .select('*')
@@ -105,7 +96,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user's managed signers
-    const supabase = createSupabaseClient();
     const { data: signers, error } = await supabase
       .from('managed_signers')
       .select('*')

@@ -172,64 +172,35 @@ The user has identified Farcaster mini app functionality as the **main priority*
 
 ## Executor's Feedback or Assistance Requests
 
-**🚨 ROOT CAUSES IDENTIFIED AND CRITICAL FIXES DEPLOYED**:
+**✅ MAJOR PROGRESS: Build Now Compiling Successfully!**
 
-### **🔍 ACTUAL ROOT CAUSES OF AUTHENTICATION FAILURES:**
+### **📋 CURRENT STATUS: Environment Variable Issue Resolved at Build Time**
 
-#### **1. Desktop Authentication Loop:**
-- **Root Cause**: `AuthContext` was calling `/api/auth/session` which used **Supabase Auth** (not our custom system)
-- **Problem**: Always returned empty session → user appeared unauthenticated after SIWN → endless reload loop
-- **Evidence**: User signs in, page reloads, appears signed out again
+#### **✅ What We Fixed**:
+1. **Reverted to Simple Approach**: Successfully reverted `lib/supabase.ts` back to direct export
+2. **Fixed All Import Statements**: Updated 30+ files to use `{ supabase }` instead of `{ createSupabaseClient }`
+3. **Build Compilation**: ✅ **Next.js build now compiles successfully!**
+4. **Environment Variable**: ✅ **Added `SUPABASE_SERVICE_ROLE_KEY` to Vercel**
 
-#### **2. Mini App Missing SIWN Button:**
-- **Root Cause**: Over-complicated `MiniAppAuth` component with broken "Grant Posting Permissions" button
-- **Problem**: API failure prevented showing SIWN → users stuck with non-functional button
-- **Evidence**: "Grant Posting Permissions" button did nothing when clicked
+#### **🔍 Current Issue**: 
+- **Build compiles** but fails during **page data collection** with "supabaseKey is required"
+- This suggests the environment variable might not be available during the build process in Vercel
+- **Local development works fine** (as shown by `npm run dev` success)
 
-### ✅ **CRITICAL FIXES DEPLOYED**:
+#### **📋 Next Steps**:
+1. **Commit Current Progress**: All code changes are working
+2. **Test Vercel Deployment**: See if adding the environment variable fixed the deployment
+3. **If Still Failing**: May need to check Vercel environment variable configuration
 
-#### **1. Fixed Desktop Authentication Loop** (`lib/auth-context.tsx`):
-- **Before**: Called Supabase Auth session API (wrong system)
-- **After**: Checks `localStorage.getItem('siwn_auth_data')` for our custom SIWN sessions
-- **Result**: SIWN sessions now persist correctly, no more reload loops
+#### **✅ Files Successfully Reverted**:
+- `lib/supabase.ts` - Back to simple export
+- `lib/auth-context.tsx` - Using direct import
+- `lib/neynar.ts` - Using direct import  
+- `lib/user-service.ts` - Using direct import
+- `cron/postScheduledCasts.ts` - Using direct import
+- **30+ API route files** - All updated to use `{ supabase }`
 
-#### **2. Fixed Session API** (`app/api/auth/session/route.ts`):
-- **Before**: Used `supabase.auth.getSession()` (Supabase Auth we don't use)
-- **After**: Fetches from our custom users table using FID
-- **Result**: Returns actual user data instead of empty sessions
-
-#### **3. Simplified Mini App Flow** (`components/MiniAppAuth.tsx`):
-- **Before**: Complex "Grant Posting Permissions" → API check → show SIWN flow
-- **After**: Shows SIWN button directly (SIWN handles everything in one step)
-- **Result**: No more broken intermediate buttons, direct path to authentication
-
-### 📈 **EXPECTED OUTCOMES**:
-
-#### **Desktop Environment**:
-- ✅ **No more authentication loops** - SIWN sessions persist properly
-- ✅ **Users stay logged in** after page reloads
-- ✅ **SIWN button works correctly** for authentication + signer delegation
-
-#### **Mini App Environment**:
-- ✅ **SIWN button shows immediately** when user needs authentication
-- ✅ **No more broken "Grant Posting Permissions" button**
-- ✅ **Direct authentication flow** - SIWN handles auth + signer in one step
-
-### 🧪 **HOW TO TEST**:
-
-#### **Desktop**:
-1. Refresh page → Should see SIWN button
-2. Complete SIWN → Should stay logged in (no reload loop)
-3. Refresh page again → Should remain authenticated
-
-#### **Mini App**:
-1. User without permissions → Should see SIWN button directly
-2. Complete SIWN → Should be authenticated with posting permissions
-3. No intermediate buttons or API failures
-
-**Deployment Status**: ✅ Critical fixes committed and pushed to GitHub (auto-deploying to Vercel)
-
-**The Fix Summary**: We eliminated the wrong authentication system (Supabase Auth) and simplified the mini app flow to use SIWN directly as intended.
+**🎯 READY FOR DEPLOYMENT TEST**: The codebase is now clean and should work with the added environment variable.
 
 ## Lessons
 

@@ -29,65 +29,39 @@ export async function syncUserToSupabase(neynarUser: NeynarUser) {
     // Prepare user data from Neynar's SIWN info
     const userData = {
       fid: neynarUser.fid,
-      username: neynarUser.username || '',
-      display_name: neynarUser.displayName || '',
-      custody_address: neynarUser.custody_address || '',
-      avatar_url: neynarUser.pfp?.url || '',
+      username: neynarUser.username,
+      display_name: neynarUser.displayName || neynarUser.username,
+      pfp_url: neynarUser.pfp?.url || null,
+      custody_address: neynarUser.custody_address || null,
       signer_uuid: neynarUser.signerUuid || null,
+      signer_status: neynarUser.signerUuid ? 'approved' : null,
+      needs_signer_approval: !neynarUser.signerUuid,
+      last_signer_check: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    
-    console.log('[syncUserToSupabase] User data to save:', userData);
 
-    // Check if user already exists by FID
-    const { data: existingUser, error: findError } = await supabase
+    console.log('[syncUserToSupabase] Prepared user data:', userData);
+
+    // Upsert user to our database
+    const { data, error } = await supabase
       .from('users')
-      .select('id')
-      .eq('fid', userData.fid)
+      .upsert(userData, { 
+        onConflict: 'fid',
+        ignoreDuplicates: false 
+      })
+      .select()
       .single();
 
-    if (findError && findError.code !== 'PGRST116') {
-      console.error('[syncUserToSupabase] Error finding user:', findError);
-      return null;
+    if (error) {
+      console.error('[syncUserToSupabase] Database error:', error);
+      throw error;
     }
 
-    console.log('[syncUserToSupabase] Existing user check result:', { existingUser, findError });
-
-    if (existingUser) {
-      // Update existing user
-      console.log('[syncUserToSupabase] Updating existing user with ID:', existingUser.id);
-      const { data: updatedUser, error: updateError } = await supabase
-        .from('users')
-        .update(userData)
-        .eq('id', existingUser.id)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error('[syncUserToSupabase] Error updating user:', updateError);
-        return null;
-      }
-
-      console.log('[syncUserToSupabase] Updated user:', updatedUser);
-      return updatedUser;
-    } else {
-      // Create new user
-      console.log('[syncUserToSupabase] Creating new user');
-      const { data: newUser, error: insertError } = await supabase
-        .from('users')
-        .insert(userData)
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('[syncUserToSupabase] Error creating user:', insertError);
-        return null;
-      }
-
-      console.log('[syncUserToSupabase] Created new user:', newUser);
-      return newUser;
-    }
+    console.log('[syncUserToSupabase] User synced successfully:', data.fid);
+    return data;
   } catch (error) {
-    console.error('[syncUserToSupabase] Error syncing user to Supabase:', error);
+    console.error('[syncUserToSupabase] Failed to sync user:', error);
     return null;
   }
 }

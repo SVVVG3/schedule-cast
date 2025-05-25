@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 // Create Neynar client
 const config = new Configuration({
   apiKey: process.env.NEYNAR_API_KEY!,
 });
 const neynarClient = new NeynarAPIClient(config);
-
-// Create Supabase client inside function to avoid build-time errors
-function createSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +20,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const supabase = createSupabaseClient();
 
     // Get signer from our database
     const { data: dbSigner, error: dbError } = await supabase
@@ -123,7 +114,6 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const supabase = createSupabaseClient();
 
     // Get user's approved managed signer
     const { data: signer, error } = await supabase
