@@ -59,13 +59,13 @@ export default function MiniApp() {
             <div className="text-center mb-6">
               <div className="flex items-center justify-center mb-4">
                 <svg 
-                  className="text-white mr-2" 
+                  className="text-white mr-3" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
-                  width="20"
-                  height="20"
-                  style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px', maxWidth: '20px', maxHeight: '20px' }}
+                  width="40"
+                  height="40"
+                  style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
@@ -78,8 +78,8 @@ export default function MiniApp() {
             {/* User Header */}
             <div className="mb-6">
               <div className="flex items-center justify-center bg-white rounded-lg p-3 shadow-sm">
-                <span className="text-gray-500 text-sm mr-4">Signed in as:</span>
-                <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3 flex-shrink-0">
+                <span className="text-gray-500 text-sm mr-6">Signed in as:</span>
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-4 flex-shrink-0">
                   {authUser?.avatar ? (
                     <img 
                       src={authUser.avatar} 
