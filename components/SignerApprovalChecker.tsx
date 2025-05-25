@@ -73,8 +73,18 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
       // Step 1: Use Frame SDK signIn to get SIWF credential
       addDebugMessage(`🔐 Requesting SIWF credential via Frame SDK...`);
       
-      // Generate a secure nonce
-      const nonce = crypto.randomUUID();
+      // Generate a secure alphanumeric nonce (SIWF requires alphanumeric only, min 8 chars)
+      const generateAlphanumericNonce = (length: number = 16): string => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      };
+      
+      const nonce = generateAlphanumericNonce(16);
+      addDebugMessage(`🎲 Generated alphanumeric nonce: ${nonce}`);
       
       const signInResult = await sdk.actions.signIn({
         nonce,
