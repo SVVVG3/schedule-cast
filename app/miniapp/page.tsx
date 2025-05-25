@@ -57,15 +57,16 @@ export default function MiniApp() {
           <div className="max-w-2xl mx-auto">
             {/* User Header */}
             <div className="flex items-center mb-6 bg-white rounded-lg p-4 shadow-sm">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3 flex-shrink-0">
                 {authUser?.avatar ? (
                   <img 
                     src={authUser.avatar} 
                     alt={authUser.displayName || authUser.username || 'User'} 
-                    className="w-full h-full object-cover"
+                    className="w-10 h-10 rounded-full object-cover"
+                    style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
                   />
                 ) : (
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 )}
