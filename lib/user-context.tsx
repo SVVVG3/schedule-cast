@@ -46,11 +46,34 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             username: authUser.username
           });
           
-          // Get the user from Supabase via API route - we don't need to sync since the SIWN flow
-          // already ensures user exists in Supabase
-          const response = await fetch(`/api/auth/session?fid=${authUser.fid}`);
-          const dbUser = await response.json();
-          console.log('[UserContext] Supabase user result:', dbUser);
+          // Get the user from Supabase via API route with retry logic
+          // This handles race conditions where auth completes before user is fully stored
+          let dbUser = null;
+          let attempts = 0;
+          const maxAttempts = 5;
+          
+          while (attempts < maxAttempts && !dbUser) {
+            attempts++;
+            console.log(`[UserContext] Fetch attempt ${attempts}/${maxAttempts}`);
+            
+            const response = await fetch(`/api/auth/session?fid=${authUser.fid}`);
+            const result = await response.json();
+            
+            if (result && result.fid) {
+              dbUser = result;
+              console.log('[UserContext] User found:', dbUser);
+              break;
+            } else {
+              console.log(`[UserContext] User not found yet, retrying... (attempt ${attempts})`);
+              if (attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+              }
+            }
+          }
+          
+          if (!dbUser) {
+            console.warn('[UserContext] User not found after all retry attempts');
+          }
           
           setSupabaseUser(dbUser);
         } catch (error) {
