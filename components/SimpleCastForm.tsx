@@ -118,15 +118,15 @@ export default function SimpleCastForm() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
+        <div className="space-y-6">
           <div>
-            <label className="block text-xl font-medium text-gray-300 mb-4">
+            <label className="block text-lg font-medium text-gray-300 mb-3">
               Date
             </label>
             <input
               type="date"
               style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px' }}
-              className="w-full p-3 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledDate', { required: 'Date is required' })}
             />
             {errors.scheduledDate && (
@@ -136,13 +136,13 @@ export default function SimpleCastForm() {
             )}
           </div>
           <div>
-            <label className="block text-xl font-medium text-gray-300 mb-4">
+            <label className="block text-lg font-medium text-gray-300 mb-3">
               Time
             </label>
             <input
               type="time"
               style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px' }}
-              className="w-full p-3 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledTime', { required: 'Time is required' })}
             />
             {errors.scheduledTime && (
