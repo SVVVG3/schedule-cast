@@ -56,7 +56,7 @@ export default function MiniApp() {
         <div className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
             {/* User Header */}
-            <div className="flex items-center mb-6 bg-white rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-center mb-4 bg-white rounded-lg p-4 shadow-sm">
               <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3 flex-shrink-0">
                 {authUser?.avatar ? (
                   <img 
@@ -71,7 +71,7 @@ export default function MiniApp() {
                   </svg>
                 )}
               </div>
-              <div>
+              <div className="text-center">
                 <p className="font-semibold text-gray-900">
                   {authUser?.displayName || authUser?.username || 'User'}
                 </p>
@@ -82,7 +82,7 @@ export default function MiniApp() {
             </div>
 
             {/* App Title */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                 Schedule Cast
               </h1>
