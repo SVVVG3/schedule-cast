@@ -196,6 +196,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const updateAuthFromSIWN = async (siwnData: any) => {
     console.log('[AuthContext] 🚀 UPDATING AUTH FROM SIWN DATA:', siwnData);
+    console.log('[AuthContext] 🌍 Current environment - hostname:', typeof window !== 'undefined' ? window.location.hostname : 'server');
     
     if (typeof window !== 'undefined') {
       localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
