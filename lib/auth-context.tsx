@@ -199,12 +199,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     if (typeof window !== 'undefined') {
       localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
+      console.log('[AuthContext] Stored auth data in localStorage');
     }
     
-    // Give the database a moment to update, then refresh authentication state
-    setTimeout(async () => {
-      await refreshAuth();
-    }, 1000);
+    // Immediately try to fetch user data and update state
+    if (siwnData.fid) {
+      console.log('[AuthContext] Immediately fetching user data for FID:', siwnData.fid);
+      
+      // Try multiple times with increasing delays to handle race conditions
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      const tryFetchUser = async () => {
+        attempts++;
+        console.log(`[AuthContext] Fetch attempt ${attempts}/${maxAttempts}`);
+        
+        try {
+          const userData = await fetchUserFromSupabase(siwnData.fid);
+          if (userData) {
+            setUser({
+              ...userData,
+              avatar: siwnData.user?.pfp_url || userData.avatar,
+            });
+            setIsAuthenticated(true);
+            console.log('[AuthContext] Auth state updated immediately:', userData);
+            return true; // Success
+          }
+        } catch (error) {
+          console.error(`[AuthContext] Attempt ${attempts} failed:`, error);
+        }
+        
+        return false; // Failed
+      };
+      
+      // Try immediately
+      const success = await tryFetchUser();
+      
+      // If immediate attempt fails, retry with delays
+      if (!success && attempts < maxAttempts) {
+        const retryWithDelay = async (delay: number) => {
+          await new Promise(resolve => setTimeout(resolve, delay));
+          const success = await tryFetchUser();
+          
+          if (!success && attempts < maxAttempts) {
+            // Exponential backoff: 500ms, 1s, 2s, 4s
+            const nextDelay = delay * 2;
+            if (nextDelay <= 4000) {
+              return retryWithDelay(nextDelay);
+            }
+          }
+        };
+        
+        retryWithDelay(500); // Start with 500ms delay
+      }
+    }
   };
 
   const signIn = () => {
