@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   console.log("Running scheduled casts posting job via API route");
   
-  // Validate cron secret
+  // Validate cron secret - allow Vercel cron calls or manual calls with proper secret
   const cronSecret = process.env.CRON_SECRET;
   const requestSecret = request.nextUrl.searchParams.get('cron_secret');
   
@@ -16,10 +16,19 @@ export async function GET(request: NextRequest) {
   const isDebug = request.nextUrl.searchParams.get('debug') === 'true';
   const forceFix = request.nextUrl.searchParams.get('fix') === 'true';
   
-  // Skip secret validation in debug mode or validate the secret
-  if (!isDebug && requestSecret !== cronSecret) {
+  // Check if this is a Vercel cron call (they include special headers)
+  const isVercelCron = request.headers.get('user-agent')?.includes('vercel') || 
+                      request.headers.get('x-vercel-cron') || 
+                      request.headers.get('host')?.includes('vercel');
+  
+  // Skip secret validation for Vercel cron calls, debug mode, or valid secret
+  if (!isDebug && !isVercelCron && requestSecret !== cronSecret) {
     console.error(`Invalid cron secret provided: ${requestSecret}`);
     return NextResponse.json({ error: 'Invalid cron secret provided' }, { status: 401 });
+  }
+  
+  if (isVercelCron) {
+    console.log("Detected Vercel cron call - proceeding with authentication bypass");
   }
 
   try {
