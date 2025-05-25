@@ -55,9 +55,20 @@ export default function MiniApp() {
       {isAuthenticated && supabaseUser ? (
         <div className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
-            {/* Mini App Title - NO LOGO TO TEST */}
+            {/* Mini App Title - Small Triangle with Explicit Sizing */}
             <div className="text-center mb-6">
               <div className="flex items-center justify-center mb-4">
+                <svg 
+                  className="text-white mr-2" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px', maxWidth: '20px', maxHeight: '20px' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
                 <h1 className="text-lg font-bold text-white">
                   Schedule Cast
                 </h1>
