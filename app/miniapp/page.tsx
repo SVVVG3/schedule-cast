@@ -59,7 +59,7 @@ export default function MiniApp() {
             <div className="text-center mb-6">
               <div className="flex items-center justify-center mb-4">
                 <svg 
-                  className="text-white mr-3" 
+                  className="text-white mr-4" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -77,9 +77,9 @@ export default function MiniApp() {
 
             {/* User Header */}
             <div className="mb-6">
-              <div className="flex items-center justify-center bg-white rounded-lg p-3 shadow-sm">
-                <span className="text-gray-500 text-sm mr-6">Signed in as:</span>
-                <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-4 flex-shrink-0">
+              <div className="flex items-center justify-center bg-white rounded-lg p-4 shadow-sm">
+                <span className="text-gray-500 text-sm mr-8">Signed in as:</span>
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-6 flex-shrink-0">
                   {authUser?.avatar ? (
                     <img 
                       src={authUser.avatar} 
