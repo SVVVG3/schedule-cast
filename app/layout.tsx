@@ -7,9 +7,34 @@ import { FrameContextProvider } from '@/lib/frame-context'
 import ConditionalLayout from '@/components/ConditionalLayout'
 import NeynarProvider from '@/components/NeynarProvider'
 
+// Mini App Embed configuration
+const embedFrame = {
+  version: "next",
+  imageUrl: "https://schedule-cast.vercel.app/api/embed-image",
+  button: {
+    title: "🚀 Schedule Cast",
+    action: {
+      type: "launch_frame",
+      name: "Schedule Cast",
+      url: "https://schedule-cast.vercel.app/miniapp",
+      splashImageUrl: "https://schedule-cast.vercel.app/api/splash-logo",
+      splashBackgroundColor: "#000000"
+    }
+  }
+}
+
 export const metadata: Metadata = {
   title: 'Schedule Cast - Farcaster Scheduling',
-  description: 'Schedule your Farcaster casts for future posting',
+  description: 'Plan and schedule your Farcaster casts for optimal engagement. Schedule posts in advance and never miss a beat.',
+  other: {
+    'fc:frame': JSON.stringify(embedFrame)
+  },
+  openGraph: {
+    title: 'Schedule Cast',
+    description: 'Plan and schedule your Farcaster casts for optimal engagement',
+    images: ['https://schedule-cast.vercel.app/api/embed-image'],
+    url: 'https://schedule-cast.vercel.app'
+  }
 }
 
 export const viewport: Viewport = {

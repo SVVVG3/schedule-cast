@@ -1,182 +1,128 @@
 'use client';
 
-import { useFrameContext } from '@/lib/frame-context';
-import { useAuth } from '@/lib/auth-context';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import CompactCastForm from '@/components/CompactCastForm';
-import CompactScheduledCasts from '@/components/CompactScheduledCasts';
-import UniversalAuthButton from '@/components/UniversalAuthButton';
+import SimpleCastForm from '@/components/SimpleCastForm';
+import ScheduledCasts from '@/components/ScheduledCasts';
+import { useAuth } from '@/lib/auth-context';
+import { useUser } from '@/lib/user-context';
 
-export default function MiniAppPage() {
-  const { isFrameApp, frameContext, isLoading } = useFrameContext();
-  const { isAuthenticated, refreshAuth } = useAuth();
-  const [siwnMessage, setSiwnMessage] = useState<string | null>(null);
+export default function MiniApp() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isLoading: userLoading, supabaseUser } = useUser();
+  const [isMiniAppReady, setIsMiniAppReady] = useState(false);
 
-  // Check for SIWN completion on mount
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const siwnComplete = urlParams.get('siwn_complete');
-    const siwnError = urlParams.get('siwn_error');
-    
-    if (siwnComplete === 'true') {
-      console.log('[MiniApp] SIWN completion detected - refreshing auth state');
-      setSiwnMessage('✅ Authentication successful! Refreshing...');
-      
-      // Clean URL
-      window.history.replaceState({}, '', '/miniapp');
-      
-      // Refresh auth state
-      setTimeout(() => {
-        refreshAuth?.();
-        setSiwnMessage(null);
-      }, 1500);
-    } else if (siwnError) {
-      console.log('[MiniApp] SIWN error detected:', siwnError);
-      setSiwnMessage(`❌ Authentication error: ${siwnError}`);
-      
-      // Clean URL
-      window.history.replaceState({}, '', '/miniapp');
-      
-      // Clear message after delay
-      setTimeout(() => setSiwnMessage(null), 3000);
-    }
-  }, [refreshAuth]);
+    // Initialize Farcaster Mini App SDK
+    const initializeMiniApp = async () => {
+      try {
+        // Dynamically import the SDK to avoid SSR issues
+        const { sdk } = await import('@farcaster/frame-sdk');
+        
+        // Let the host know the app is ready
+        await sdk.actions.ready();
+        setIsMiniAppReady(true);
+        
+        console.log('Mini App SDK initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize Mini App SDK:', error);
+        // Still show the app even if SDK fails
+        setIsMiniAppReady(true);
+      }
+    };
 
-  if (isLoading) {
+    initializeMiniApp();
+  }, []);
+
+  if (authLoading || userLoading || !isMiniAppReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center text-white">
-          <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Loading Schedule Cast...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+        <div className="animate-pulse">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </div>
+          <p className="text-center text-gray-600">Loading Schedule Cast...</p>
         </div>
       </div>
     );
   }
 
-  // Apply safe area insets if available from frame context
-  const safeAreaInsets = frameContext?.client?.safeAreaInsets || {
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900">
-      {/* Header */}
-      <header className="w-full py-6 px-6 border-b border-gray-700 backdrop-blur-sm bg-gray-900/50">
-        <div className="flex items-center justify-between max-w-sm mx-auto">
-          <h1 className="text-2xl font-bold text-white">Schedule Cast</h1>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="px-6 py-8 w-full overflow-x-hidden flex justify-center">
-        {/* SIWN Status Message */}
-        {siwnMessage && (
-          <div className="fixed top-20 left-4 right-4 z-50 max-w-sm mx-auto">
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-4 shadow-lg">
-              <p className="text-white text-center text-sm">{siwnMessage}</p>
-            </div>
-          </div>
-        )}
-
-        {isAuthenticated ? (
-          <div className="space-y-8 max-w-sm w-full mx-auto">
-            {/* User Profile Section */}
-            {frameContext?.user && (
-              <div className="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700">
-                <div className="flex items-center justify-between px-2">
-                  <span className="text-base text-gray-300 font-medium">Signed in as</span>
-                  <div className="flex items-center space-x-3">
-                    {frameContext.user.pfpUrl && (
-                      <div className="w-12 h-12 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
-                        <img
-                          src={frameContext.user.pfpUrl}
-                          alt={frameContext.user.displayName || frameContext.user.username || 'User'}
-                          className="w-full h-full object-cover"
-                          style={{ 
-                            width: '48px !important', 
-                            height: '48px !important',
-                            maxWidth: '48px',
-                            maxHeight: '48px',
-                            minWidth: '48px',
-                            minHeight: '48px'
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex flex-col space-y-0">
-                      <span className="font-medium text-white text-sm">
-                        {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
-                      </span>
-                      <span className="text-xs text-gray-400">FID {frameContext.user.fid}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <CompactCastForm />
-            
-            <CompactScheduledCasts />
-          </div>
-        ) : (
-          <div className="text-center py-16 space-y-8 max-w-sm w-full mx-auto">
-            {/* Show frame user info if available, even if not authenticated */}
-            {frameContext?.user && (
-              <div className="bg-gray-800 rounded-xl p-4 shadow-lg border border-gray-700">
-                <div className="flex items-center justify-between px-2">
-                  <span className="text-base text-gray-300 font-medium">Continue as</span>
-                  <div className="flex items-center space-x-3">
-                    {frameContext.user.pfpUrl && (
-                      <div className="w-12 h-12 rounded-full border-2 border-gray-600 overflow-hidden flex-shrink-0">
-                        <img
-                          src={frameContext.user.pfpUrl}
-                          alt={frameContext.user.displayName || frameContext.user.username || 'User'}
-                          className="w-full h-full object-cover"
-                          style={{ 
-                            width: '48px !important', 
-                            height: '48px !important',
-                            maxWidth: '48px',
-                            maxHeight: '48px',
-                            minWidth: '48px',
-                            minHeight: '48px'
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex flex-col space-y-0">
-                      <span className="font-medium text-white text-sm">
-                        {frameContext.user.displayName || frameContext.user.username || `FID ${frameContext.user.fid}`}
-                      </span>
-                      <span className="text-xs text-gray-400">FID {frameContext.user.fid}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-gray-800 rounded-xl p-8 shadow-lg border border-gray-700 text-center">
-              <h2 className="text-xl font-semibold text-white mb-4">Welcome to Schedule Cast</h2>
-              <p className="text-gray-300 mb-6 text-sm leading-relaxed">
-                Connect your Farcaster account to start scheduling casts. You can schedule posts to go live at any time you choose.
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+      {isAuthenticated && supabaseUser ? (
+        <div className="py-8 px-4">
+          <div className="max-w-2xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                Schedule Cast
+              </h1>
+              <p className="text-gray-600">
+                Your scheduled casts dashboard
               </p>
+            </div>
+
+            {/* Cast Form */}
+            <div className="mb-8">
+              <SimpleCastForm />
+            </div>
+
+            {/* Scheduled Casts */}
+            <ScheduledCasts />
+          </div>
+        </div>
+      ) : (
+        <div className="py-8 px-4">
+          <div className="max-w-2xl mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                Schedule Cast
+              </h1>
+              <p className="text-gray-600">
+                Plan and schedule your Farcaster posts
+              </p>
+            </div>
+
+            {/* Cast Form */}
+            <CompactCastForm />
+
+            {/* Features */}
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <div className="bg-white rounded-lg p-4 shadow-sm text-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-sm mb-1">Perfect Timing</h3>
+                <p className="text-xs text-gray-600">Schedule for any time</p>
+              </div>
               
-              <UniversalAuthButton />
+              <div className="bg-white rounded-lg p-4 shadow-sm text-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v10a2 2 0 002 2h8a2 2 0 002-2V8" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-sm mb-1">Channels</h3>
+                <p className="text-xs text-gray-600">Post to any channel</p>
+              </div>
+              
+              <div className="bg-white rounded-lg p-4 shadow-sm text-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="font-semibold text-sm mb-1">Track</h3>
+                <p className="text-xs text-gray-600">Monitor your casts</p>
+              </div>
             </div>
           </div>
-        )}
-      </main>
-
-      {/* Debug Info (only in development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-gray-900 text-white text-xs p-3 rounded-lg max-w-xs">
-          <p><strong>Frame App:</strong> {isFrameApp ? 'Yes' : 'No'}</p>
-          <p><strong>Auth:</strong> {isAuthenticated ? 'Yes' : 'No'}</p>
-          {frameContext && (
-            <p><strong>Client FID:</strong> {frameContext.client?.clientFid}</p>
-          )}
         </div>
       )}
     </div>
