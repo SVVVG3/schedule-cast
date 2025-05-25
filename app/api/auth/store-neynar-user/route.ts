@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,11 +13,8 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create Supabase client inside function
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // Create server Supabase client using the correct helper function
+    const supabase = createServerSupabaseClient();
 
     // Prepare user data for our database
     const dbUserData = {
@@ -45,7 +42,8 @@ export async function POST(request: NextRequest) {
     if (fetchError) {
       console.error('[store-neynar-user] Error checking existing user:', fetchError);
       return NextResponse.json({ 
-        error: 'Database error while checking user' 
+        error: 'Database error while checking user',
+        details: fetchError 
       }, { status: 500 });
     }
 
@@ -63,7 +61,8 @@ export async function POST(request: NextRequest) {
       if (error) {
         console.error('[store-neynar-user] Error updating user:', error);
         return NextResponse.json({ 
-          error: 'Failed to update user' 
+          error: 'Failed to update user',
+          details: error 
         }, { status: 500 });
       }
 
@@ -91,7 +90,8 @@ export async function POST(request: NextRequest) {
       if (error) {
         console.error('[store-neynar-user] Error creating user:', error);
         return NextResponse.json({ 
-          error: 'Failed to create user' 
+          error: 'Failed to create user',
+          details: error 
         }, { status: 500 });
       }
 
@@ -105,7 +105,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[store-neynar-user] Unexpected error:', error);
     return NextResponse.json({ 
-      error: 'Internal server error' 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 } 
