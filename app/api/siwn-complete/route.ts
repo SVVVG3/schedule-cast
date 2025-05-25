@@ -108,13 +108,18 @@ export async function GET(request: NextRequest) {
     
     console.log('[siwn-complete] SIWN completion stored successfully');
     
-    // Return success JSON instead of redirect
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Authentication completed successfully',
-      fid: finalFid,
-      signer_uuid: finalSigner 
-    });
+    // Create the redirect URL back to the mini app with success parameters
+    const redirectUrl = new URL('https://schedule-cast.vercel.app/');
+    redirectUrl.searchParams.set('siwn_complete', 'true');
+    redirectUrl.searchParams.set('fid', finalFid);
+    redirectUrl.searchParams.set('signer_uuid', finalSigner);
+    if (username) redirectUrl.searchParams.set('username', username);
+    if (display_name) redirectUrl.searchParams.set('display_name', display_name);
+    
+    console.log('[siwn-complete] Redirecting back to app:', redirectUrl.toString());
+    
+    // Redirect back to the mini app with success data
+    return NextResponse.redirect(redirectUrl.toString(), 302);
     
   } catch (error) {
     console.error('[siwn-complete] Unexpected error:', error);

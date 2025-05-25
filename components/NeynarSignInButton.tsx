@@ -237,10 +237,35 @@ export default function NeynarSignInButton({
     const siwnUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
     
     addDebugMessage(`🔗 SIWN URL: ${siwnUrl}`);
-    addDebugMessage(`🚀 Opening SIWN in external browser`);
+    addDebugMessage(`🚀 Attempting to open SIWN in external browser`);
     
-    // For mini apps, force external browser opening
-    window.location.href = siwnUrl;
+    // For mini apps, try multiple methods to force external browser opening
+    try {
+      // Method 1: Try window.top (works if we're in iframe/webview)
+      if (window.top && window.top !== window) {
+        addDebugMessage(`🎯 Using window.top.location.href for external opening`);
+        window.top.location.href = siwnUrl;
+        return;
+      }
+      
+      // Method 2: Try window.open with _blank target
+      addDebugMessage(`🎯 Trying window.open with _blank target`);
+      const newWindow = window.open(siwnUrl, '_blank', 'noopener,noreferrer');
+      
+      if (newWindow) {
+        addDebugMessage(`✅ Successfully opened in new window`);
+        // Start polling immediately since user will return via external completion
+        setTimeout(() => {
+          pollForAuthentication();
+        }, 3000);
+      } else {
+        throw new Error('Popup was blocked');
+      }
+    } catch (error) {
+      // Method 3: Fallback to current window navigation
+      addDebugMessage(`⚠️ External opening failed: ${error}, falling back to current window`);
+      window.location.href = siwnUrl;
+    }
   };
 
   // Polling function to check if authentication completed
