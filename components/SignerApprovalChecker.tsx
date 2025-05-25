@@ -125,64 +125,21 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
             This is a one-time security step required by Farcaster.
           </p>
           
-          {/* Show SIWN for mini app users, Warpcast approval for web users */}
-          {isMiniApp ? (
-            <div className="space-y-3">
-              <p className="text-sm text-orange-700">
-                Complete authentication with Neynar to get posting permissions:
-              </p>
-              <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-3">
-                <button
-                  onClick={async () => {
-                    try {
-                      // Use API to get proper authorization URL
-                      const response = await fetch('/api/auth/get-auth-url');
-                      const data = await response.json();
-                      
-                      if (response.ok && data.authorization_url) {
-                        console.log('[SignerApprovalChecker] Got authorization URL:', data.authorization_url);
-                        // Navigate to the proper SIWN URL
-                        window.location.href = data.authorization_url;
-                      } else {
-                        console.error('[SignerApprovalChecker] Failed to get auth URL:', data);
-                        alert('Failed to initialize authentication. Please try again.');
-                      }
-                    } catch (error) {
-                      console.error('[SignerApprovalChecker] Error getting auth URL:', error);
-                      alert('Failed to initialize authentication. Please try again.');
-                    }
-                  }}
-                  className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center justify-center space-x-2"
-                >
-                  <span>🔐</span>
-                  <span>Continue with Neynar</span>
-                </button>
-                <div className="mt-3">
-                  <button
-                    onClick={checkSignerStatus}
-                    className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
-                  >
-                    🔄 Check Status Again
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={handleApproval}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium"
-              >
-                Open Warpcast to Approve
-              </button>
-              <button
-                onClick={checkSignerStatus}
-                className="px-4 py-2 bg-white border border-orange-300 text-orange-800 rounded-lg hover:bg-orange-50 text-sm"
-              >
-                Check Status Again
-              </button>
-            </div>
-          )}
+          {/* Show Warpcast signer approval for both mini app and web users */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={handleApproval}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium"
+            >
+              {isMiniApp ? 'Open Warpcast to Approve' : 'Open Warpcast to Approve'}
+            </button>
+            <button
+              onClick={checkSignerStatus}
+              className="px-4 py-2 bg-white border border-orange-300 text-orange-800 rounded-lg hover:bg-orange-50 text-sm"
+            >
+              Check Status Again
+            </button>
+          </div>
         </div>
         {fallback || (
           <div className="opacity-50 pointer-events-none">
