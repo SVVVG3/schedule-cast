@@ -12,7 +12,7 @@ const embedFrame = {
   version: "next",
   imageUrl: "https://schedule-cast.vercel.app/api/embed-image",
   button: {
-    title: "🚀 Schedule Cast",
+    title: "📅 Schedule Cast",
     action: {
       type: "launch_frame",
       name: "Schedule Cast",
