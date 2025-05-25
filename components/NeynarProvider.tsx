@@ -61,20 +61,11 @@ function NeynarAuthIntegration({ children }: { children: React.ReactNode }) {
             await updateAuthFromSIWN(authData);
             console.log('✅ updateAuthFromSIWN completed successfully');
             
-            // BYPASS BROKEN AUTH-CONTEXT: Set auth state directly here
-            console.log('🚀 BYPASS: Setting auth state directly in NeynarProvider');
-            
-            // Store in localStorage
+            // Store in localStorage (no redirect - let page handle it naturally)
             if (typeof window !== 'undefined') {
               localStorage.setItem('siwn_auth_data', JSON.stringify(authData));
-              console.log('🚀 Stored auth data in localStorage');
+              console.log('✅ Auth data stored in localStorage - NO FORCED REDIRECT');
             }
-            
-            // Navigate to dashboard without page reload
-            setTimeout(() => {
-              console.log('🚀 Navigating to dashboard...');
-              window.location.href = '/dashboard';
-            }, 500);
             
           } catch (error) {
             console.error('❌ updateAuthFromSIWN failed:', error);
