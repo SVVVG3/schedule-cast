@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createSupabaseClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get FID from request headers or query params (set by SIWN)
-    const fid = request.headers.get('x-fid') || request.nextUrl.searchParams.get('fid');
+    const { searchParams } = new URL(request.url);
+    const fid = searchParams.get('fid');
+    
+    console.log('[session] Checking session for FID:', fid);
     
     if (!fid) {
-      return NextResponse.json({ session: null });
+      return NextResponse.json({ 
+        success: false, 
+        error: 'FID is required' 
+      }, { status: 400 });
     }
+
+    // Create Supabase client inside function
+    const supabase = createSupabaseClient();
     
     // Fetch user data from our custom users table
     const { data: userData, error } = await supabase

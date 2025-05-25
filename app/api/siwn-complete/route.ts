@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createSupabaseClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,6 +39,9 @@ export async function GET(request: NextRequest) {
     }
     
     console.log('[siwn-complete] Processing with:', { fid: finalFid, signer_uuid: finalSigner });
+    
+    // Create Supabase client inside function
+    const supabase = createSupabaseClient();
     
     // Store the signer data
     const { data: existingUser, error: userError } = await supabase
