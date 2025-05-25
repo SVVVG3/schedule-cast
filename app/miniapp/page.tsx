@@ -51,7 +51,7 @@ export default function MiniApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900" style={{ background: '#111827 !important', minHeight: '100vh', position: 'relative', zIndex: 1000 }}>
+    <div className="min-h-screen bg-gray-900">
       {isAuthenticated && supabaseUser ? (
         <div className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
