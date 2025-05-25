@@ -84,7 +84,7 @@ export default function SimpleCastForm() {
   };
 
   return (
-    <div className="bg-gray-800 p-8 sm:p-10 rounded-xl border border-gray-700 shadow-lg w-full max-w-lg mx-auto" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+    <div className="bg-gray-800 p-4 sm:p-6 rounded-xl border border-gray-700 shadow-lg w-full max-w-2xl mx-auto" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
 
       {submitSuccess && (
         <div className="bg-green-900 text-green-200 p-6 rounded-lg mb-8 border border-green-700 text-xl">
@@ -98,7 +98,7 @@ export default function SimpleCastForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <label className="block text-xl font-medium text-gray-300 mb-4">
             What's on your mind?
@@ -118,15 +118,15 @@ export default function SimpleCastForm() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
           <div>
             <label className="block text-xl font-medium text-gray-300 mb-4">
               Date
             </label>
             <input
               type="date"
-              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
-              className="w-full p-6 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px' }}
+              className="w-full p-3 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledDate', { required: 'Date is required' })}
             />
             {errors.scheduledDate && (
@@ -141,8 +141,8 @@ export default function SimpleCastForm() {
             </label>
             <input
               type="time"
-              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
-              className="w-full p-6 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px' }}
+              className="w-full p-3 border border-gray-600 rounded-lg text-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               {...register('scheduledTime', { required: 'Time is required' })}
             />
             {errors.scheduledTime && (

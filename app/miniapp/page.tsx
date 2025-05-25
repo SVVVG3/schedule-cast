@@ -72,18 +72,18 @@ export default function MiniApp() {
                 )}
               </div>
               <div className="text-center">
-                <p className="font-semibold text-gray-900">
+                <p className="font-semibold text-gray-900 leading-tight">
                   {authUser?.displayName || authUser?.username || 'User'}
                 </p>
                 {authUser?.username && authUser.displayName && (
-                  <p className="text-sm text-gray-500">@{authUser.username}</p>
+                  <p className="text-sm text-gray-500 -mt-1">@{authUser.username}</p>
                 )}
               </div>
             </div>
 
             {/* App Title */}
             <div className="text-center mb-6">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold text-white">
                 Schedule Cast
               </h1>
             </div>
