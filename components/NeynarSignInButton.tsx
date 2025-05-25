@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useUpdateAuthFromSIWN } from '@/lib/auth-context';
+import { useFrameContext } from '@/lib/frame-context';
 
 interface NeynarSignInButtonProps {
   theme?: 'light' | 'dark';
@@ -17,6 +18,7 @@ export default function NeynarSignInButton({
   frameUserFid
 }: NeynarSignInButtonProps) {
   const updateAuthFromSIWN = useUpdateAuthFromSIWN();
+  const { isMiniApp } = useFrameContext();
   const [isClient, setIsClient] = useState(false);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -237,82 +239,59 @@ export default function NeynarSignInButton({
     const siwnUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
     
     addDebugMessage(`🔗 SIWN URL: ${siwnUrl}`);
-    addDebugMessage(`📱 Attempting mobile-optimized external opening`);
     
-    // For mobile mini apps, use a different strategy
-    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // Check if we're in a Frame/Mini App environment
+    const isInFrame = window.parent !== window || window.top !== window || (window as any).frameContext;
     
-    if (isMobile) {
-      addDebugMessage(`📱 Mobile device detected - using mobile strategy`);
+    addDebugMessage(`🖼️ In Frame: ${isInFrame}, Mini App: ${isMiniApp}`);
+    
+    if (isMiniApp || isInFrame) {
+      // We're in a mini app - force external browser opening
+      addDebugMessage(`📱 Mini app detected - forcing external browser`);
       
-      // Method 1: Try to use the browser's share/open functionality
-      if (navigator.share) {
-        addDebugMessage(`🔗 Using native share to open externally`);
-        navigator.share({
-          title: 'Complete Sign In',
-          text: 'Complete your sign in with Neynar',
-          url: siwnUrl
-        }).catch(e => {
-          addDebugMessage(`⚠️ Share API failed: ${e}`);
-          fallbackToDirectOpen(siwnUrl);
-        });
-      } else {
-        fallbackToDirectOpen(siwnUrl);
+      // Method 1: Try window.top.location for frames
+      if (window.top && window.top !== window) {
+        try {
+          addDebugMessage(`🔝 Attempting window.top.location redirect`);
+          window.top.location.href = siwnUrl;
+          return;
+        } catch (e) {
+          addDebugMessage(`⚠️ window.top.location failed: ${e}`);
+        }
+      }
+      
+      // Method 2: Use location.replace to force navigation
+      try {
+        addDebugMessage(`🔄 Using location.replace to force external`);
+        window.location.replace(siwnUrl);
+        return;
+      } catch (e) {
+        addDebugMessage(`⚠️ location.replace failed: ${e}`);
       }
     } else {
-      addDebugMessage(`💻 Desktop detected - using standard opening`);
-      fallbackToDirectOpen(siwnUrl);
-    }
-    
-    // Start polling immediately since user will return via external completion
-    setTimeout(() => {
-      addDebugMessage(`🔄 Starting polling for auth completion`);
-      pollForAuthentication();
-    }, 3000);
-  };
-  
-  const fallbackToDirectOpen = (url: string) => {
-    addDebugMessage(`🚀 Using fallback opening method`);
-    
-    // Create a temporary link element that forces external browser opening
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_system'; // Try _system for mobile apps
-    link.rel = 'noopener noreferrer';
-    
-    // Add mobile-specific attributes
-    link.setAttribute('data-external', 'true');
-    
-    // Add to DOM and click (required for some mobile browsers)
-    document.body.appendChild(link);
-    
-    // Use both click and manual navigation
-    try {
-      link.click();
-      addDebugMessage(`✅ Link click executed`);
-    } catch (e) {
-      addDebugMessage(`⚠️ Link click failed: ${e}`);
-    }
-    
-    // Also try direct window.open as backup
-    setTimeout(() => {
+      // Regular web environment - use popup
+      addDebugMessage(`💻 Web environment - using popup`);
       try {
-        window.open(url, '_blank');
-        addDebugMessage(`✅ Window.open backup executed`);
+        const popup = window.open(siwnUrl, 'neynar-signin', 'width=500,height=600,scrollbars=yes,resizable=yes');
+        if (popup) {
+          addDebugMessage(`✅ Popup opened successfully`);
+          // Monitor popup for closure
+          const checkClosed = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkClosed);
+              addDebugMessage(`🔄 Popup closed - starting polling`);
+              setTimeout(() => pollForAuthentication(), 1000);
+            }
+          }, 1000);
+        } else {
+          addDebugMessage(`❌ Popup blocked - falling back to redirect`);
+          window.location.href = siwnUrl;
+        }
       } catch (e) {
-        addDebugMessage(`⚠️ Window.open failed: ${e}`);
-        // Last resort - navigate current window
-        addDebugMessage(`🔄 Last resort: navigating current window`);
-        window.location.href = url;
+        addDebugMessage(`⚠️ Popup failed: ${e} - using redirect`);
+        window.location.href = siwnUrl;
       }
-    }, 500);
-    
-    // Clean up
-    setTimeout(() => {
-      if (document.body.contains(link)) {
-        document.body.removeChild(link);
-      }
-    }, 1000);
+    }
   };
 
   // Polling function to check if authentication completed
