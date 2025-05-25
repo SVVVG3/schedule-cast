@@ -87,15 +87,23 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
       const { authorizationUrl } = await authResponse.json();
       addDebugMessage(`🔗 Auth URL: ${authorizationUrl}`);
       
-      // Open the authorization URL in external browser
-      // This should properly break out of the mini app and open in external browser
-      addDebugMessage(`📱 Opening external browser for SIWN...`);
+      // Use Frame SDK's openUrl action for mini apps - this is the correct approach
+      addDebugMessage(`📱 Using Frame SDK openUrl to open external browser...`);
       
-      // Force external browser opening
-      if (window.top && window.top !== window) {
-        window.top.location.href = authorizationUrl;
-      } else {
-        window.location.href = authorizationUrl;
+      try {
+        // This is the proper way to open external URLs in Frame SDK mini apps
+        await sdk.actions.openUrl(authorizationUrl);
+        addDebugMessage(`✅ Successfully called sdk.actions.openUrl`);
+      } catch (error) {
+        addDebugMessage(`❌ Frame SDK openUrl failed: ${error}`);
+        
+        // Fallback: try direct location methods as last resort
+        addDebugMessage(`🎯 Fallback: Using window location methods...`);
+        if (window.top && window.top !== window) {
+          window.top.location.href = authorizationUrl;
+        } else {
+          window.location.href = authorizationUrl;
+        }
       }
       
     } catch (error) {
