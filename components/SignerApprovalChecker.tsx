@@ -12,9 +12,10 @@ interface SignerApprovalCheckerProps {
 
 export default function SignerApprovalChecker({ children, fallback }: SignerApprovalCheckerProps) {
   const { user, isAuthenticated } = useAuth();
-  const { isMiniApp } = useFrameContext();
+  const { isMiniApp, sdk } = useFrameContext();
   const [hasSigner, setHasSigner] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
 
   const addDebugMessage = (message: string) => {
@@ -59,6 +60,52 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
     }
   };
 
+  const handleMiniAppSIWN = async () => {
+    if (!user?.fid || !sdk) {
+      addDebugMessage(`❌ Missing user FID or SDK`);
+      return;
+    }
+
+    setIsProcessing(true);
+    addDebugMessage(`🚀 Starting SIWN flow for posting permissions in mini app`);
+
+    try {
+      // Get auth URL from our server
+      addDebugMessage(`📡 Fetching authorization URL...`);
+      
+      const authResponse = await fetch('/api/signer/get-auth-url', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!authResponse.ok) {
+        throw new Error(`Failed to get auth URL: ${authResponse.status}`);
+      }
+
+      const { authorizationUrl } = await authResponse.json();
+      addDebugMessage(`🔗 Auth URL: ${authorizationUrl}`);
+      
+      // Open the authorization URL in external browser
+      // This should properly break out of the mini app and open in external browser
+      addDebugMessage(`📱 Opening external browser for SIWN...`);
+      
+      // Force external browser opening
+      if (window.top && window.top !== window) {
+        window.top.location.href = authorizationUrl;
+      } else {
+        window.location.href = authorizationUrl;
+      }
+      
+    } catch (error) {
+      addDebugMessage(`❌ Error starting SIWN: ${error instanceof Error ? error.message : String(error)}`);
+      alert(`Failed to start SIWN flow: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -98,18 +145,43 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
               <p className="text-gray-600 text-sm">
                 To schedule casts, we need permission to post on your behalf.
                 {isMiniApp 
-                  ? ' This will open in your external browser for security.'
+                  ? ' This will open in your external browser for authorization.'
                   : ' This uses Sign In with Neynar for secure authorization.'
                 }
               </p>
             </div>
             
             <div className="space-y-3">
-              <NeynarSignInButton 
-                theme="light" 
-                showAsSignerDelegation={true}
-                frameUserFid={user?.fid}
-              />
+              {isMiniApp ? (
+                // Mini App Environment: Use server-based auth URL approach
+                <button
+                  onClick={handleMiniAppSIWN}
+                  disabled={isProcessing}
+                  className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg font-medium transition-colors"
+                >
+                  {isProcessing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Opening Browser...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7h10v10M14 3h7v7M10 14l7-7" />
+                      </svg>
+                      Grant Posting Permissions
+                    </>
+                  )}
+                </button>
+              ) : (
+                // Web Environment: Use standard SIWN
+                <NeynarSignInButton 
+                  theme="light" 
+                  showAsSignerDelegation={true}
+                  frameUserFid={user?.fid}
+                />
+              )}
+              
               <button
                 onClick={checkUserSigner}
                 className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm transition-colors"
