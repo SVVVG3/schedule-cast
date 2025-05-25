@@ -59,6 +59,20 @@ function NeynarAuthIntegration({ children }: { children: React.ReactNode }) {
             console.log('📞 About to call updateAuthFromSIWN...');
             await updateAuthFromSIWN(authData);
             console.log('✅ updateAuthFromSIWN completed successfully');
+            
+            // DEBUG: Check auth state after the call
+            setTimeout(() => {
+              console.log('🔍 POST-AUTH DEBUG: Checking if redirect should happen...');
+              console.log('🔍 Current URL:', window.location.href);
+              console.log('🔍 Should redirect to dashboard if auth worked...');
+              
+              // Force a manual redirect as a test
+              if (authData.fid && authData.signer_uuid) {
+                console.log('🚀 MANUAL REDIRECT TEST: Forcing navigation to dashboard...');
+                window.location.href = '/dashboard';
+              }
+            }, 2000);
+            
           } catch (error) {
             console.error('❌ updateAuthFromSIWN failed:', error);
             console.error('❌ Error details:', {
