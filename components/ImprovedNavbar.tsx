@@ -50,15 +50,11 @@ export default function ImprovedNavbar() {
       console.log('🚪 Original signOut failed (expected due to caching):', error);
     }
     
-    // Don't reload automatically - let user see debug logs
-    console.log('🚪 DEBUG MODE: Not reloading automatically so you can see the logs');
-    console.log('🚪 Check if auth state updates automatically, or manually navigate to homepage');
-    
-    // Show a visible alert with the debug info
+    // Force page reload to clear cached auth-context state
+    console.log('🚪 SOLUTION: Forcing page reload to clear cached auth-context state...');
     setTimeout(() => {
-      const finalCheck = localStorage.getItem('siwn_auth_data');
-      alert(`SignOut Debug Results:\n\nLocalStorage after clear: ${finalCheck || 'null'}\n\nCheck console logs for details, then manually navigate to homepage to test.`);
-    }, 500);
+      window.location.href = '/';
+    }, 1000);
   };
 
   return (
