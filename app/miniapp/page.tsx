@@ -55,12 +55,9 @@ export default function MiniApp() {
       {isAuthenticated && supabaseUser ? (
         <div className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
-            {/* Mini App Title - Internal UI Only */}
+            {/* Mini App Title - Internal UI Only - No Logo */}
             <div className="text-center mb-6">
               <div className="flex items-center justify-center mb-4">
-                <svg className="w-3 h-3 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
                 <h1 className="text-lg font-bold text-white">
                   Schedule Cast
                 </h1>
