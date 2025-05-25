@@ -1,42 +1,63 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function SIWNBridgePage() {
   const [status, setStatus] = useState('Processing authentication...');
-  const router = useRouter();
 
   useEffect(() => {
     const handleSIWNCompletion = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const fid = urlParams.get('fid');
-        const signer_uuid = urlParams.get('signer_uuid');
-        const username = urlParams.get('username');
-        const display_name = urlParams.get('display_name');
+        const authCode = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
         
-        console.log('[SIWN Bridge] Received params:', { fid, signer_uuid, username, display_name });
+        console.log('[SIWN Bridge] Received params:', { authCode, state, error });
         
-        if (fid && signer_uuid) {
-          setStatus('✅ Authentication successful! Saving data...');
-          
-          // Call our API to store the data
-          const response = await fetch('/api/siwn-complete?' + urlParams.toString());
-          const result = await response.text();
-          
-          console.log('[SIWN Bridge] API call result:', result);
-          
-          setStatus('✅ Complete! Redirecting to app...');
-          
-          // Redirect to mini app with success
+        if (error) {
+          setStatus(`❌ Authentication error: ${error}`);
           setTimeout(() => {
-            window.location.href = '/miniapp?siwn_complete=true';
-          }, 1000);
+            window.location.href = `/miniapp?siwn_error=${error}`;
+          }, 2000);
+          return;
+        }
+        
+        if (authCode) {
+          setStatus('✅ Authorization code received! Exchanging for access token...');
+          
+          // Exchange authorization code for access token using our API
+          const response = await fetch('/api/auth/exchange-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              code: authCode,
+              state: state 
+            })
+          });
+          
+          const result = await response.json();
+          console.log('[SIWN Bridge] Token exchange result:', result);
+          
+          if (response.ok && result.success) {
+            setStatus('✅ Authentication complete! Redirecting to app...');
+            
+            // Redirect to mini app with success
+            setTimeout(() => {
+              window.location.href = '/miniapp?siwn_complete=true';
+            }, 1000);
+          } else {
+            setStatus(`❌ Token exchange failed: ${result.error || 'Unknown error'}`);
+            setTimeout(() => {
+              window.location.href = '/miniapp?siwn_error=token_exchange_failed';
+            }, 2000);
+          }
         } else {
-          setStatus('❌ Missing authentication data');
+          setStatus('❌ Missing authorization code');
           setTimeout(() => {
-            window.location.href = '/miniapp?siwn_error=missing_data';
+            window.location.href = '/miniapp?siwn_error=missing_code';
           }, 2000);
         }
       } catch (error) {

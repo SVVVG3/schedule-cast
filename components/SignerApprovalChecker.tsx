@@ -133,13 +133,24 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
               </p>
               <div className="bg-blue-900/20 border border-blue-600 rounded-lg p-3">
                 <button
-                  onClick={() => {
-                    const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
-                    const redirectUri = encodeURIComponent('https://schedule-cast.vercel.app/siwn-bridge');
-                    const siwnUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
-                    
-                    // Navigate the entire mini app to SIWN
-                    window.location.href = siwnUrl;
+                  onClick={async () => {
+                    try {
+                      // Use API to get proper authorization URL
+                      const response = await fetch('/api/auth/get-auth-url');
+                      const data = await response.json();
+                      
+                      if (response.ok && data.authorization_url) {
+                        console.log('[SignerApprovalChecker] Got authorization URL:', data.authorization_url);
+                        // Navigate to the proper SIWN URL
+                        window.location.href = data.authorization_url;
+                      } else {
+                        console.error('[SignerApprovalChecker] Failed to get auth URL:', data);
+                        alert('Failed to initialize authentication. Please try again.');
+                      }
+                    } catch (error) {
+                      console.error('[SignerApprovalChecker] Error getting auth URL:', error);
+                      alert('Failed to initialize authentication. Please try again.');
+                    }
                   }}
                   className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium flex items-center justify-center space-x-2"
                 >
