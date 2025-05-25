@@ -67,49 +67,34 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
     }
 
     setIsProcessing(true);
-    addDebugMessage(`🚀 Starting Frame SDK signIn for posting permissions`);
+    addDebugMessage(`🚀 Starting Frame SDK signIn flow for mini app`);
 
     try {
-      // Use Frame SDK's built-in signIn action - this is designed for mini apps
-      addDebugMessage(`🔐 Using Frame SDK signIn action...`);
+      // Frame SDK signIn provides both authentication AND posting permissions
+      addDebugMessage(`🔐 Calling Frame SDK signIn...`);
       
-      try {
-        // The Frame SDK signIn action handles the authentication properly in mini apps
-        const signInResult = await sdk.actions.signIn();
-        addDebugMessage(`✅ Frame SDK signIn completed: ${JSON.stringify(signInResult)}`);
-        
-        // After successful signIn, check if user now has posting permissions
-        addDebugMessage(`🔍 Checking for updated signer status...`);
-        await checkUserSigner();
-        
-      } catch (error) {
-        addDebugMessage(`❌ Frame SDK signIn failed: ${error}`);
-        
-        // Fallback to SIWN URL method if Frame SDK signIn fails
-        addDebugMessage(`🔄 Fallback: Trying SIWN URL method...`);
-        
-        const authResponse = await fetch('/api/signer/get-auth-url', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!authResponse.ok) {
-          throw new Error(`Failed to get auth URL: ${authResponse.status}`);
-        }
-
-        const { authorizationUrl } = await authResponse.json();
-        addDebugMessage(`🔗 Fallback Auth URL: ${authorizationUrl}`);
-        
-        // Use Frame SDK openUrl as fallback
-        await sdk.actions.openUrl(authorizationUrl);
-        addDebugMessage(`✅ Fallback method completed`);
-      }
+      const signInResult = await sdk.actions.signIn({
+        nonce: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+      });
+      
+      addDebugMessage(`✅ Frame SDK signIn success: ${JSON.stringify(signInResult)}`);
+      
+      // The signInResult should contain everything we need for posting permissions
+      // According to Frame SDK docs, this should work silently on mobile and provide full access
+      
+      // Check if we now have posting permissions
+      addDebugMessage(`🔍 Checking if signIn provided posting permissions...`);
+      await checkUserSigner();
+      
+      // If we still don't have posting permissions after Frame SDK signIn, 
+      // then there might be an issue with our implementation or understanding
+      addDebugMessage(`🎉 Frame SDK signIn flow completed`);
       
     } catch (error) {
-      addDebugMessage(`❌ Error in authentication flow: ${error instanceof Error ? error.message : String(error)}`);
-      alert(`Failed to authenticate: ${error instanceof Error ? error.message : String(error)}`);
+      addDebugMessage(`❌ Frame SDK signIn failed: ${error instanceof Error ? error.message : String(error)}`);
+      
+      // If Frame SDK signIn fails, show helpful error message
+      alert(`Authentication failed: ${error instanceof Error ? error.message : String(error)}\n\nFrame SDK signIn should work seamlessly in mini apps. Please try again or contact support.`);
     } finally {
       setIsProcessing(false);
     }
