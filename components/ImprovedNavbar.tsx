@@ -9,7 +9,24 @@ export default function ImprovedNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
+    console.log('🚪 BYPASS: Implementing signOut directly in navbar...');
+    
+    // Clear localStorage (the real auth storage)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('siwn_auth_data');
+      console.log('🚪 Cleared localStorage auth data');
+    }
+    
+    // Try the original signOut (probably won't work due to caching)
+    try {
+      await signOut();
+      console.log('🚪 Original signOut called');
+    } catch (error) {
+      console.log('🚪 Original signOut failed (expected due to caching):', error);
+    }
+    
+    // Force page reload to clear all auth state
+    console.log('🚪 Reloading page to clear auth state...');
     window.location.href = '/';
   };
 
