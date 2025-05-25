@@ -11,10 +11,22 @@ export default function ImprovedNavbar() {
   const handleSignOut = async () => {
     console.log('🚪 BYPASS: Implementing signOut directly in navbar...');
     
-    // Clear localStorage (the real auth storage)
+    // Debug: Check what's in localStorage before clearing
     if (typeof window !== 'undefined') {
+      const currentAuth = localStorage.getItem('siwn_auth_data');
+      console.log('🚪 Current localStorage auth data:', currentAuth);
+      
       localStorage.removeItem('siwn_auth_data');
       console.log('🚪 Cleared localStorage auth data');
+      
+      // Verify it's actually cleared
+      const afterClear = localStorage.getItem('siwn_auth_data');
+      console.log('🚪 After clear, localStorage auth data:', afterClear);
+      
+      // Also clear any Neynar SDK data
+      localStorage.removeItem('neynar_user');
+      localStorage.removeItem('neynar_auth');
+      console.log('🚪 Cleared Neynar SDK data');
     }
     
     // Try the original signOut (probably won't work due to caching)
