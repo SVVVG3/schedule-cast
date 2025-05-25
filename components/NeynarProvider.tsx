@@ -70,10 +70,10 @@ function NeynarAuthIntegration({ children }: { children: React.ReactNode }) {
               console.log('🚀 Stored auth data in localStorage');
             }
             
-            // Force page reload to trigger auth context re-initialization
+            // Navigate to dashboard without page reload
             setTimeout(() => {
-              console.log('🚀 Forcing page reload to update auth state...');
-              window.location.reload();
+              console.log('🚀 Navigating to dashboard...');
+              window.location.href = '/dashboard';
             }, 500);
             
           } catch (error) {
