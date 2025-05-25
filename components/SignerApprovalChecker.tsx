@@ -12,10 +12,12 @@ interface SignerApprovalCheckerProps {
 
 export default function SignerApprovalChecker({ children, fallback }: SignerApprovalCheckerProps) {
   const { user, isAuthenticated } = useAuth();
-  const { isMiniApp, sdk } = useFrameContext();
+  const { isMiniApp } = useFrameContext();
   const [hasSigner, setHasSigner] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [signerApprovalUrl, setSignerApprovalUrl] = useState<string | null>(null);
+  const [signerUuid, setSignerUuid] = useState<string | null>(null);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
 
   const addDebugMessage = (message: string) => {
@@ -60,53 +62,26 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
     }
   };
 
-  const handleGetPostingPermissions = async () => {
-    if (!user?.fid || !sdk) {
-      addDebugMessage(`❌ Missing requirements: FID=${user?.fid}, SDK=${!!sdk}`);
+  const handleCreateSigner = async () => {
+    if (!user?.fid) {
+      addDebugMessage(`❌ Missing user FID`);
       return;
     }
 
     setIsProcessing(true);
-    addDebugMessage(`🚀 Starting Frame SDK posting permissions flow for FID: ${user.fid}`);
+    addDebugMessage(`🚀 Creating managed signer for FID: ${user.fid}`);
 
     try {
-      // Step 1: Use Frame SDK signIn to get SIWF credential
-      addDebugMessage(`🔐 Requesting SIWF credential via Frame SDK...`);
+      // Step 1: Create managed signer via Neynar API
+      addDebugMessage(`📡 Creating Neynar managed signer...`);
       
-      // Generate a secure alphanumeric nonce (SIWF requires alphanumeric only, min 8 chars)
-      const generateAlphanumericNonce = (length: number = 16): string => {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = '';
-        for (let i = 0; i < length; i++) {
-          result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-      };
-      
-      const nonce = generateAlphanumericNonce(16);
-      addDebugMessage(`🎲 Generated alphanumeric nonce: ${nonce}`);
-      
-      const signInResult = await sdk.actions.signIn({
-        nonce,
-        acceptAuthAddress: true
-      });
-      
-      addDebugMessage(`✅ SIWF credential received`);
-      addDebugMessage(`📝 Message length: ${signInResult.message.length}`);
-      
-      // Step 2: Send SIWF credential to our API to get Neynar signer
-      addDebugMessage(`📡 Sending SIWF to API for Neynar signer creation...`);
-      
-      const response = await fetch('/api/signer/create-from-siwf', {
+      const response = await fetch('/api/signer/create-managed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           fid: user.fid,
-          message: signInResult.message,
-          signature: signInResult.signature,
-          nonce
         }),
       });
 
@@ -116,41 +91,63 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
         throw new Error(result.error || `API error: ${response.status}`);
       }
       
-      addDebugMessage(`✅ Neynar signer created successfully!`);
+      addDebugMessage(`✅ Managed signer created successfully!`);
       addDebugMessage(`🔑 Signer UUID: ${result.signer_uuid}`);
+      addDebugMessage(`🔗 Approval URL: ${result.signer_approval_url}`);
       
-      // Step 3: Store the signer in our database
-      addDebugMessage(`💾 Storing signer in database...`);
+      // Step 2: Store signer info and show approval flow
+      setSignerUuid(result.signer_uuid);
+      setSignerApprovalUrl(result.signer_approval_url);
       
-      const storeResponse = await fetch('/api/signer/store', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fid: user.fid,
-          signer_uuid: result.signer_uuid,
-          username: user.username,
-          display_name: user.displayName
-        }),
-      });
-      
-      if (!storeResponse.ok) {
-        const storeError = await storeResponse.text();
-        throw new Error(`Failed to store signer: ${storeError}`);
-      }
-      
-      addDebugMessage(`✅ Signer stored in database successfully!`);
-      
-      // Step 4: Update local state
-      setHasSigner(true);
-      addDebugMessage(`🎉 Posting permissions granted! User can now schedule casts.`);
+      addDebugMessage(`📱 Please approve the signer in Warpcast to enable posting`);
       
     } catch (error) {
-      addDebugMessage(`❌ Error getting posting permissions: ${error instanceof Error ? error.message : String(error)}`);
-      alert(`Failed to get posting permissions: ${error instanceof Error ? error.message : String(error)}`);
+      addDebugMessage(`❌ Error creating signer: ${error instanceof Error ? error.message : String(error)}`);
+      alert(`Failed to create signer: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleCheckApprovalStatus = async () => {
+    if (!signerUuid) return;
+    
+    addDebugMessage(`🔍 Checking approval status for signer: ${signerUuid}`);
+    
+    try {
+      const response = await fetch(`/api/signer/status?signer_uuid=${signerUuid}`);
+      const data = await response.json();
+      
+      addDebugMessage(`📊 Signer status: ${data.status}`);
+      
+      if (data.status === 'approved') {
+        // Store the approved signer
+        const storeResponse = await fetch('/api/signer/store', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fid: user?.fid,
+            signer_uuid: signerUuid,
+            username: user?.username,
+            display_name: user?.displayName
+          }),
+        });
+        
+        if (storeResponse.ok) {
+          addDebugMessage(`✅ Signer approved and stored! Posting permissions granted.`);
+          setHasSigner(true);
+          setSignerApprovalUrl(null);
+          setSignerUuid(null);
+        } else {
+          addDebugMessage(`❌ Failed to store approved signer`);
+        }
+      } else {
+        addDebugMessage(`⏳ Signer not yet approved. Status: ${data.status}`);
+      }
+    } catch (error) {
+      addDebugMessage(`❌ Error checking status: ${error}`);
     }
   };
 
@@ -193,33 +190,63 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
               <p className="text-gray-600 text-sm">
                 To schedule casts, we need permission to post on your behalf.
                 {isMiniApp 
-                  ? ' This uses Frame SDK authentication - no external browser required!'
+                  ? ' This requires approval in Warpcast (opens in external app).'
                   : ' This uses Sign In with Neynar for secure authorization.'
                 }
               </p>
             </div>
             
-            {isMiniApp && sdk ? (
-              // Mini App Environment: Use Frame SDK signIn
-              <button
-                onClick={handleGetPostingPermissions}
-                disabled={isProcessing}
-                className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg font-medium transition-colors"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Getting Permissions...
-                  </>
+            {isMiniApp ? (
+              // Mini App Environment: Use managed signer with QR code/deeplink
+              <div className="space-y-4">
+                {!signerApprovalUrl ? (
+                  <button
+                    onClick={handleCreateSigner}
+                    disabled={isProcessing}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg font-medium transition-colors"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Creating Signer...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Create Posting Permissions
+                      </>
+                    )}
+                  </button>
                 ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Grant Posting Permissions
-                  </>
+                  <div className="space-y-3">
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800 mb-3">
+                        <strong>Step 2:</strong> Approve the signer in Warpcast to enable posting permissions.
+                      </p>
+                      <a
+                        href={signerApprovalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 7h10v10M14 3h7v7M10 14l7-7" />
+                        </svg>
+                        Open Warpcast to Approve
+                      </a>
+                    </div>
+                    
+                    <button
+                      onClick={handleCheckApprovalStatus}
+                      className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm transition-colors"
+                    >
+                      Check Approval Status
+                    </button>
+                  </div>
                 )}
-              </button>
+              </div>
             ) : (
               // Regular Web Environment: Use SIWN
               <div className="space-y-3">
@@ -240,9 +267,9 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
             <p className="text-xs text-gray-500 mt-3">
               {isMiniApp ? (
                 <>
-                  ✅ Uses Frame SDK - works perfectly in mini apps<br/>
-                  ✅ No external browser popups required<br/>
-                  ✅ Secure Farcaster authentication
+                  ✅ Uses Neynar managed signers<br/>
+                  ⚠️ Requires Warpcast approval (one-time)<br/>
+                  ✅ Secure posting permissions
                 </>
               ) : (
                 <>
