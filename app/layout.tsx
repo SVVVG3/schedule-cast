@@ -10,7 +10,7 @@ import NeynarProvider from '@/components/NeynarProvider'
 // Mini App Embed configuration
 const embedFrame = {
   version: "next",
-  imageUrl: "https://schedule-cast.vercel.app/api/embed-image",
+  imageUrl: "https://schedule-cast.vercel.app/ScheduleCastEmbed.png",
   button: {
     title: "📅 Schedule Cast",
     action: {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Schedule Cast',
     description: 'Plan and schedule your Farcaster casts for optimal engagement',
-    images: ['https://schedule-cast.vercel.app/api/embed-image'],
+    images: ['https://schedule-cast.vercel.app/ScheduleCastEmbed.png'],
     url: 'https://schedule-cast.vercel.app'
   }
 }
