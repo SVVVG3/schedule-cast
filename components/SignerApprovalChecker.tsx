@@ -22,6 +22,7 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
   const [signerStatus, setSignerStatus] = useState<SignerStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingApproval, setIsCreatingApproval] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !user?.fid) {
@@ -55,25 +56,43 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
     }
   };
 
-  const handleApproval = () => {
-    if (signerStatus?.approval_url) {
-      console.log('[SignerApprovalChecker] Opening approval URL:', signerStatus.approval_url);
-      console.log('[SignerApprovalChecker] Is mini app:', isMiniApp);
-      
-      if (isMiniApp) {
-        // In mini app environment, try to open in current window which should stay in Farcaster
-        window.location.href = signerStatus.approval_url;
+  const handleApproval = async () => {
+    if (!user?.fid) {
+      console.error('[SignerApprovalChecker] No user FID available');
+      return;
+    }
+
+    try {
+      setIsCreatingApproval(true);
+      console.log('[SignerApprovalChecker] Creating signer approval for FID:', user.fid);
+
+      // Create a new signer and get approval URL
+      const response = await fetch('/api/signer/create-approval', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fid: user.fid })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.approval_url) {
+        console.log('[SignerApprovalChecker] Got approval URL:', data.approval_url);
+        console.log('[SignerApprovalChecker] Is mini app:', isMiniApp);
+        
+        // Navigate to the approval URL (works for both mobile and desktop)
+        window.location.href = data.approval_url;
+        
       } else {
-        // In web environment, open in new tab
-        window.open(signerStatus.approval_url, '_blank');
+        console.error('[SignerApprovalChecker] Failed to create approval:', data);
+        setError(data.error || 'Failed to create signer approval');
       }
-      
-      // Recheck status after a short delay to see if user approved
-      setTimeout(() => {
-        checkSignerStatus();
-      }, 3000);
-    } else {
-      console.error('[SignerApprovalChecker] No approval URL available');
+    } catch (error) {
+      console.error('[SignerApprovalChecker] Error creating approval:', error);
+      setError('Failed to create signer approval');
+    } finally {
+      setIsCreatingApproval(false);
     }
   };
 
@@ -129,13 +148,22 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
           <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={handleApproval}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium"
+              disabled={isCreatingApproval}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {isMiniApp ? 'Open Warpcast to Approve' : 'Open Warpcast to Approve'}
+              {isCreatingApproval ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating Approval...
+                </>
+              ) : (
+                'Open Warpcast to Approve'
+              )}
             </button>
             <button
               onClick={checkSignerStatus}
-              className="px-4 py-2 bg-white border border-orange-300 text-orange-800 rounded-lg hover:bg-orange-50 text-sm"
+              disabled={isCreatingApproval}
+              className="px-4 py-2 bg-white border border-orange-300 text-orange-800 rounded-lg hover:bg-orange-50 text-sm disabled:opacity-50"
             >
               Check Status Again
             </button>
