@@ -4,7 +4,7 @@ export const runtime = 'edge';
 
 export async function GET() {
   try {
-    return new ImageResponse(
+    const imageResponse = new ImageResponse(
       (
         <div
           style={{
@@ -36,8 +36,18 @@ export async function GET() {
       {
         width: 200,
         height: 200,
+        headers: {
+          'Cache-Control': 'public, immutable, no-transform, max-age=3600',
+          'Content-Type': 'image/png',
+        },
       }
     );
+    
+    // Add headers to the response
+    imageResponse.headers.set('Cache-Control', 'public, immutable, no-transform, max-age=3600');
+    imageResponse.headers.set('Content-Type', 'image/png');
+    
+    return imageResponse;
   } catch (error) {
     console.error('Error generating splash logo:', error);
     return new Response('Failed to generate logo', { status: 500 });

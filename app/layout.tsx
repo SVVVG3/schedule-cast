@@ -26,9 +26,6 @@ const embedFrame = {
 export const metadata: Metadata = {
   title: 'Schedule Cast - Farcaster Scheduling',
   description: 'Plan and schedule your Farcaster casts for optimal engagement. Schedule posts in advance and never miss a beat.',
-  other: {
-    'fc:frame': JSON.stringify(embedFrame)
-  },
   openGraph: {
     title: 'Schedule Cast',
     description: 'Plan and schedule your Farcaster casts for optimal engagement',
@@ -50,6 +47,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="fc:frame" content={JSON.stringify(embedFrame)} />
+      </head>
       <body className="overflow-x-hidden">
         <NeynarProvider>
           <FrameContextProvider>

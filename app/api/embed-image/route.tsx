@@ -4,7 +4,7 @@ export const runtime = 'edge';
 
 export async function GET() {
   try {
-    return new ImageResponse(
+    const imageResponse = new ImageResponse(
       (
         <div
           style={{
@@ -99,8 +99,18 @@ export async function GET() {
       {
         width: 1200,
         height: 800, // 3:2 aspect ratio
+        headers: {
+          'Cache-Control': 'public, immutable, no-transform, max-age=3600',
+          'Content-Type': 'image/png',
+        },
       }
     );
+    
+    // Add headers to the response
+    imageResponse.headers.set('Cache-Control', 'public, immutable, no-transform, max-age=3600');
+    imageResponse.headers.set('Content-Type', 'image/png');
+    
+    return imageResponse;
   } catch (error) {
     console.error('Error generating embed image:', error);
     return new Response('Failed to generate image', { status: 500 });
