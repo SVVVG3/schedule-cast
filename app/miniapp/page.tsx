@@ -55,38 +55,41 @@ export default function MiniApp() {
       {isAuthenticated && supabaseUser ? (
         <div className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
-            {/* User Header */}
-            <div className="flex items-center justify-center mb-4 bg-white rounded-lg p-4 shadow-sm">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3 flex-shrink-0">
-                {authUser?.avatar ? (
-                  <img 
-                    src={authUser.avatar} 
-                    alt={authUser.displayName || authUser.username || 'User'} 
-                    className="w-10 h-10 rounded-full object-cover"
-                    style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', maxWidth: '40px', maxHeight: '40px' }}
-                  />
-                ) : (
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                )}
-              </div>
-              <div className="flex items-center">
-                <p className="font-semibold text-gray-900">
-                  @{authUser?.username || 'user'}
-                </p>
+            {/* App Title */}
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center mb-4">
+                <svg className="w-4 h-4 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                <h1 className="text-2xl font-bold text-white">
+                  Schedule Cast
+                </h1>
               </div>
             </div>
 
-            {/* App Title */}
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center mb-2">
-                <svg className="w-6 h-6 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                <h1 className="text-3xl font-bold text-white">
-                  Schedule Cast
-                </h1>
+            {/* User Header */}
+            <div className="mb-6">
+              <p className="text-center text-gray-300 text-sm mb-2">Signed in as:</p>
+              <div className="flex items-center justify-center bg-white rounded-lg p-3 shadow-sm">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3 flex-shrink-0">
+                  {authUser?.avatar ? (
+                    <img 
+                      src={authUser.avatar} 
+                      alt={authUser.displayName || authUser.username || 'User'} 
+                      className="w-8 h-8 rounded-full object-cover"
+                      style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px' }}
+                    />
+                  ) : (
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <p className="font-semibold text-gray-900">
+                    @{authUser?.username || 'user'}
+                  </p>
+                </div>
               </div>
             </div>
 
