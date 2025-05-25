@@ -125,15 +125,15 @@ export default function CompactCastForm() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div className="space-y-6">
             <div>
-              <label className="block text-xl font-medium text-gray-300 mb-4">
+              <label className="block text-lg font-medium text-gray-300 mb-3">
                 Date
               </label>
               <input
                 type="date"
-                style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
-                className={`w-full px-6 py-6 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg ${
+                style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px', maxWidth: '100%' }}
+                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent box-border ${
                   !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-700 text-white border-gray-600'
                 }`}
                 disabled={!isAuthenticated}
@@ -141,13 +141,13 @@ export default function CompactCastForm() {
               />
             </div>
             <div>
-              <label className="block text-xl font-medium text-gray-300 mb-4">
+              <label className="block text-lg font-medium text-gray-300 mb-3">
                 Time
               </label>
               <input
                 type="time"
-                style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
-                className={`w-full px-6 py-6 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg ${
+                style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px', maxWidth: '100%' }}
+                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent box-border ${
                   !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600' : 'bg-gray-700 text-white border-gray-600'
                 }`}
                 disabled={!isAuthenticated}
