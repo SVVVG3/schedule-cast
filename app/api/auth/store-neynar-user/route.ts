@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,8 +13,17 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create server Supabase client using the correct helper function
-    const supabase = createServerSupabaseClient();
+    // Create Supabase client with service role key (same pattern as run-sql route)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+      process.env.SUPABASE_SERVICE_ROLE_KEY as string,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
 
     // Prepare user data for our database
     const dbUserData = {
