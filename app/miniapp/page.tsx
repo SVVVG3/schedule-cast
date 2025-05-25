@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useUser } from '@/lib/user-context';
 
 export default function MiniApp() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const { isLoading: userLoading, supabaseUser } = useUser();
   const [isMiniAppReady, setIsMiniAppReady] = useState(false);
 
@@ -55,14 +55,36 @@ export default function MiniApp() {
       {isAuthenticated && supabaseUser ? (
         <div className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
-            {/* Header */}
+            {/* User Header */}
+            <div className="flex items-center mb-6 bg-white rounded-lg p-4 shadow-sm">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3">
+                {authUser?.avatar ? (
+                  <img 
+                    src={authUser.avatar} 
+                    alt={authUser.displayName || authUser.username || 'User'} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {authUser?.displayName || authUser?.username || 'User'}
+                </p>
+                {authUser?.username && authUser.displayName && (
+                  <p className="text-sm text-gray-500">@{authUser.username}</p>
+                )}
+              </div>
+            </div>
+
+            {/* App Title */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                 Schedule Cast
               </h1>
-              <p className="text-gray-600">
-                Your scheduled casts dashboard
-              </p>
             </div>
 
             {/* Cast Form */}
