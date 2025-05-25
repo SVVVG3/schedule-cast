@@ -58,7 +58,7 @@ export default function MiniApp() {
             {/* App Title */}
             <div className="text-center mb-6">
               <div className="flex items-center justify-center mb-4">
-                <svg className="w-4 h-4 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
                 <h1 className="text-2xl font-bold text-white">
@@ -69,7 +69,6 @@ export default function MiniApp() {
 
             {/* User Header */}
             <div className="mb-6">
-              <p className="text-center text-gray-300 text-sm mb-2">Signed in as:</p>
               <div className="flex items-center justify-center bg-white rounded-lg p-3 shadow-sm">
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3 flex-shrink-0">
                   {authUser?.avatar ? (
@@ -86,6 +85,7 @@ export default function MiniApp() {
                   )}
                 </div>
                 <div className="flex items-center">
+                  <span className="text-gray-500 text-sm mr-2">Signed in as:</span>
                   <p className="font-semibold text-gray-900">
                     @{authUser?.username || 'user'}
                   </p>
