@@ -244,3 +244,66 @@ The user has identified Farcaster mini app functionality as the **main priority*
 - Mini apps require @farcaster/frame-sdk for proper integration
 - Authentication in mini apps should use sdk.actions.signIn instead of SIWN
 - Mobile responsiveness is critical for mini app functionality 
+
+## Latest Issue: Need Neynar Managed Signers for Scheduled Casting
+
+### **🚨 ROOT CAUSE IDENTIFIED: Wrong Signer Type for Scheduled Posting**
+
+**Current Problem**: 
+- ✅ **Frame SDK signIn works** for authentication in mini apps
+- ❌ **Frame SDK signIn CANNOT be used for automated posting** - it only provides authentication credentials
+- ❌ **Current system stores SIWF credentials** but these cannot post casts programmatically  
+- ❌ **Scheduled casts fail** because SIWF is only for authentication, not posting
+
+**Solution Required**:
+- ✅ **Keep Frame SDK signIn** for mini app authentication 
+- ✅ **Add Neynar Managed Signers** for getting posting permissions (signer_uuid)
+- ✅ **Store signer_uuid** in database alongside SIWF credentials
+- ✅ **Use signer_uuid** with Neynar's publishCast API for scheduled posts
+
+### **📋 NEW IMPLEMENTATION PLAN**:
+
+#### **Phase 1: Add Managed Signers Database Support**
+- [x] **Task 1.1**: Create new database table for managed signers 
+  - **Success Criteria**: `managed_signers` table with signer_uuid, approval_url, status fields
+  - **Actions**: Migration to add managed signer storage
+  - **Status**: ✅ COMPLETED - Migration file created, needs manual application via Supabase dashboard
+
+#### **Phase 2: Implement Managed Signer Flow**  
+- [x] **Task 2.1**: Create managed signer creation API
+  - **Success Criteria**: API endpoint that creates Neynar managed signers and returns approval URL
+  - **Actions**: `/api/signer/create-managed` endpoint using Neynar SDK
+  - **Status**: ✅ COMPLETED - API endpoint created with proper error handling
+
+- [x] **Task 2.2**: Create signer approval checker  
+  - **Success Criteria**: Component that checks signer approval status and handles approval flow
+  - **Actions**: Polling component that checks signer status via Neynar API
+  - **Status**: ✅ COMPLETED - `/api/signer/check-managed-status` endpoint and `ManagedSignerHandler` component created
+
+- [ ] **Task 2.3**: Update authentication flow to include managed signers
+  - **Success Criteria**: After Frame SDK signIn, user gets managed signer for posting permissions  
+  - **Actions**: Modified auth components to handle both authentication + posting permissions
+  - **Status**: 🔄 IN PROGRESS - Components created, need integration with existing auth flow
+
+#### **Phase 3: Update Scheduled Casting**
+- [x] **Task 3.1**: Update scheduled cast processing to use signer_uuid
+  - **Success Criteria**: Scheduled casts posted using Neynar publishCast API with signer_uuid
+  - **Actions**: Modify `/api/scheduled-casts/process` to use managed signers instead of SIWF
+  - **Status**: ✅ COMPLETED - Updated to use Neynar managed signers with proper API calls
+
+- [x] **Task 3.2**: Update cast creation to check for approved signers
+  - **Success Criteria**: Users can only schedule casts if they have approved managed signer
+  - **Actions**: Validate signer approval before allowing cast scheduling
+  - **Status**: ✅ COMPLETED - Updated to require approved managed signer before scheduling
+
+### **🎯 EXPECTED FLOW**:
+1. **Mini App Authentication**: User signs in via Frame SDK (provides FID + authentication)
+2. **Posting Permissions**: Create managed signer → User approves in Warpcast → Returns signer_uuid  
+3. **Store Credentials**: Save both SIWF credentials (auth) + signer_uuid (posting) in database
+4. **Schedule Casts**: User can schedule casts (validated against approved signer)
+5. **Automated Posting**: Cron job uses signer_uuid with Neynar publishCast API
+
+### **✅ DUAL AUTHENTICATION SYSTEM**:
+- **Frame SDK signIn**: For user authentication and identity verification
+- **Neynar Managed Signers**: For obtaining cast posting permissions  
+- **Combined**: Best of both worlds - seamless mini app auth + automated posting capability 

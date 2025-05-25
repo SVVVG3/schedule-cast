@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export async function POST(request: NextRequest) {
   try {
     const { fid, siwf_message, siwf_signature } = await request.json();
@@ -18,6 +13,12 @@ export async function POST(request: NextRequest) {
         error: 'Missing required fields: fid, siwf_message, siwf_signature' 
       }, { status: 400 });
     }
+
+    // Create Supabase client inside function to avoid build-time errors
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     // Parse the SIWF message to get expiration time if available
     let expires_at = null;

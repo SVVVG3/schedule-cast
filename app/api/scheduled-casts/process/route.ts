@@ -1,51 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create Neynar client
+const config = new Configuration({
+  apiKey: process.env.NEYNAR_API_KEY!,
+});
+const neynarClient = new NeynarAPIClient(config);
 
-// Function to post a cast using SIWF credentials via Neynar
-async function postCastWithSIWF(siwf_message: string, siwf_signature: string, cast_content: string) {
-  const apiKey = process.env.NEYNAR_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('Missing NEYNAR_API_KEY');
+// Create Supabase client inside function to avoid build-time errors
+function createSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
+// Function to post a cast using managed signer via Neynar
+async function postCastWithManagedSigner(signerUuid: string, castContent: string) {
+  console.log('[postCastWithManagedSigner] Posting cast via Neynar API with signer:', signerUuid);
+
+  try {
+    // Use Neynar's publishCast method with the managed signer
+    const result = await neynarClient.publishCast({
+      signerUuid: signerUuid,
+      text: castContent
+    });
+    
+    console.log('[postCastWithManagedSigner] Cast posted successfully:', result.cast?.hash);
+    return result;
+  } catch (error) {
+    console.error('[postCastWithManagedSigner] Neynar API error:', error);
+    throw error;
   }
-
-  console.log('[postCastWithSIWF] Posting cast via Neynar API...');
-
-  // Use Neynar's cast API with SIWF authentication
-  const response = await fetch('https://api.neynar.com/v2/farcaster/cast', {
-    method: 'POST',
-    headers: {
-      'accept': 'application/json',
-      'api_key': apiKey,
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      text: cast_content,
-      signer_uuid: null, // We're using SIWF instead of UUID signer
-      // Include SIWF credentials for authentication
-      auth: {
-        type: 'siwf',
-        message: siwf_message,
-        signature: siwf_signature
-      }
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('[postCastWithSIWF] Neynar API error:', errorText);
-    throw new Error(`Neynar API error: ${response.status} - ${errorText}`);
-  }
-
-  const result = await response.json();
-  console.log('[postCastWithSIWF] Cast posted successfully:', result.cast?.hash);
-  
-  return result;
 }
 
 export async function POST(request: NextRequest) {
@@ -60,31 +47,33 @@ export async function POST(request: NextRequest) {
 
     console.log('[process-scheduled-casts] Processing due scheduled casts...');
 
+    const supabase = createSupabaseClient();
     const now = new Date();
     
     // Get all pending scheduled casts that are due
+    // Join with managed_signers to get approved signer UUIDs
     const { data: dueCasts, error: fetchError } = await supabase
       .from('scheduled_casts')
       .select(`
         *,
-        user_signers!inner(siwf_message, siwf_signature, is_active, expires_at)
+        managed_signers!inner(signer_uuid, status)
       `)
       .eq('status', 'pending')
       .lte('scheduled_time', now.toISOString())
-      .eq('user_signers.is_active', true);
+      .eq('managed_signers.status', 'approved');
 
     if (fetchError) {
       console.error('[process-scheduled-casts] Error fetching due casts:', fetchError);
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
-    console.log(`[process-scheduled-casts] Found ${dueCasts?.length || 0} due casts`);
+    console.log(`[process-scheduled-casts] Found ${dueCasts?.length || 0} due casts with approved signers`);
 
     const results = {
       processed: 0,
       posted: 0,
       failed: 0,
-      expired: 0,
+      no_signer: 0,
       errors: [] as string[]
     };
 
@@ -103,28 +92,26 @@ export async function POST(request: NextRequest) {
       try {
         console.log(`[process-scheduled-casts] Processing cast ${cast.id}...`);
 
-        // Check if signer credentials have expired
-        const signer = cast.user_signers;
-        if (signer.expires_at && new Date(signer.expires_at) <= now) {
-          console.log(`[process-scheduled-casts] Signer expired for cast ${cast.id}`);
+        const managedSigner = cast.managed_signers;
+        if (!managedSigner || managedSigner.status !== 'approved') {
+          console.log(`[process-scheduled-casts] No approved signer for cast ${cast.id}`);
           
           await supabase
             .from('scheduled_casts')
             .update({
               status: 'failed',
-              error_message: 'Posting permissions expired',
+              error_message: 'No approved posting permissions',
               updated_at: now.toISOString()
             })
             .eq('id', cast.id);
           
-          results.expired++;
+          results.no_signer++;
           continue;
         }
 
-        // Post the cast using SIWF credentials
-        const postResult = await postCastWithSIWF(
-          signer.siwf_message,
-          signer.siwf_signature,
+        // Post the cast using managed signer
+        const postResult = await postCastWithManagedSigner(
+          managedSigner.signer_uuid,
           cast.cast_content
         );
 
@@ -134,6 +121,7 @@ export async function POST(request: NextRequest) {
           .update({
             status: 'posted',
             cast_hash: postResult.cast?.hash || null,
+            managed_signer_uuid: managedSigner.signer_uuid,
             updated_at: now.toISOString()
           })
           .eq('id', cast.id);

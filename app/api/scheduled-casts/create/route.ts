@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Create Supabase client inside function to avoid build-time errors
+function createSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,13 +20,14 @@ export async function POST(request: NextRequest) {
     });
     
     if (!user_fid || !cast_content || !scheduled_time) {
-      console.error('[create-scheduled-cast] Missing required fields');
       return NextResponse.json({ 
         error: 'Missing required fields: user_fid, cast_content, scheduled_time' 
       }, { status: 400 });
     }
 
-    // Validate scheduled time is in the future
+    const supabase = createSupabaseClient();
+
+    // Validate the scheduled time is in the future
     const scheduledDate = new Date(scheduled_time);
     const now = new Date();
     
@@ -33,47 +37,62 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Check if user has valid signer credentials
-    const { data: signer, error: signerError } = await supabase
+    // Check if user has valid authentication (SIWF credentials)
+    const { data: userSigner, error: signerError } = await supabase
       .from('user_signers')
-      .select('*')
+      .select('fid, is_active, expires_at')
       .eq('fid', user_fid)
       .eq('is_active', true)
       .single();
 
-    if (signerError || !signer) {
-      console.error('[create-scheduled-cast] No valid signer found for FID:', user_fid);
+    if (signerError || !userSigner) {
+      console.error('[create-scheduled-cast] User authentication not found:', signerError);
       return NextResponse.json({ 
-        error: 'No valid posting permissions found. Please grant posting permissions first.' 
+        error: 'User authentication required. Please sign in first.' 
+      }, { status: 401 });
+    }
+
+    // Check if authentication has expired
+    if (userSigner.expires_at && new Date(userSigner.expires_at) <= now) {
+      return NextResponse.json({ 
+        error: 'Authentication has expired. Please sign in again.' 
+      }, { status: 401 });
+    }
+
+    // Check if user has approved managed signer for posting
+    const { data: managedSigner, error: managedSignerError } = await supabase
+      .from('managed_signers')
+      .select('signer_uuid, status, approved_at')
+      .eq('fid', user_fid)
+      .eq('status', 'approved')
+      .order('approved_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (managedSignerError || !managedSigner) {
+      console.error('[create-scheduled-cast] No approved managed signer found:', managedSignerError);
+      return NextResponse.json({ 
+        error: 'Posting permissions required. Please grant posting permissions first.' 
       }, { status: 403 });
     }
 
-    // Check if signer credentials have expired
-    if (signer.expires_at && new Date(signer.expires_at) <= now) {
-      console.error('[create-scheduled-cast] Signer credentials expired for FID:', user_fid);
-      return NextResponse.json({ 
-        error: 'Posting permissions have expired. Please grant posting permissions again.' 
-      }, { status: 403 });
-    }
-
-    console.log('[create-scheduled-cast] Creating scheduled cast for FID:', user_fid);
-
-    // Insert the scheduled cast
-    const { data: scheduledCast, error } = await supabase
+    // Create the scheduled cast
+    const { data: scheduledCast, error: createError } = await supabase
       .from('scheduled_casts')
       .insert({
         user_fid: user_fid,
         cast_content: cast_content,
-        scheduled_time: scheduledDate.toISOString(),
+        scheduled_time: scheduled_time,
+        managed_signer_uuid: managedSigner.signer_uuid,
         status: 'pending'
       })
       .select()
       .single();
 
-    if (error) {
-      console.error('[create-scheduled-cast] Database error:', error);
+    if (createError) {
+      console.error('[create-scheduled-cast] Database error:', createError);
       return NextResponse.json({ 
-        error: `Database error: ${error.message}` 
+        error: `Database error: ${createError.message}` 
       }, { status: 500 });
     }
 
@@ -81,7 +100,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      scheduled_cast: scheduledCast,
+      scheduled_cast: {
+        id: scheduledCast.id,
+        cast_content: scheduledCast.cast_content,
+        scheduled_time: scheduledCast.scheduled_time,
+        status: scheduledCast.status,
+        created_at: scheduledCast.created_at
+      },
       message: 'Cast scheduled successfully'
     });
 
@@ -93,28 +118,38 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Also allow GET for testing user's scheduled casts
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const user_fid = url.searchParams.get('user_fid');
+    const searchParams = request.nextUrl.searchParams;
+    const user_fid = searchParams.get('user_fid');
     
     if (!user_fid) {
       return NextResponse.json({ 
-        error: 'Missing user_fid parameter' 
+        error: 'user_fid parameter is required' 
       }, { status: 400 });
     }
 
-    console.log('[get-scheduled-casts] Fetching scheduled casts for FID:', user_fid);
+    const supabase = createSupabaseClient();
 
     // Get user's scheduled casts
     const { data: scheduledCasts, error } = await supabase
       .from('scheduled_casts')
-      .select('*')
-      .eq('user_fid', parseInt(user_fid))
+      .select(`
+        id,
+        cast_content,
+        scheduled_time,
+        status,
+        cast_hash,
+        error_message,
+        created_at,
+        managed_signer_uuid
+      `)
+      .eq('user_fid', user_fid)
       .order('scheduled_time', { ascending: true });
 
     if (error) {
-      console.error('[get-scheduled-casts] Database error:', error);
+      console.error('[create-scheduled-cast] Database error:', error);
       return NextResponse.json({ 
         error: `Database error: ${error.message}` 
       }, { status: 500 });
@@ -122,11 +157,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      scheduled_casts: scheduledCasts
+      scheduled_casts: scheduledCasts || []
     });
 
   } catch (error) {
-    console.error('[get-scheduled-casts] Error:', error);
+    console.error('[create-scheduled-cast] Error:', error);
     return NextResponse.json({ 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 
     }, { status: 500 });
