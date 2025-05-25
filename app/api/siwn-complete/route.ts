@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     // Create Supabase client inside function
     
     // Store the signer data
-    const { data: existingUser, error: userError } = await supabase
+    const { data: existingUser, error: userError } = await createServerSupabaseClient()
       .from('users')
       .select('id')
       .eq('fid', parseInt(finalFid))
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       
       console.log('[siwn-complete] Updating user:', existingUser.id, 'with data:', updateData);
       
-      const { error: updateError } = await supabase
+      const { error: updateError } = await createServerSupabaseClient()
         .from('users')
         .update(updateData)
         .eq('id', existingUser.id);
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       
       console.log('[siwn-complete] Creating new user with data:', insertData);
       
-      const { error: createError } = await supabase
+      const { error: createError } = await createServerSupabaseClient()
         .from('users')
         .insert(insertData);
       

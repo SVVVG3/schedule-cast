@@ -1,48 +1,38 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase';
 
 /**
  * Endpoint to store a Neynar signer in the user's database record
  * This is called after a successful Sign in with Neynar (SIWN) flow
  */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    console.log('[signer/store] ===== PROCESSING SIGNER STORE REQUEST =====');
-    console.log('[signer/store] Timestamp:', new Date().toISOString());
-    console.log('[signer/store] Request URL:', request.url);
-    console.log('[signer/store] Request headers:', Object.fromEntries(request.headers.entries()));
+    const { 
+      signer_uuid, 
+      public_key, 
+      status, 
+      fid, 
+      signer_approval_url 
+    } = await request.json();
     
-    // Parse request body
-    const requestBody = await request.text();
-    console.log('[signer/store] Raw request body:', requestBody);
-    
-    let parsedBody;
-    try {
-      parsedBody = JSON.parse(requestBody);
-      console.log('[signer/store] Parsed request body:', parsedBody);
-    } catch (e) {
-      console.error('[signer/store] Failed to parse JSON:', e);
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 }
-      );
+    console.log('[signer/store] Received signer data:', {
+      signer_uuid,
+      public_key: public_key?.substring(0, 20) + '...',
+      status,
+      fid,
+      signer_approval_url
+    });
+
+    // Validate required fields
+    if (!signer_uuid || !fid) {
+      return NextResponse.json({ 
+        error: 'Missing required fields: signer_uuid, fid' 
+      }, { status: 400 });
     }
-    
-    const { fid, signer_uuid, username, display_name } = parsedBody;
-    console.log('[signer/store] Extracted data:', { fid, signer_uuid, username, display_name });
-    
-    // Validation
-    if (!fid || !signer_uuid) {
-      console.error('[signer/store] Missing required parameters');
-      return NextResponse.json(
-        { error: 'Missing required parameters: fid and signer_uuid' },
-        { status: 400 }
-      );
-    }
-    
-    // Create server Supabase client for database operations
+
+    // Create server Supabase client
     const supabase = createServerSupabaseClient();
-    
+
     // Check if user exists
     console.log('[signer/store] Checking for existing user with FID:', fid);
     const { data: existingUser, error: userError } = await supabase

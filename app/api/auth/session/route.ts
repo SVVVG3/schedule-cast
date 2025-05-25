@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch user data from our custom users table
-    const { data: userData, error } = await supabase
+    const { data: userData, error } = await createServerSupabaseClient()
       .from('users')
       .select('*')
       .eq('fid', parseInt(fid))
