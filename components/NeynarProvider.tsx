@@ -1,7 +1,7 @@
 'use client';
 
 import { NeynarContextProvider, Theme, useNeynarContext } from '@neynar/react';
-import { useUpdateAuthFromSIWN } from '@/lib/auth-context';
+import { useUpdateAuthFromSIWN, useAuth } from '@/lib/auth-context';
 import { useEffect, useState } from 'react';
 
 interface NeynarProviderProps {
@@ -11,6 +11,7 @@ interface NeynarProviderProps {
 function NeynarAuthIntegration({ children }: { children: React.ReactNode }) {
   const { user } = useNeynarContext();
   const updateAuthFromSIWN = useUpdateAuthFromSIWN();
+  const auth = useAuth();
   const [hasProcessed, setHasProcessed] = useState(false);
 
   useEffect(() => {
@@ -60,14 +61,20 @@ function NeynarAuthIntegration({ children }: { children: React.ReactNode }) {
             await updateAuthFromSIWN(authData);
             console.log('✅ updateAuthFromSIWN completed successfully');
             
-            // DEBUG: Check auth state after the call
+            // BYPASS BROKEN AUTH-CONTEXT: Set auth state directly here
+            console.log('🚀 BYPASS: Setting auth state directly in NeynarProvider');
+            
+            // Store in localStorage
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('siwn_auth_data', JSON.stringify(authData));
+              console.log('🚀 Stored auth data in localStorage');
+            }
+            
+            // Force page reload to trigger auth context re-initialization
             setTimeout(() => {
-              console.log('🔍 POST-AUTH DEBUG: Checking if redirect should happen...');
-              console.log('🔍 Current URL:', window.location.href);
-              console.log('🔍 Auth data available:', !!authData.fid);
-              console.log('🔍 Signer UUID available:', !!authData.signer_uuid);
-              // Removed manual redirect to fix loop
-            }, 1000);
+              console.log('🚀 Forcing page reload to update auth state...');
+              window.location.reload();
+            }, 500);
             
           } catch (error) {
             console.error('❌ updateAuthFromSIWN failed:', error);
