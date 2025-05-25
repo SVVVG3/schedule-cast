@@ -195,6 +195,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const updateAuthFromSIWN = async (siwnData: any) => {
+    throw new Error('🚨 INTENTIONAL ERROR TO TEST IF PRODUCTION PICKS UP CHANGES!');
     console.log('🔥🔥🔥 NEW FUNCTION VERSION 2025 - CACHE BUSTER!');
     console.log('🔥 UPDATEAUTH FUNCTION ENTRY - THIS SHOULD ALWAYS SHOW!');
     console.log('[AuthContext] 🚀 UPDATING AUTH FROM SIWN DATA:', siwnData);
