@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     console.log('[create-approval] Signer created:', signerData);
 
     // Step 2: Register the signed key to get approval URL  
-    const registerResponse = await fetch('https://api.neynar.com/v2/farcaster/signer/signed_key', {
+    const registerResponse = await fetch('https://api.neynar.com/v2/farcaster/signer/developer_managed/signed_key', {
       method: 'POST', 
       headers: {
         'accept': 'application/json',
