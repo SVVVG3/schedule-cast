@@ -79,15 +79,33 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
       
       addDebugMessage(`✅ Frame SDK signIn success: ${JSON.stringify(signInResult)}`);
       
-      // The signInResult should contain everything we need for posting permissions
-      // According to Frame SDK docs, this should work silently on mobile and provide full access
+      // Store the signIn credentials in Supabase for scheduled posting
+      addDebugMessage(`💾 Storing signIn credentials for scheduled posting...`);
+      
+      const storeResponse = await fetch('/api/signer/store-frame-signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fid: user.fid,
+          siwf_message: signInResult.message,
+          siwf_signature: signInResult.signature,
+        }),
+      });
+
+      if (!storeResponse.ok) {
+        const errorData = await storeResponse.json();
+        throw new Error(`Failed to store credentials: ${errorData.error || storeResponse.status}`);
+      }
+
+      const storeData = await storeResponse.json();
+      addDebugMessage(`✅ Credentials stored successfully: ${JSON.stringify(storeData)}`);
       
       // Check if we now have posting permissions
       addDebugMessage(`🔍 Checking if signIn provided posting permissions...`);
       await checkUserSigner();
       
-      // If we still don't have posting permissions after Frame SDK signIn, 
-      // then there might be an issue with our implementation or understanding
       addDebugMessage(`🎉 Frame SDK signIn flow completed`);
       
     } catch (error) {

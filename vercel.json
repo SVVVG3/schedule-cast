@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/post-casts?cron_secret=dQN7GaIsfBnSVQ9ZZ4qRONXjuzAT4LpP4QagJzBN1h0=",
+      "path": "/api/scheduled-casts/process",
       "schedule": "* * * * *"
     }
   ]
