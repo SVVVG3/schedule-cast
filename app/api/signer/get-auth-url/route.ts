@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    const clientId = process.env.NEYNAR_CLIENT_ID;
+    const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID;
     
     if (!clientId) {
-      console.error('[get-auth-url] Missing NEYNAR_CLIENT_ID');
+      console.error('[get-auth-url] Missing NEXT_PUBLIC_NEYNAR_CLIENT_ID');
       return NextResponse.json({ 
         error: 'Server configuration error - missing client ID' 
       }, { status: 500 });
