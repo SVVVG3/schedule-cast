@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useNeynarContext } from '@neynar/react';
 import AuthButton from './AuthButton';
 
 export default function ImprovedNavbar() {
   const { user: authUser, isAuthenticated, signOut } = useAuth();
+  const { user: neynarUser } = useNeynarContext();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -23,10 +25,21 @@ export default function ImprovedNavbar() {
       const afterClear = localStorage.getItem('siwn_auth_data');
       console.log('🚪 After clear, localStorage auth data:', afterClear);
       
-      // Also clear any Neynar SDK data
-      localStorage.removeItem('neynar_user');
-      localStorage.removeItem('neynar_auth');
-      console.log('🚪 Cleared Neynar SDK data');
+          // Also clear any Neynar SDK data from localStorage
+    localStorage.removeItem('neynar_user');
+    localStorage.removeItem('neynar_auth');
+    localStorage.removeItem('neynar_access_token');
+    localStorage.removeItem('NEYNAR_USER');
+    localStorage.removeItem('NEYNAR_ACCESS_TOKEN');
+    console.log('🚪 Cleared Neynar SDK data from localStorage');
+    
+    // Clear all localStorage to be extra sure
+    Object.keys(localStorage).forEach(key => {
+      if (key.toLowerCase().includes('neynar') || key.toLowerCase().includes('siwn')) {
+        localStorage.removeItem(key);
+        console.log(`🚪 Removed localStorage key: ${key}`);
+      }
+    });
     }
     
     // Try the original signOut (probably won't work due to caching)
