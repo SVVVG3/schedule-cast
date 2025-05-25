@@ -31,7 +31,7 @@ export async function syncUserToSupabase(neynarUser: NeynarUser) {
       fid: neynarUser.fid,
       username: neynarUser.username,
       display_name: neynarUser.displayName || neynarUser.username,
-      pfp_url: neynarUser.pfp?.url || null,
+      avatar: neynarUser.pfp?.url || null,
       custody_address: neynarUser.custody_address || null,
       signer_uuid: neynarUser.signerUuid || null,
       signer_status: neynarUser.signerUuid ? 'approved' : null,

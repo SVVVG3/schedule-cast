@@ -30,12 +30,9 @@ export async function POST(request: NextRequest) {
       fid: userData.fid,
       username: userData.username || null,
       display_name: userData.display_name || userData.displayName || null,
-      pfp_url: userData.pfp_url || null,
+      avatar: userData.pfp_url || userData.avatar || null,
       signer_uuid: userData.signer_uuid || null,
-      signer_status: userData.signer_uuid ? 'approved' : null,
-      needs_signer_approval: !userData.signer_uuid,
       delegated: !!userData.signer_uuid,
-      last_signer_check: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
