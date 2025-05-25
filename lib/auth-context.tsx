@@ -195,11 +195,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const updateAuthFromSIWN = async (siwnData: any) => {
-    console.log('[AuthContext] Updating auth from SIWN data:', siwnData);
+    console.log('[AuthContext] 🚀 UPDATING AUTH FROM SIWN DATA:', siwnData);
     
     if (typeof window !== 'undefined') {
       localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
-      console.log('[AuthContext] Stored auth data in localStorage:', localStorage.getItem('siwn_auth_data'));
+      console.log('[AuthContext] 💾 STORED AUTH DATA IN LOCALSTORAGE:', localStorage.getItem('siwn_auth_data'));
     }
     
     // Immediately try to fetch user data and update state
