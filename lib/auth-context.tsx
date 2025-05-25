@@ -197,6 +197,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const updateAuthFromSIWN = async (siwnData: any) => {
     // DIRECT FIX: Skip the complex retry logic and directly set auth state
     console.log('🔧 DIRECT AUTH FIX - Setting auth state immediately');
+    console.log('🔧 BUNDLE CHECK: This auth-context function IS running!');
     
     if (typeof window !== 'undefined') {
       localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
