@@ -195,88 +195,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const updateAuthFromSIWN = async (siwnData: any) => {
-    throw new Error('🚨 INTENTIONAL ERROR TO TEST IF PRODUCTION PICKS UP CHANGES!');
-    console.log('🔥🔥🔥 NEW FUNCTION VERSION 2025 - CACHE BUSTER!');
-    console.log('🔥 UPDATEAUTH FUNCTION ENTRY - THIS SHOULD ALWAYS SHOW!');
-    console.log('[AuthContext] 🚀 UPDATING AUTH FROM SIWN DATA:', siwnData);
-    console.log('[AuthContext] 🌍 Current environment - hostname:', typeof window !== 'undefined' ? window.location.hostname : 'server');
+    // DIRECT FIX: Skip the complex retry logic and directly set auth state
+    console.log('🔧 DIRECT AUTH FIX - Setting auth state immediately');
     
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
-        console.log('[AuthContext] 💾 STORED AUTH DATA IN LOCALSTORAGE:', localStorage.getItem('siwn_auth_data'));
-      }
-      console.log('[AuthContext] ✅ Local storage operations completed');
-    } catch (storageError) {
-      console.error('[AuthContext] ❌ Local storage error:', storageError);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
     }
     
-    // Immediately try to fetch user data and update state
-    if (siwnData.fid) {
-      console.log('[AuthContext] 🔍 Starting user fetch for FID:', siwnData.fid);
-      
-      // Try multiple times with increasing delays to handle race conditions
-      let attempts = 0;
-      const maxAttempts = 5;
-      console.log('[AuthContext] 📊 Retry configuration - maxAttempts:', maxAttempts);
-      
-      const tryFetchUser = async () => {
-        attempts++;
-        console.log(`[AuthContext] 🔄 Fetch attempt ${attempts}/${maxAttempts} for FID:`, siwnData.fid);
-        
-        try {
-          console.log('[AuthContext] 📡 Calling fetchUserFromSupabase...');
-          const userData = await fetchUserFromSupabase(siwnData.fid);
-          console.log('[AuthContext] 📊 fetchUserFromSupabase result:', userData);
-          
-          if (userData) {
-            const finalUser = {
-              ...userData,
-              avatar: siwnData.user?.pfp_url || userData.avatar,
-            };
-            console.log('[AuthContext] 👤 Setting user state:', finalUser);
-            setUser(finalUser);
-            
-            console.log('[AuthContext] 🔐 Setting isAuthenticated to true');
-            setIsAuthenticated(true);
-            
-            console.log('[AuthContext] ✅ Auth state updated successfully!');
-            console.log('[AuthContext] 📊 Final auth state - isAuthenticated:', true, 'user:', finalUser);
-            return true; // Success
-          } else {
-            console.log('[AuthContext] ⚠️ fetchUserFromSupabase returned null/undefined');
-            return false;
-          }
-        } catch (error) {
-          console.error(`[AuthContext] ❌ Attempt ${attempts} failed:`, error);
-          console.error('[AuthContext] 📊 Error details:', {
-            message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : 'No stack'
-          });
-          return false;
-        }
+    // Directly set the auth state without API calls
+    if (siwnData.fid && siwnData.signer_uuid) {
+      const directUser = {
+        fid: siwnData.fid,
+        username: siwnData.user?.username || `user${siwnData.fid}`,
+        displayName: siwnData.user?.display_name || siwnData.user?.username || `User ${siwnData.fid}`,
+        avatar: siwnData.user?.pfp_url || null,
+        signer_uuid: siwnData.signer_uuid,
+        delegated: true,
       };
       
-      // Try immediately
-      const success = await tryFetchUser();
-      
-      // If immediate attempt fails, retry with delays
-      if (!success && attempts < maxAttempts) {
-        const retryWithDelay = async (delay: number) => {
-          await new Promise(resolve => setTimeout(resolve, delay));
-          const success = await tryFetchUser();
-          
-          if (!success && attempts < maxAttempts) {
-            // Exponential backoff: 500ms, 1s, 2s, 4s
-            const nextDelay = delay * 2;
-            if (nextDelay <= 4000) {
-              return retryWithDelay(nextDelay);
-            }
-          }
-        };
-        
-        retryWithDelay(500); // Start with 500ms delay
-      }
+      console.log('🔧 Setting user directly:', directUser);
+      setUser(directUser);
+      setIsAuthenticated(true);
+      console.log('🔧 Auth state set - isAuthenticated should now be true');
     }
   };
 
