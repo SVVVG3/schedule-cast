@@ -55,23 +55,11 @@ export default function MiniApp() {
       {isAuthenticated && supabaseUser ? (
         <div className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
-            {/* App Title */}
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center mb-4">
-                <svg className="w-1 h-1 text-white mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                <h1 className="text-xl font-bold text-white">
-                  Schedule Cast
-                </h1>
-              </div>
-            </div>
-
             {/* User Header */}
             <div className="mb-6">
               <div className="flex items-center justify-center bg-white rounded-lg p-3 shadow-sm">
-                <span className="text-gray-500 text-sm mr-2">Signed in as:</span>
-                <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-2 flex-shrink-0">
+                <span className="text-gray-500 text-sm mr-4">Signed in as:</span>
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-3 flex-shrink-0">
                   {authUser?.avatar ? (
                     <img 
                       src={authUser.avatar} 
