@@ -54,7 +54,18 @@ function NeynarAuthIntegration({ children }: { children: React.ReactNode }) {
           };
 
           console.log('Updating auth context with:', authData);
-          await updateAuthFromSIWN(authData);
+          
+          try {
+            console.log('📞 About to call updateAuthFromSIWN...');
+            await updateAuthFromSIWN(authData);
+            console.log('✅ updateAuthFromSIWN completed successfully');
+          } catch (error) {
+            console.error('❌ updateAuthFromSIWN failed:', error);
+            console.error('❌ Error details:', {
+              message: error instanceof Error ? error.message : 'Unknown error',
+              stack: error instanceof Error ? error.stack : 'No stack trace'
+            });
+          }
           
           console.log('✅ Neynar integration completed successfully');
           setHasProcessed(true);
