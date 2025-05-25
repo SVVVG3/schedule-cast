@@ -67,48 +67,49 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
     }
 
     setIsProcessing(true);
-    addDebugMessage(`🚀 Starting SIWN flow for posting permissions in mini app`);
+    addDebugMessage(`🚀 Starting Frame SDK signIn for posting permissions`);
 
     try {
-      // Get auth URL from our server
-      addDebugMessage(`📡 Fetching authorization URL...`);
-      
-      const authResponse = await fetch('/api/signer/get-auth-url', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!authResponse.ok) {
-        throw new Error(`Failed to get auth URL: ${authResponse.status}`);
-      }
-
-      const { authorizationUrl } = await authResponse.json();
-      addDebugMessage(`🔗 Auth URL: ${authorizationUrl}`);
-      
-      // Use Frame SDK's openUrl action for mini apps - this is the correct approach
-      addDebugMessage(`📱 Using Frame SDK openUrl to open external browser...`);
+      // Use Frame SDK's built-in signIn action - this is designed for mini apps
+      addDebugMessage(`🔐 Using Frame SDK signIn action...`);
       
       try {
-        // This is the proper way to open external URLs in Frame SDK mini apps
-        await sdk.actions.openUrl(authorizationUrl);
-        addDebugMessage(`✅ Successfully called sdk.actions.openUrl`);
-      } catch (error) {
-        addDebugMessage(`❌ Frame SDK openUrl failed: ${error}`);
+        // The Frame SDK signIn action handles the authentication properly in mini apps
+        const signInResult = await sdk.actions.signIn();
+        addDebugMessage(`✅ Frame SDK signIn completed: ${JSON.stringify(signInResult)}`);
         
-        // Fallback: try direct location methods as last resort
-        addDebugMessage(`🎯 Fallback: Using window location methods...`);
-        if (window.top && window.top !== window) {
-          window.top.location.href = authorizationUrl;
-        } else {
-          window.location.href = authorizationUrl;
+        // After successful signIn, check if user now has posting permissions
+        addDebugMessage(`🔍 Checking for updated signer status...`);
+        await checkUserSigner();
+        
+      } catch (error) {
+        addDebugMessage(`❌ Frame SDK signIn failed: ${error}`);
+        
+        // Fallback to SIWN URL method if Frame SDK signIn fails
+        addDebugMessage(`🔄 Fallback: Trying SIWN URL method...`);
+        
+        const authResponse = await fetch('/api/signer/get-auth-url', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!authResponse.ok) {
+          throw new Error(`Failed to get auth URL: ${authResponse.status}`);
         }
+
+        const { authorizationUrl } = await authResponse.json();
+        addDebugMessage(`🔗 Fallback Auth URL: ${authorizationUrl}`);
+        
+        // Use Frame SDK openUrl as fallback
+        await sdk.actions.openUrl(authorizationUrl);
+        addDebugMessage(`✅ Fallback method completed`);
       }
       
     } catch (error) {
-      addDebugMessage(`❌ Error starting SIWN: ${error instanceof Error ? error.message : String(error)}`);
-      alert(`Failed to start SIWN flow: ${error instanceof Error ? error.message : String(error)}`);
+      addDebugMessage(`❌ Error in authentication flow: ${error instanceof Error ? error.message : String(error)}`);
+      alert(`Failed to authenticate: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsProcessing(false);
     }
