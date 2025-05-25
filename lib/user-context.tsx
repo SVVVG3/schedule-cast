@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './auth-context';
-import { getUserByFid } from './user-service';
 
 // Define the user context type
 interface UserContextType {
@@ -47,9 +46,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             username: authUser.username
           });
           
-          // Get the user from Supabase - we don't need to sync since the SIWN flow
+          // Get the user from Supabase via API route - we don't need to sync since the SIWN flow
           // already ensures user exists in Supabase
-          const dbUser = await getUserByFid(authUser.fid);
+          const response = await fetch(`/api/auth/session?fid=${authUser.fid}`);
+          const dbUser = await response.json();
           console.log('[UserContext] Supabase user result:', dbUser);
           
           setSupabaseUser(dbUser);

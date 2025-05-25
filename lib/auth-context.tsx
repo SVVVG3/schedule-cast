@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase } from './supabase';
 import { useFrameContext } from './frame-context';
 
 // Define the user type for the authentication context
@@ -54,16 +53,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Get frame context
   const { isMiniApp, frameContext } = useFrameContext();
   
-  // Helper function to fetch the user from Supabase
+  // Helper function to fetch the user from Supabase via API route
   const fetchUserFromSupabase = async (fid: number): Promise<AuthUser | null> => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('fid', fid)
-        .single();
+      const response = await fetch(`/api/auth/session?fid=${fid}`);
+      const data = await response.json();
 
-      if (error || !data) {
+      if (!response.ok || !data.fid) {
         console.log(`[AuthContext] User with FID ${fid} not found in database`);
         return null;
       }
@@ -71,13 +67,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return {
         fid: data.fid,
         username: data.username,
-        displayName: data.display_name,
+        displayName: data.displayName,
         avatar: data.avatar,
         signer_uuid: data.signer_uuid,
         delegated: data.delegated || false,
       };
     } catch (error) {
-      console.error('[AuthContext] Error fetching user from Supabase:', error);
+      console.error('[AuthContext] Error fetching user from API:', error);
       return null;
     }
   };
