@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import NeynarSignInButton from './NeynarSignInButton';
+import { NeynarAuthButton } from '@neynar/react';
 
 interface AuthButtonProps {
   className?: string;
@@ -51,9 +51,8 @@ export default function AuthButton({ className = '' }: AuthButtonProps) {
   
   return (
     <div className="flex items-center">
-      <NeynarSignInButton 
-        theme="dark"
-        className={`${className} min-w-[120px]`}
+      <NeynarAuthButton 
+        label="Sign in with Neynar"
       />
     </div>
   );

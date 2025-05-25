@@ -6,7 +6,10 @@
  */
 
 import neynarClient from "@/lib/neynarClient";
-import { registerUserSigner } from "./registerUserSigner";
+import { ViemLocalEip712Signer } from "@farcaster/hub-nodejs";
+import { bytesToHex, hexToBytes } from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import { getFid } from "./getFid";
 
 /**
  * Creates a new managed signer via Neynar
@@ -15,31 +18,56 @@ import { registerUserSigner } from "./registerUserSigner";
  * @param fid Optional Farcaster ID to associate with the signer
  * @returns The signed key information
  */
-export const getSignedKey = async (fid?: number) => {
-  try {
-    console.log('[getSignedKey] Creating managed signer via Neynar');
-    
-    // If no FID is provided, create an app signer (not associated with a user)
-    if (!fid) {
-      console.log('[getSignedKey] No FID provided, creating app signer');
-      // Use Neynar client directly to create a signer not associated with a specific user
-      const signer = await neynarClient.createSigner();
-      console.log('[getSignedKey] App signer created:', signer.signer_uuid);
-      return signer;
-    }
-    
-    // Create a user-specific signer
-    console.log('[getSignedKey] Creating signer for FID:', fid);
-    const signerInfo = await registerUserSigner(fid, false, { includeDebugLogs: true });
-    
-    console.log('[getSignedKey] User signer created:', signerInfo.signer_uuid);
-    return {
-      signer_uuid: signerInfo.signer_uuid,
-      public_key: signerInfo.public_key,
-      signer_approval_url: signerInfo.signer_approval_url
-    };
-  } catch (error) {
-    console.error('[getSignedKey] Error creating signer:', error);
-    throw error;
+export const getSignedKey = async () => {
+  const createSigner = await neynarClient.createSigner();
+  const { deadline, signature } = await generate_signature(
+    createSigner.public_key
+  );
+
+  if (deadline === 0 || signature === "") {
+    throw new Error("Failed to generate signature");
   }
+
+  const fid = await getFid();
+
+  const signedKey = await neynarClient.registerSignedKey({
+    signerUuid: createSigner.signer_uuid,
+    appFid: fid,
+    deadline,
+    signature,
+  });
+
+  return signedKey;
+};
+
+const generate_signature = async function (public_key: string) {
+  if (typeof process.env.FARCASTER_DEVELOPER_MNEMONIC === "undefined") {
+    throw new Error("FARCASTER_DEVELOPER_MNEMONIC is not defined");
+  }
+
+  const FARCASTER_DEVELOPER_MNEMONIC = process.env.FARCASTER_DEVELOPER_MNEMONIC;
+  const FID = await getFid();
+
+  const account = mnemonicToAccount(FARCASTER_DEVELOPER_MNEMONIC);
+  const appAccountKey = new ViemLocalEip712Signer(account);
+
+  const deadline = Math.floor(Date.now() / 1000) + 86400; // 24 hours
+  const uintAddress = hexToBytes(public_key as `0x${string}`);
+
+  const signature = await appAccountKey.signKeyRequest({
+    requestFid: BigInt(FID),
+    key: uintAddress,
+    deadline: BigInt(deadline),
+  });
+
+  if (signature.isErr()) {
+    return {
+      deadline,
+      signature: "",
+    };
+  }
+
+  const sigHex = bytesToHex(signature.value);
+
+  return { deadline, signature: sigHex };
 }; 
