@@ -84,7 +84,7 @@ export default function SimpleCastForm() {
   };
 
   return (
-    <div className="bg-gray-800 p-4 sm:p-6 rounded-xl border border-gray-700 shadow-lg w-full max-w-2xl mx-auto" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+    <div className="bg-gray-800 p-3 sm:p-6 rounded-xl border border-gray-700 shadow-lg w-full max-w-full mx-auto overflow-hidden" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
 
       {submitSuccess && (
         <div className="bg-green-900 text-green-200 p-6 rounded-lg mb-8 border border-green-700 text-xl">
@@ -125,8 +125,8 @@ export default function SimpleCastForm() {
             </label>
             <input
               type="date"
-              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px' }}
-              className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px', maxWidth: '100%' }}
+              className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent box-border"
               {...register('scheduledDate', { required: 'Date is required' })}
             />
             {errors.scheduledDate && (
@@ -141,8 +141,8 @@ export default function SimpleCastForm() {
             </label>
             <input
               type="time"
-              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px' }}
-              className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px', maxWidth: '100%' }}
+              className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent box-border"
               {...register('scheduledTime', { required: 'Time is required' })}
             />
             {errors.scheduledTime && (
