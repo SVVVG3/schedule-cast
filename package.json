@@ -10,6 +10,7 @@
     "migrate": "node scripts/apply-migration.js"
   },
   "dependencies": {
+    "@farcaster/auth-kit": "^0.8.0",
     "@farcaster/frame-sdk": "^0.0.45",
     "@farcaster/hub-nodejs": "^0.13.5",
     "@neynar/nodejs-sdk": "^2.42.3",

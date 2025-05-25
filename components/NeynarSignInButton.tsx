@@ -237,35 +237,82 @@ export default function NeynarSignInButton({
     const siwnUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
     
     addDebugMessage(`🔗 SIWN URL: ${siwnUrl}`);
-    addDebugMessage(`🚀 Attempting to open SIWN in external browser`);
+    addDebugMessage(`📱 Attempting mobile-optimized external opening`);
     
-    // For mini apps, try multiple methods to force external browser opening
-    try {
-      // Method 1: Try window.top (works if we're in iframe/webview)
-      if (window.top && window.top !== window) {
-        addDebugMessage(`🎯 Using window.top.location.href for external opening`);
-        window.top.location.href = siwnUrl;
-        return;
-      }
+    // For mobile mini apps, use a different strategy
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      addDebugMessage(`📱 Mobile device detected - using mobile strategy`);
       
-      // Method 2: Try window.open with _blank target
-      addDebugMessage(`🎯 Trying window.open with _blank target`);
-      const newWindow = window.open(siwnUrl, '_blank', 'noopener,noreferrer');
-      
-      if (newWindow) {
-        addDebugMessage(`✅ Successfully opened in new window`);
-        // Start polling immediately since user will return via external completion
-        setTimeout(() => {
-          pollForAuthentication();
-        }, 3000);
+      // Method 1: Try to use the browser's share/open functionality
+      if (navigator.share) {
+        addDebugMessage(`🔗 Using native share to open externally`);
+        navigator.share({
+          title: 'Complete Sign In',
+          text: 'Complete your sign in with Neynar',
+          url: siwnUrl
+        }).catch(e => {
+          addDebugMessage(`⚠️ Share API failed: ${e}`);
+          fallbackToDirectOpen(siwnUrl);
+        });
       } else {
-        throw new Error('Popup was blocked');
+        fallbackToDirectOpen(siwnUrl);
       }
-    } catch (error) {
-      // Method 3: Fallback to current window navigation
-      addDebugMessage(`⚠️ External opening failed: ${error}, falling back to current window`);
-      window.location.href = siwnUrl;
+    } else {
+      addDebugMessage(`💻 Desktop detected - using standard opening`);
+      fallbackToDirectOpen(siwnUrl);
     }
+    
+    // Start polling immediately since user will return via external completion
+    setTimeout(() => {
+      addDebugMessage(`🔄 Starting polling for auth completion`);
+      pollForAuthentication();
+    }, 3000);
+  };
+  
+  const fallbackToDirectOpen = (url: string) => {
+    addDebugMessage(`🚀 Using fallback opening method`);
+    
+    // Create a temporary link element that forces external browser opening
+    const link = document.createElement('a');
+    link.href = url;
+    link.target = '_system'; // Try _system for mobile apps
+    link.rel = 'noopener noreferrer';
+    
+    // Add mobile-specific attributes
+    link.setAttribute('data-external', 'true');
+    
+    // Add to DOM and click (required for some mobile browsers)
+    document.body.appendChild(link);
+    
+    // Use both click and manual navigation
+    try {
+      link.click();
+      addDebugMessage(`✅ Link click executed`);
+    } catch (e) {
+      addDebugMessage(`⚠️ Link click failed: ${e}`);
+    }
+    
+    // Also try direct window.open as backup
+    setTimeout(() => {
+      try {
+        window.open(url, '_blank');
+        addDebugMessage(`✅ Window.open backup executed`);
+      } catch (e) {
+        addDebugMessage(`⚠️ Window.open failed: ${e}`);
+        // Last resort - navigate current window
+        addDebugMessage(`🔄 Last resort: navigating current window`);
+        window.location.href = url;
+      }
+    }, 500);
+    
+    // Clean up
+    setTimeout(() => {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    }, 1000);
   };
 
   // Polling function to check if authentication completed
