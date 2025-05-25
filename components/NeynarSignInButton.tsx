@@ -16,7 +16,6 @@ export default function NeynarSignInButton({
   showAsSignerDelegation = false,
   frameUserFid
 }: NeynarSignInButtonProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const updateAuthFromSIWN = useUpdateAuthFromSIWN();
   const [isClient, setIsClient] = useState(false);
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
@@ -90,7 +89,7 @@ export default function NeynarSignInButton({
         };
         
         addDebugMessage("🚀 Processing SIWN data from URL parameters");
-        (window as any).onSignInSuccess?.(siwnData);
+        handleSignInSuccess(siwnData);
       }
     }
 
@@ -104,7 +103,7 @@ export default function NeynarSignInButton({
         
         if (parsedData.fid && parsedData.signer_uuid) {
           addDebugMessage("🚀 Processing SIWN data from localStorage");
-          (window as any).onSignInSuccess?.(parsedData);
+          handleSignInSuccess(parsedData);
           // Clear the localStorage data after processing
           localStorage.removeItem('neynar_siwn_data');
           localStorage.removeItem('siwn_data');
@@ -115,82 +114,7 @@ export default function NeynarSignInButton({
     }
 
     // Define the global callback function exactly as Neynar docs specify
-    (window as any).onSignInSuccess = async (data: any) => {
-      addDebugMessage("🎉 SIWN SUCCESS CALLBACK TRIGGERED!");
-      addDebugMessage(`📊 FID: ${data.fid}, Signer: ${data.signer_uuid}`);
-      setIsProcessing(true);
-      
-      try {
-        if (data.fid && data.signer_uuid) {
-          addDebugMessage("🔄 Starting authentication process...");
-          
-          // Update auth context first
-          await updateAuthFromSIWN(data);
-          addDebugMessage("✅ Auth context updated");
-          
-          // Store signer in Supabase
-          addDebugMessage("💾 Storing signer in database...");
-          
-          const storeResponse = await fetch('/api/signer/store', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              fid: data.fid,
-              signer_uuid: data.signer_uuid,
-              username: data.user?.username,
-              display_name: data.user?.display_name || data.user?.displayName
-            }),
-          });
-          
-          addDebugMessage(`📡 Store API Response: ${storeResponse.status} ${storeResponse.ok ? 'OK' : 'ERROR'}`);
-          
-          const storeResponseText = await storeResponse.text();
-          
-          if (!storeResponse.ok) {
-            addDebugMessage(`❌ Store API Error: ${storeResponseText}`);
-            alert(`Failed to store signer data. Status: ${storeResponse.status}. Please try again.`);
-          } else {
-            addDebugMessage("✅ Signer stored successfully!");
-            
-            // Let's also call the debug endpoint to verify data was stored
-            addDebugMessage("🔍 Verifying data in database...");
-            try {
-              const debugResponse = await fetch(`/api/debug-user?fid=${data.fid}`);
-              const debugData = await debugResponse.json();
-              
-              if (debugData.has_signer && debugData.is_delegated) {
-                addDebugMessage("🎉 SUCCESS: Data confirmed in database!");
-              } else {
-                addDebugMessage("⚠️ WARNING: Data not properly stored in database");
-              }
-            } catch (debugError) {
-              addDebugMessage("❌ Debug verification failed");
-            }
-          }
-          
-          addDebugMessage("🎉 Authentication process complete!");
-        } else {
-          addDebugMessage(`❌ Missing required data: FID=${data.fid}, Signer=${data.signer_uuid}`);
-        }
-      } catch (error) {
-        addDebugMessage(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
-        alert('Sign-in successful, but there was an issue processing your signer. You may need to approve it manually.');
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    // Load the official Neynar SIWN script
-    if (!document.getElementById('neynar-siwn-script')) {
-      const script = document.createElement('script');
-      script.id = 'neynar-siwn-script';
-      script.src = 'https://neynarxyz.github.io/siwn/raw/1.2.0/index.js';
-      script.async = true;
-      document.body.appendChild(script);
-      addDebugMessage("📦 Neynar script loaded");
-    }
+    (window as any).onSignInSuccess = handleSignInSuccess;
 
     // Add message listener for SIWN popup messages
     const handleMessage = (event: MessageEvent) => {
@@ -218,7 +142,7 @@ export default function NeynarSignInButton({
           
           if (isSuccess) {
             addDebugMessage("🚀 Success message detected - triggering callback");
-            (window as any).onSignInSuccess?.(event.data);
+            handleSignInSuccess(event.data);
           } else {
             addDebugMessage("ℹ️ Non-success message from Neynar");
           }
@@ -231,55 +155,6 @@ export default function NeynarSignInButton({
     window.addEventListener('message', handleMessage);
     addDebugMessage("👂 Message listener added");
 
-    // Create the SIWN widget div using standard configuration
-    if (containerRef.current) {
-      const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
-      
-      // Configure button text based on context
-      let buttonText = 'Sign in with Neynar';
-      if (showAsSignerDelegation) {
-        buttonText = 'Grant Posting Permissions';
-      } else if (frameUserFid) {
-        buttonText = 'Connect to Schedule-Cast';
-      }
-      
-      // Use our custom completion endpoint to handle SIWN data
-      const redirectUri = 'https://schedule-cast.vercel.app/api/siwn-complete';
-      addDebugMessage(`🔧 Using custom completion endpoint: ${redirectUri}`);
-      addDebugMessage(`🔑 Client ID: ${clientId}`);
-      addDebugMessage(`📝 Button text: ${buttonText}`);
-      
-      const siwnHtml = `
-        <div
-          class="neynar_signin"
-          data-client_id="${clientId}"
-          data-success-callback="onSignInSuccess"
-          data-redirect_uri="${redirectUri}"
-          data-theme="${theme}"
-          data-variant="neynar"
-          data-text="${buttonText}"
-          data-width="100%"
-          data-height="44px">
-        </div>
-      `;
-      
-      addDebugMessage(`🏗️ SIWN widget HTML: ${siwnHtml.trim()}`);
-      containerRef.current.innerHTML = siwnHtml;
-      
-      addDebugMessage(`🎨 SIWN widget created: ${buttonText} (with completion endpoint)`);
-      
-      // Let's also inspect the actual DOM after the widget loads
-      setTimeout(() => {
-        const actualWidget = containerRef.current?.querySelector('.neynar_signin');
-        if (actualWidget) {
-          addDebugMessage(`🔍 Actual widget HTML: ${actualWidget.outerHTML}`);
-          addDebugMessage(`🔍 Widget attributes: ${Array.from(actualWidget.attributes).map(attr => `${attr.name}="${attr.value}"`).join(', ')}`);
-        } else {
-          addDebugMessage(`⚠️ No .neynar_signin element found after creation`);
-        }
-      }, 2000);
-    }
-
     // Cleanup
     return () => {
       if ((window as any).onSignInSuccess) {
@@ -287,7 +162,86 @@ export default function NeynarSignInButton({
       }
       window.removeEventListener('message', handleMessage);
     };
-  }, [isClient, theme, updateAuthFromSIWN, showAsSignerDelegation, frameUserFid]);
+  }, [isClient, frameUserFid]);
+
+  const handleSignInSuccess = async (data: any) => {
+    addDebugMessage("🎉 SIWN SUCCESS CALLBACK TRIGGERED!");
+    addDebugMessage(`📊 FID: ${data.fid}, Signer: ${data.signer_uuid}`);
+    setIsProcessing(true);
+    
+    try {
+      if (data.fid && data.signer_uuid) {
+        addDebugMessage("🔄 Starting authentication process...");
+        
+        // Update auth context first
+        await updateAuthFromSIWN(data);
+        addDebugMessage("✅ Auth context updated");
+        
+        // Store signer in Supabase
+        addDebugMessage("💾 Storing signer in database...");
+        
+        const storeResponse = await fetch('/api/signer/store', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fid: data.fid,
+            signer_uuid: data.signer_uuid,
+            username: data.user?.username,
+            display_name: data.user?.display_name || data.user?.displayName
+          }),
+        });
+        
+        addDebugMessage(`📡 Store API Response: ${storeResponse.status} ${storeResponse.ok ? 'OK' : 'ERROR'}`);
+        
+        const storeResponseText = await storeResponse.text();
+        
+        if (!storeResponse.ok) {
+          addDebugMessage(`❌ Store API Error: ${storeResponseText}`);
+          alert(`Failed to store signer data. Status: ${storeResponse.status}. Please try again.`);
+        } else {
+          addDebugMessage("✅ Signer stored successfully!");
+          
+          // Let's also call the debug endpoint to verify data was stored
+          addDebugMessage("🔍 Verifying data in database...");
+          try {
+            const debugResponse = await fetch(`/api/debug-user?fid=${data.fid}`);
+            const debugData = await debugResponse.json();
+            
+            if (debugData.has_signer && debugData.is_delegated) {
+              addDebugMessage("🎉 SUCCESS: Data confirmed in database!");
+            } else {
+              addDebugMessage("⚠️ WARNING: Data not properly stored in database");
+            }
+          } catch (debugError) {
+            addDebugMessage("❌ Debug verification failed");
+          }
+        }
+        
+        addDebugMessage("🎉 Authentication process complete!");
+      } else {
+        addDebugMessage(`❌ Missing required data: FID=${data.fid}, Signer=${data.signer_uuid}`);
+      }
+    } catch (error) {
+      addDebugMessage(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
+      alert('Sign-in successful, but there was an issue processing your signer. You may need to approve it manually.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSignInClick = () => {
+    const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
+    const redirectUri = encodeURIComponent('https://schedule-cast.vercel.app/api/siwn-complete');
+    const siwnUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
+    
+    addDebugMessage(`🔗 SIWN URL: ${siwnUrl}`);
+    addDebugMessage(`🚀 Opening SIWN in external browser`);
+    
+    // For mini apps, force external browser opening
+    window.location.href = siwnUrl;
+  };
 
   // Polling function to check if authentication completed
   const pollForAuthentication = async () => {
@@ -354,73 +308,58 @@ export default function NeynarSignInButton({
     );
   }
 
+  // Configure button text based on context
+  let buttonText = 'Sign in with Neynar';
+  if (showAsSignerDelegation) {
+    buttonText = 'Grant Posting Permissions';
+  } else if (frameUserFid) {
+    buttonText = 'Connect to Schedule-Cast';
+  }
+
   return (
     <div className={className}>
-      <div ref={containerRef}></div>
+      <button
+        onClick={handleSignInClick}
+        disabled={isProcessing}
+        className="w-full flex items-center justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg text-sm font-medium transition-colors"
+      >
+        {isProcessing ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+            Processing...
+          </>
+        ) : (
+          <>
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            {buttonText}
+          </>
+        )}
+      </button>
       
-      {/* Backup manual authentication */}
-      {frameUserFid && (
-        <div className="mt-2">
-          <button
-            onClick={() => {
-              const clientId = process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9';
-              const redirectUri = encodeURIComponent('https://schedule-cast.vercel.app/api/siwn-complete');
-              const manualUrl = `https://app.neynar.com/login?client_id=${clientId}&redirect_uri=${redirectUri}`;
-              
-              addDebugMessage(`🔗 Manual SIWN URL: ${manualUrl}`);
-              addDebugMessage(`🚀 Opening manual SIWN in new window`);
-              
-              // Try to open in new window
-              const newWindow = window.open(manualUrl, '_blank', 'width=400,height=600');
-              if (!newWindow) {
-                addDebugMessage(`⚠️ Popup blocked - will copy URL to clipboard`);
-                navigator.clipboard?.writeText(manualUrl);
-                alert('Popup blocked. URL copied to clipboard. Please paste in browser.');
-              }
-            }}
-            className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm"
-          >
-            🔧 Manual SIWN (Backup)
-          </button>
+      {/* Debug messages for development */}
+      {process.env.NODE_ENV === 'development' && debugMessages.length > 0 && (
+        <div className="mt-2 text-xs bg-gray-100 p-2 rounded max-h-32 overflow-y-auto">
+          {debugMessages.map((msg, i) => (
+            <div key={i} className="text-gray-600">{msg}</div>
+          ))}
         </div>
       )}
       
-      {/* Debug Panel - only show if there are messages */}
-      {debugMessages.length > 0 && (
-        <div className="mt-4 p-3 bg-gray-100 rounded-lg border">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold text-gray-700">Debug Log</h4>
-            <div className="flex items-center gap-2">
-              {(isProcessing || isPolling) && (
-                <div className="flex items-center gap-1 text-blue-600">
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                  <span className="text-xs">
-                    {isProcessing ? 'Processing...' : 'Polling...'}
-                  </span>
-                </div>
-              )}
-              {frameUserFid && !isPolling && (
-                <button
-                  onClick={pollForAuthentication}
-                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Check Auth Status
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="space-y-1 max-h-32 overflow-y-auto">
-            {debugMessages.map((message, index) => (
-              <div key={index} className="text-xs text-gray-600 font-mono">
-                {message}
-              </div>
-            ))}
-          </div>
-          {frameUserFid && (
-            <div className="mt-2 text-xs text-gray-500">
-              💡 If SIWN completes but callback doesn't work, click "Check Auth Status" above
-            </div>
-          )}
+      {/* Backup polling button for troubleshooting */}
+      {frameUserFid && (
+        <div className="mt-2">
+          <button
+            onClick={pollForAuthentication}
+            disabled={isPolling}
+            className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm disabled:bg-orange-400"
+          >
+            {isPolling ? 'Checking...' : 'Check Auth Status'}
+          </button>
+          <p className="text-xs text-gray-500 mt-1">
+            💡 If SIWN completes but callback doesn't work, click "Check Auth Status" above
+          </p>
         </div>
       )}
     </div>
