@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useFrameContext } from '@/lib/frame-context';
-import NeynarSignInButton from './NeynarSignInButton';
+import { NeynarAuthButton } from '@neynar/react';
 
 interface SignerApprovalCheckerProps {
   children: React.ReactNode;
@@ -187,10 +187,8 @@ export default function SignerApprovalChecker({ children, fallback }: SignerAppr
                 </button>
               ) : (
                 // Web Environment: Use standard SIWN
-                <NeynarSignInButton 
-                  theme="light" 
-                  showAsSignerDelegation={true}
-                  frameUserFid={user?.fid}
+                <NeynarAuthButton 
+                  label="Grant Posting Permissions"
                 />
               )}
               

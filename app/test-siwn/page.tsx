@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import NeynarSignInButton from '@/components/NeynarSignInButton';
+import { NeynarAuthButton } from '@neynar/react';
 import { useAuth } from '@/lib/auth-context';
 
 export default function TestSIWNPage() {
@@ -62,9 +62,8 @@ export default function TestSIWNPage() {
                   Click the button below to test Sign In With Neynar:
                 </p>
                 
-                <NeynarSignInButton
-                  theme="light"
-                  className="w-full"
+                <NeynarAuthButton
+                  label="Sign in with Neynar"
                 />
               </div>
             ) : (
