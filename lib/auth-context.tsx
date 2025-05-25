@@ -199,7 +199,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     if (typeof window !== 'undefined') {
       localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
-      console.log('[AuthContext] Stored auth data in localStorage');
+      console.log('[AuthContext] Stored auth data in localStorage:', localStorage.getItem('siwn_auth_data'));
     }
     
     // Immediately try to fetch user data and update state
@@ -223,6 +223,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
             setIsAuthenticated(true);
             console.log('[AuthContext] Auth state updated immediately:', userData);
+            console.log('[AuthContext] Current auth state - isAuthenticated:', true, 'user:', userData);
             return true; // Success
           }
         } catch (error) {
