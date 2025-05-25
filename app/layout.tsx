@@ -6,6 +6,7 @@ import { UserProvider } from '@/lib/user-context'
 import { FrameContextProvider } from '@/lib/frame-context'
 import ConditionalLayout from '@/components/ConditionalLayout'
 import NeynarProvider from '@/components/NeynarProvider'
+import EmbedMeta from '@/components/EmbedMeta'
 
 export const metadata: Metadata = {
   title: 'Schedule Cast - Farcaster Scheduling',
@@ -31,6 +32,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <EmbedMeta />
+      </head>
       <body className="overflow-x-hidden">
         <NeynarProvider>
           <FrameContextProvider>
