@@ -198,40 +198,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('[AuthContext] 🚀 UPDATING AUTH FROM SIWN DATA:', siwnData);
     console.log('[AuthContext] 🌍 Current environment - hostname:', typeof window !== 'undefined' ? window.location.hostname : 'server');
     
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
-      console.log('[AuthContext] 💾 STORED AUTH DATA IN LOCALSTORAGE:', localStorage.getItem('siwn_auth_data'));
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('siwn_auth_data', JSON.stringify(siwnData));
+        console.log('[AuthContext] 💾 STORED AUTH DATA IN LOCALSTORAGE:', localStorage.getItem('siwn_auth_data'));
+      }
+      console.log('[AuthContext] ✅ Local storage operations completed');
+    } catch (storageError) {
+      console.error('[AuthContext] ❌ Local storage error:', storageError);
     }
     
     // Immediately try to fetch user data and update state
     if (siwnData.fid) {
-      console.log('[AuthContext] Immediately fetching user data for FID:', siwnData.fid);
+      console.log('[AuthContext] 🔍 Starting user fetch for FID:', siwnData.fid);
       
       // Try multiple times with increasing delays to handle race conditions
       let attempts = 0;
       const maxAttempts = 5;
+      console.log('[AuthContext] 📊 Retry configuration - maxAttempts:', maxAttempts);
       
       const tryFetchUser = async () => {
         attempts++;
-        console.log(`[AuthContext] Fetch attempt ${attempts}/${maxAttempts}`);
+        console.log(`[AuthContext] 🔄 Fetch attempt ${attempts}/${maxAttempts} for FID:`, siwnData.fid);
         
         try {
+          console.log('[AuthContext] 📡 Calling fetchUserFromSupabase...');
           const userData = await fetchUserFromSupabase(siwnData.fid);
+          console.log('[AuthContext] 📊 fetchUserFromSupabase result:', userData);
+          
           if (userData) {
-            setUser({
+            const finalUser = {
               ...userData,
               avatar: siwnData.user?.pfp_url || userData.avatar,
-            });
+            };
+            console.log('[AuthContext] 👤 Setting user state:', finalUser);
+            setUser(finalUser);
+            
+            console.log('[AuthContext] 🔐 Setting isAuthenticated to true');
             setIsAuthenticated(true);
-            console.log('[AuthContext] Auth state updated immediately:', userData);
-            console.log('[AuthContext] Current auth state - isAuthenticated:', true, 'user:', userData);
+            
+            console.log('[AuthContext] ✅ Auth state updated successfully!');
+            console.log('[AuthContext] 📊 Final auth state - isAuthenticated:', true, 'user:', finalUser);
             return true; // Success
+          } else {
+            console.log('[AuthContext] ⚠️ fetchUserFromSupabase returned null/undefined');
+            return false;
           }
         } catch (error) {
-          console.error(`[AuthContext] Attempt ${attempts} failed:`, error);
+          console.error(`[AuthContext] ❌ Attempt ${attempts} failed:`, error);
+          console.error('[AuthContext] 📊 Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : 'No stack'
+          });
+          return false;
         }
-        
-        return false; // Failed
       };
       
       // Try immediately
