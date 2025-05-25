@@ -37,9 +37,15 @@ export default function ImprovedNavbar() {
       console.log('🚪 Original signOut failed (expected due to caching):', error);
     }
     
-    // Force page reload to clear all auth state
-    console.log('🚪 Reloading page to clear auth state...');
-    window.location.href = '/';
+    // Don't reload automatically - let user see debug logs
+    console.log('🚪 DEBUG MODE: Not reloading automatically so you can see the logs');
+    console.log('🚪 Check if auth state updates automatically, or manually navigate to homepage');
+    
+    // Show a visible alert with the debug info
+    setTimeout(() => {
+      const finalCheck = localStorage.getItem('siwn_auth_data');
+      alert(`SignOut Debug Results:\n\nLocalStorage after clear: ${finalCheck || 'null'}\n\nCheck console logs for details, then manually navigate to homepage to test.`);
+    }, 500);
   };
 
   return (
