@@ -7,21 +7,7 @@ import { FrameContextProvider } from '@/lib/frame-context'
 import ConditionalLayout from '@/components/ConditionalLayout'
 import NeynarProvider from '@/components/NeynarProvider'
 
-// Mini App Embed configuration - only applied to main pages, not miniapp
-const embedFrame = {
-  version: "next",
-  imageUrl: "https://schedule-cast.vercel.app/ScheduleCastEmbed.png",
-  button: {
-    title: "📅 Schedule Cast",
-    action: {
-      type: "launch_frame",
-      name: "Schedule Cast",
-      url: "https://schedule-cast.vercel.app/miniapp",
-      splashImageUrl: "https://schedule-cast.vercel.app/api/splash-logo",
-      splashBackgroundColor: "#000000"
-    }
-  }
-}
+
 
 export const metadata: Metadata = {
   title: 'Schedule Cast - Farcaster Scheduling',
@@ -31,9 +17,6 @@ export const metadata: Metadata = {
     description: 'Plan and schedule your Farcaster casts for optimal engagement',
     images: ['https://schedule-cast.vercel.app/ScheduleCastEmbed.png'],
     url: 'https://schedule-cast.vercel.app'
-  },
-  other: {
-    'fc:frame': JSON.stringify(embedFrame)
   }
 }
 
