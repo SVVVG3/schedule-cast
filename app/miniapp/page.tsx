@@ -75,25 +75,25 @@ export default function MiniApp() {
               </div>
             </div>
 
-            {/* User Header with Much More Spacing */}
-            <div className="mb-8">
-              <div className="flex items-center justify-center bg-white rounded-lg px-8 py-6 shadow-sm">
-                <span className="text-gray-500 text-sm mr-12">Signed in as:</span>
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-8 flex-shrink-0">
+            {/* User Header - EXTREMELY DRAMATIC SPACING */}
+            <div className="mb-12">
+              <div className="flex items-center justify-center bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl px-12 py-10 shadow-lg border border-purple-200">
+                <span className="text-gray-600 text-lg font-medium mr-16">Signed in as:</span>
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-12 flex-shrink-0 shadow-lg">
                   {authUser?.avatar ? (
                     <img 
                       src={authUser.avatar} 
                       alt={authUser.displayName || authUser.username || 'User'} 
-                      className="w-8 h-8 rounded-full object-cover"
-                      style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px', maxWidth: '32px', maxHeight: '32px' }}
+                      className="w-16 h-16 rounded-full object-cover"
+                      style={{ width: '64px', height: '64px', minWidth: '64px', minHeight: '64px', maxWidth: '64px', maxHeight: '64px' }}
                     />
                   ) : (
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
                 </div>
-                <p className="font-semibold text-gray-900 text-base">
+                <p className="font-bold text-gray-900 text-xl">
                   @{authUser?.username || 'user'}
                 </p>
               </div>
