@@ -199,14 +199,6 @@ export default function MediaUpload({
     return '📎';
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Upload Button - Dark mode styling matching Date/Time inputs */}
@@ -266,7 +258,7 @@ export default function MediaUpload({
           ) : (
             <>
               <ImageUploadIcon className="w-4 h-4" />
-              <span>Click or drag files to upload</span>
+              <span>Click to Upload</span>
             </>
           )}
         </button>
@@ -292,7 +284,7 @@ export default function MediaUpload({
         </div>
       )}
 
-      {/* Uploaded Files Preview - Compact mobile-friendly design */}
+      {/* Uploaded Files Preview - Clean mobile-friendly design */}
       {uploadedFiles.length > 0 && (
         <div className="space-y-3">
           <div className="text-sm font-medium text-gray-300">
@@ -305,7 +297,7 @@ export default function MediaUpload({
                 key={file.id}
                 className="relative bg-gray-700 border border-gray-600 rounded-lg overflow-hidden"
               >
-                {/* File Preview - Properly sized for mobile */}
+                {/* File Preview - Clean design without extra info */}
                 <div className="aspect-square w-full bg-gray-800 flex items-center justify-center relative">
                   {file.type === 'image' ? (
                     <>
@@ -322,10 +314,10 @@ export default function MediaUpload({
                           }
                         }}
                       />
-                      {/* Remove button overlay */}
+                      {/* Remove button overlay - more prominent */}
                       <button
                         onClick={() => removeFile(file.id)}
-                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors shadow-lg"
                         title="Remove file"
                       >
                         ✕
@@ -334,10 +326,10 @@ export default function MediaUpload({
                   ) : (
                     <>
                       <span className="text-4xl">{getFileTypeIcon(file.type)}</span>
-                      {/* Remove button overlay */}
+                      {/* Remove button overlay - more prominent */}
                       <button
                         onClick={() => removeFile(file.id)}
-                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors shadow-lg"
                         title="Remove file"
                       >
                         ✕
@@ -345,26 +337,9 @@ export default function MediaUpload({
                     </>
                   )}
                 </div>
-
-                {/* File Info - Compact */}
-                <div className="p-2 bg-gray-700">
-                  <div className="text-xs font-medium text-gray-200 truncate">
-                    {file.filename.length > 15 ? `${file.filename.substring(0, 12)}...` : file.filename}
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {file.format.toUpperCase()} • {formatFileSize(file.size)}
-                  </div>
-                </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Character Impact Notice */}
-      {uploadedFiles.length > 0 && (
-        <div className="text-xs text-gray-400 bg-blue-900/20 p-2 rounded border border-blue-800">
-          💡 Media files reduce available text space. Each file uses ~23 characters for the embed.
         </div>
       )}
     </div>
