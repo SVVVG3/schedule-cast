@@ -7,6 +7,7 @@ import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
 import UniversalAuthButton from './UniversalAuthButton';
 import SignerApprovalChecker from './SignerApprovalChecker';
+import MediaUpload, { UploadedFile } from './MediaUpload';
 
 interface CastFormData {
   content: string;
@@ -21,6 +22,7 @@ export default function CompactCastForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   
   const {
     register,
@@ -58,7 +60,20 @@ export default function CompactCastForm() {
       const castData = {
         content: data.content,
         scheduled_at: scheduledAt.toISOString(),
-        channel_id: data.channelId || null
+        channel_id: data.channelId || null,
+        // Include media data if files are uploaded
+        ...(uploadedFiles.length > 0 && {
+          media_urls: uploadedFiles.map(file => file.url),
+          media_types: uploadedFiles.map(file => file.type),
+          media_metadata: {
+            files: uploadedFiles.map(file => ({
+              id: file.id,
+              filename: file.filename,
+              size: file.size,
+              format: file.format
+            }))
+          }
+        })
       };
 
       const response = await fetch(`/api/casts?fid=${authUser.fid}`, {
@@ -77,6 +92,7 @@ export default function CompactCastForm() {
 
       setSubmitSuccess(true);
       reset();
+      setUploadedFiles([]); // Clear uploaded files
     } catch (error) {
       console.error('Error scheduling cast:', error);
       setSubmitError((error as Error)?.message || 'An unexpected error occurred');
@@ -123,6 +139,19 @@ export default function CompactCastForm() {
                 {errors.content.message}
               </p>
             )}
+          </div>
+
+          {/* Media Upload Section */}
+          <div>
+            <label className="block text-xl font-medium text-gray-300 mb-4">
+              Media (optional)
+            </label>
+            <MediaUpload 
+              onFilesChange={setUploadedFiles}
+              maxFiles={4}
+              maxSizePerFile={10 * 1024 * 1024} // 10MB
+              className="mb-4"
+            />
           </div>
 
           <div className="space-y-6">
