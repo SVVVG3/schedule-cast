@@ -172,8 +172,9 @@ export default function MiniApp() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-3">
-                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="m8 12 4 4 4-4"/>
                         </svg>
                         <h3 className="text-white font-semibold">Visit our website</h3>
                       </div>
@@ -182,8 +183,9 @@ export default function MiniApp() {
                         onClick={copyUrlToClipboard}
                         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
                         </svg>
                         <span>Copy Website URL</span>
                       </button>
@@ -206,8 +208,10 @@ export default function MiniApp() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-3">
-                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                          <circle cx="12" cy="16" r="1"/>
+                          <path d="M7 11V7a5 5 0 0110 0v4"/>
                         </svg>
                         <h3 className="text-white font-semibold">Grant permissions</h3>
                       </div>
@@ -226,8 +230,9 @@ export default function MiniApp() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-3">
-                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
                         </svg>
                         <h3 className="text-white font-semibold">Return & start scheduling</h3>
                       </div>
