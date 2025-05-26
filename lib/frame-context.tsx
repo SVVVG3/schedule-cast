@@ -63,12 +63,22 @@ export function FrameContextProvider({ children }: FrameContextProviderProps) {
         return;
       }
 
+      // Check if we're on the miniapp route - if so, assume mini app environment
+      const isMiniAppRoute = window.location.pathname.includes('/miniapp');
+      
       // Set a maximum timeout for SDK initialization
       const timeoutId = setTimeout(() => {
-        console.log('[FrameContext] SDK initialization timeout - assuming web environment');
+        console.log('[FrameContext] SDK initialization timeout');
+        if (isMiniAppRoute) {
+          console.log('[FrameContext] On miniapp route - assuming mini app environment');
+          setIsMiniApp(true);
+          setIsFrameApp(true);
+        } else {
+          console.log('[FrameContext] Assuming web environment');
+          setIsMiniApp(false);
+          setIsFrameApp(false);
+        }
         setIsLoading(false);
-        setIsMiniApp(false);
-        setIsFrameApp(false);
       }, 3000); // 3 second timeout
 
       try {
@@ -84,24 +94,30 @@ export function FrameContextProvider({ children }: FrameContextProviderProps) {
         
         console.log('[FrameContext] Mini app detection result:', isMiniAppEnv);
         
-        if (isMiniAppEnv) {
-          // We're in a mini app - get user context
+        if (isMiniAppEnv || isMiniAppRoute) {
+          // We're in a mini app environment or on miniapp route
           console.log('[FrameContext] In mini app environment, getting context...');
+          setIsMiniApp(true);
+          setIsFrameApp(true);
           
-          const context = await frameSdk.context;
-          console.log('[FrameContext] Frame context:', context);
-          
-          if (context?.user) {
-            setFrameContext(context);
-            setIsFrameApp(true);
-            console.log('[FrameContext] User context loaded:', context.user);
+          if (isMiniAppEnv) {
+            // Only try to get context if actually in mini app environment
+            const context = await frameSdk.context;
+            console.log('[FrameContext] Frame context:', context);
+            
+            if (context?.user) {
+              setFrameContext(context);
+              console.log('[FrameContext] User context loaded:', context.user);
+            }
+            
+            // Signal ready to Farcaster client
+            await frameSdk.actions.ready();
+            console.log('[FrameContext] Frame SDK ready signal sent');
           }
-          
-          // Signal ready to Farcaster client
-          await frameSdk.actions.ready();
-          console.log('[FrameContext] Frame SDK ready signal sent');
         } else {
           console.log('[FrameContext] Not in mini app environment');
+          setIsMiniApp(false);
+          setIsFrameApp(false);
         }
         
         // Clear timeout since initialization completed

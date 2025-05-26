@@ -52,6 +52,22 @@ export default function Home() {
         {/* Header Section */}
         <div className="text-center mb-12">
           <div className="max-w-6xl mx-auto">
+            {/* Main Title with Triangle */}
+            <div className="flex items-center justify-center mb-8">
+              <svg 
+                className="text-purple-600 mr-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+                width="48"
+                height="48"
+                style={{ width: '48px', height: '48px', minWidth: '48px', minHeight: '48px' }}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+              <h1 className="text-5xl font-bold text-gray-900">Schedule Cast</h1>
+            </div>
+            
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Get Started</h2>
               <p className="text-gray-600">Sign in with Neynar to start scheduling casts</p>

@@ -273,6 +273,13 @@ WITH CHECK (
 
 ## Executor's Feedback or Assistance Requests
 
+**🔧 LATEST FIXES COMPLETED (Just Now)**:
+- [x] **Fixed**: Restored "Schedule Cast" title with triangle icon above "Get Started" on main page (user correctly pointed out I accidentally removed it)
+- [x] **Fixed**: Updated frame context detection to hide NavBar in mini app - added route-based detection for `/miniapp` path to ensure NavBar doesn't show 
+- [ ] **Testing Required**: Need to test both fixes work correctly in production environment
+
+**Ready for user to test and confirm fixes work properly**
+
 **🚨 MAJOR DATABASE ARCHITECTURE ISSUE DISCOVERED**
 
 ### **🔍 THE PROBLEM: Multiple Overlapping Tables**
