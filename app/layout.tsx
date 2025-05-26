@@ -7,8 +7,6 @@ import { FrameContextProvider } from '@/lib/frame-context'
 import ConditionalLayout from '@/components/ConditionalLayout'
 import NeynarProvider from '@/components/NeynarProvider'
 
-
-
 export const metadata: Metadata = {
   title: 'Schedule Cast - Farcaster Scheduling',
   description: 'Plan and schedule your Farcaster casts for optimal engagement. Schedule posts in advance and never miss a beat.',
@@ -17,22 +15,6 @@ export const metadata: Metadata = {
     description: 'Plan and schedule your Farcaster casts for optimal engagement',
     images: ['https://schedule-cast.vercel.app/ScheduleCastEmbed.png'],
     url: 'https://schedule-cast.vercel.app'
-  },
-  other: {
-    'fc:frame': JSON.stringify({
-      version: "next",
-      imageUrl: "https://schedule-cast.vercel.app/ScheduleCastEmbed.png",
-      button: {
-        title: "⚡ Schedule Cast",
-        action: {
-          type: "launch_frame",
-          name: "Schedule Cast",
-          url: "https://schedule-cast.vercel.app/miniapp",
-          splashImageUrl: "https://schedule-cast.vercel.app/ScheduleCastLogo.png",
-          splashBackgroundColor: "#000000"
-        }
-      }
-    })
   }
 }
 
@@ -51,6 +33,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta 
+          name="fc:frame" 
+          content='{"version":"1","imageUrl":"https://schedule-cast.vercel.app/ScheduleCastEmbed.png","button":{"title":"⚡ Schedule Cast","action":{"type":"launch_frame","name":"Schedule Cast","url":"https://schedule-cast.vercel.app/miniapp","splashImageUrl":"https://schedule-cast.vercel.app/ScheduleCastLogo.png","splashBackgroundColor":"#000000"}}}' 
+        />
+      </head>
       <body className="overflow-x-hidden w-full max-w-full">
         <NeynarProvider>
           <FrameContextProvider>
