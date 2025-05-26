@@ -1,7 +1,6 @@
 'use client';
 
 import { useFrameContext } from '@/lib/frame-context';
-import ImprovedNavbar from './ImprovedNavbar';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -28,10 +27,9 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     );
   }
 
-  // Regular web layout - with navbar and footer
+  // Regular web layout - no navbar, just content and footer
   return (
     <div className="min-h-screen flex flex-col">
-      <ImprovedNavbar />
       <main className="flex-grow">{children}</main>
       <footer className="bg-gray-800 py-4 border-t border-gray-700">
         <div className="container mx-auto px-4 text-center text-sm text-gray-300">

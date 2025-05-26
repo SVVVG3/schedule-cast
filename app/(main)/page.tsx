@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 import CompactCastForm from '@/components/CompactCastForm';
+import UniversalAuthButton from '@/components/UniversalAuthButton';
 import { useAuth } from '@/lib/auth-context';
 
 export default function Home() {
@@ -70,7 +71,12 @@ export default function Home() {
             
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Get Started</h2>
-              <p className="text-gray-600">Sign in with Neynar to start scheduling casts</p>
+              <p className="text-gray-600 mb-4">Sign in with Neynar to start scheduling casts</p>
+              
+              {/* Sign in with Neynar Button */}
+              <div className="flex justify-center">
+                <UniversalAuthButton className="max-w-sm" />
+              </div>
             </div>
             
             <div className="text-center">
