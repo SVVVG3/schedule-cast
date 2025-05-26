@@ -168,7 +168,7 @@ export default function MiniApp() {
                   <p className="text-gray-300 text-sm mb-4">Open the desktop/mobile site to grant permissions</p>
                   <button
                     onClick={copyUrlToClipboard}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
@@ -199,39 +199,6 @@ export default function MiniApp() {
 
             {/* Cast Form */}
             <CompactCastForm />
-
-            {/* Features */}
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              <div className="bg-white rounded-lg p-4 shadow-sm text-center">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-sm mb-1">Perfect Timing</h3>
-                <p className="text-xs text-gray-600">Schedule for any time</p>
-              </div>
-              
-              <div className="bg-white rounded-lg p-4 shadow-sm text-center">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10m0 0V6a2 2 0 00-2-2H9a2 2 0 00-2 2v2m0 0v10a2 2 0 002 2h8a2 2 0 002-2V8" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-sm mb-1">Channels</h3>
-                <p className="text-xs text-gray-600">Post to any channel</p>
-              </div>
-              
-              <div className="bg-white rounded-lg p-4 shadow-sm text-center">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-sm mb-1">Track</h3>
-                <p className="text-xs text-gray-600">Monitor your casts</p>
-              </div>
-            </div>
           </div>
         </div>
       )}
