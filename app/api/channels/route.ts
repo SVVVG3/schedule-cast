@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const fid = url.searchParams.get('fid');
-    const limit = parseInt(url.searchParams.get('limit') || '150'); // Increased default limit
+    const limit = parseInt(url.searchParams.get('limit') || '100'); // Maximum allowed by Neynar API
     const type = url.searchParams.get('type') || 'followed';
 
     // Validate required parameters
@@ -83,7 +83,22 @@ export async function GET(request: Request) {
       if (!response.ok) {
         const errorText = await response.text();
         console.log(`[channels] API error response: ${errorText}`);
-        throw new Error(`Neynar API error: ${response.status} - ${errorText}`);
+        
+        // Try to parse the error response for better error messages
+        let errorMessage = `Neynar API error: ${response.status}`;
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.message) {
+            errorMessage += ` - ${errorData.message}`;
+          }
+          if (errorData.code) {
+            errorMessage += ` (${errorData.code})`;
+          }
+        } catch {
+          errorMessage += ` - ${errorText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

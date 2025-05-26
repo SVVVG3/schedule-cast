@@ -8,7 +8,7 @@ export default function ChannelSelector({
   onChannelSelect,
   userFid,
   className = '',
-  limit = 100, // Increased to get more channels
+  limit = 100, // Maximum allowed by Neynar API
   showSearch = true
 }: ChannelSelectorProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
