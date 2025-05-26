@@ -7,6 +7,17 @@ html, body {
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+  /* Prevent pinch-to-zoom and improve mobile app feel */
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -webkit-touch-callout: none;
+}
+
+/* Allow text selection for inputs and textareas */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 * {
