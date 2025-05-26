@@ -476,6 +476,15 @@ export async function checkSignerStatus(signerUuid: string) {
 }
 
 /**
+ * Extract URLs from text content
+ */
+function extractUrls(text: string): string[] {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const matches = text.match(urlRegex);
+  return matches || [];
+}
+
+/**
  * Post a cast via direct Neynar API call with retry logic
  * This bypasses the SDK due to API changes and includes rate limit handling
  */
@@ -515,10 +524,28 @@ export async function postCastDirect(
         requestBody.channel_id = channelId;
       }
       
-      // Add media embeds if provided
+      // Collect all embeds (media + URLs from content)
+      const allEmbeds: string[] = [];
+      
+      // Add media URLs if provided
       if (mediaUrls && mediaUrls.length > 0) {
-        requestBody.embeds = mediaUrls.map(url => ({ url }));
-        console.log('[postCastDirect] Including media embeds:', requestBody.embeds);
+        allEmbeds.push(...mediaUrls);
+        console.log('[postCastDirect] Including media embeds:', mediaUrls);
+      }
+      
+      // Extract and add URLs from cast content for automatic embed detection
+      const contentUrls = extractUrls(content);
+      if (contentUrls.length > 0) {
+        allEmbeds.push(...contentUrls);
+        console.log('[postCastDirect] Auto-detected URLs for embeds:', contentUrls);
+      }
+      
+      // Add embeds to request if we have any
+      if (allEmbeds.length > 0) {
+        // Farcaster allows max 2 embeds, prioritize media then content URLs
+        const limitedEmbeds = allEmbeds.slice(0, 2);
+        requestBody.embeds = limitedEmbeds.map(url => ({ url }));
+        console.log('[postCastDirect] Final embeds being sent:', requestBody.embeds);
       }
       
       const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {

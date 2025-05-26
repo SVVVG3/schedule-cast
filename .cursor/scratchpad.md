@@ -789,7 +789,7 @@ const MEDIA_LIMITS = {
 
 ## Current Status / Progress Tracking
 
-### **🎯 Farcaster Embed Validation - LATEST ATTEMPT**
+### **🎯 Farcaster Embed Validation - SCHEMA ISSUE RESOLVED**
 - ✅ **Meta Tag Implementation**: Successfully added `fc:frame` meta tag to app/layout.tsx
 - ✅ **Browser Verification**: Confirmed meta tag is present and properly formatted in browser console
 - ✅ **JSON Structure**: All required fields present (version, imageUrl, button, action, etc.)
@@ -797,22 +797,26 @@ const MEDIA_LIMITS = {
   - `ScheduleCastEmbed.png`: 600x400 (3:2 aspect ratio) ✅
   - `ScheduleCastLogo.png`: 200x200 (splash image requirement) ✅
   - Both images accessible at public URLs ✅
-- 🔄 **Latest Fix Applied**: Simplified meta tag implementation and changed version from "next" to "1"
+- ✅ **Embed Present**: Manifest Tool now shows "Embed Present" ✅
+- 🔄 **Schema Fix Applied**: Corrected version field after discovering schema confusion
 
-**Changes Made in Latest Attempt**:
-- Removed dual meta tag approach (metadata + head)
-- Changed version from "next" to "1" (per documentation)
-- Used static JSON string instead of JavaScript object
-- Simplified implementation to avoid potential conflicts
+**🎯 ROOT CAUSE IDENTIFIED**: Schema Confusion
+- **Issue**: Was mixing Manifest schema (`version: "1"`) with Embed schema (`version: "next"`)
+- **Solution**: `fc:frame` meta tag uses **Embed schema** which requires `version: "next"`
+- **Documentation**: "Sharing your app" docs clearly show embed examples with `version: "next"`
 
-**Updated Meta Tag**:
+**Final Meta Tag** (corrected):
 ```html
 <meta 
   name="fc:frame" 
-  content='{"version":"1","imageUrl":"https://schedule-cast.vercel.app/ScheduleCastEmbed.png","button":{"title":"⚡ Schedule Cast","action":{"type":"launch_frame","name":"Schedule Cast","url":"https://schedule-cast.vercel.app/miniapp","splashImageUrl":"https://schedule-cast.vercel.app/ScheduleCastLogo.png","splashBackgroundColor":"#000000"}}}' 
+  content='{"version":"next","imageUrl":"https://schedule-cast.vercel.app/ScheduleCastEmbed.png","button":{"title":"📅 Schedule Cast","action":{"type":"launch_frame","name":"Schedule Cast","url":"https://schedule-cast.vercel.app/miniapp","splashImageUrl":"https://schedule-cast.vercel.app/ScheduleCastLogo.png","splashBackgroundColor":"#000000"}}}' 
 />
 ```
 
-**Next Actions**: Re-test Manifest Tool after deployment completes, verify if embed is now detected
+**Key Learning**: 
+- **Manifest** (`/.well-known/farcaster.json`) → `version: "1"`
+- **Embed** (`fc:frame` meta tag) → `version: "next"`
+
+**Next Actions**: Re-test Manifest Tool to confirm "Embed Valid" now passes
 
 This implementation plan provides a comprehensive roadmap for adding media support while maintaining the stability and reliability of your existing scheduling system.
