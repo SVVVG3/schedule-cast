@@ -13,6 +13,9 @@ interface ScheduledCast {
   posted: boolean;
   posted_at: string | null;
   error: string | null;
+  media_urls: string[] | null;
+  media_types: string[] | null;
+  has_media: boolean;
 }
 
 export default function ScheduledCasts() {
@@ -93,6 +96,49 @@ export default function ScheduledCasts() {
                   {format(new Date(cast.scheduled_at), 'PPP')} at {format(new Date(cast.scheduled_at), 'p')}
                 </p>
                 <p className="text-white whitespace-pre-wrap text-lg leading-relaxed">{cast.content}</p>
+                
+                {/* Media Preview */}
+                {cast.has_media && cast.media_urls && cast.media_urls.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex flex-wrap gap-2">
+                      {cast.media_urls.slice(0, 2).map((url, index) => {
+                        const isImage = cast.media_types?.[index]?.startsWith('image/') || 
+                                       cast.media_types?.[index] === 'gif' ||
+                                       url.toLowerCase().includes('.gif') ||
+                                       url.toLowerCase().includes('.jpg') ||
+                                       url.toLowerCase().includes('.jpeg') ||
+                                       url.toLowerCase().includes('.png') ||
+                                       url.toLowerCase().includes('.webp');
+                        
+                        return (
+                          <div key={index} className="relative">
+                            {isImage ? (
+                              <img
+                                src={url}
+                                alt={`Media ${index + 1}`}
+                                className="w-16 h-16 object-cover rounded-lg border border-gray-600"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center">
+                                <span className="text-2xl">🎥</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {cast.media_urls.length > 2 && (
+                        <div className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center">
+                          <span className="text-xs text-gray-300">+{cast.media_urls.length - 2}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
                 {cast.channel_id && (
                   <p className="mt-4 text-lg text-gray-400">
                     Channel: {cast.channel_id}
@@ -105,7 +151,7 @@ export default function ScheduledCasts() {
                     Posted
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-4 py-2 rounded-lg text-base font-medium bg-blue-900 text-blue-200 border border-blue-700">
+                  <span className="inline-flex items-center px-4 py-2 rounded-lg text-base font-medium bg-blue-900 text-blue-200">
                     Scheduled
                   </span>
                 )}

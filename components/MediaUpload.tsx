@@ -315,7 +315,7 @@ export default function MediaUpload({
                     position: 'relative'
                   }}
                 >
-                  {file.type === 'image' ? (
+                  {file.type === 'image' || file.type === 'gif' || file.format.toLowerCase() === 'gif' ? (
                     <img
                       src={file.url}
                       alt={file.filename}
