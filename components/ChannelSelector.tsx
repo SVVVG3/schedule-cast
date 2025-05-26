@@ -119,7 +119,7 @@ export default function ChannelSelector({
       <div className="flex items-center space-x-1 text-xs">
         <button
           onClick={() => setChannelType('followed')}
-          className={`px-2 py-1 rounded ${
+          className={`px-2 py-1 rounded text-xs ${
             channelType === 'followed'
               ? 'bg-blue-100 text-blue-700'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -129,7 +129,7 @@ export default function ChannelSelector({
         </button>
         <button
           onClick={() => setChannelType('active')}
-          className={`px-2 py-1 rounded ${
+          className={`px-2 py-1 rounded text-xs ${
             channelType === 'active'
               ? 'bg-blue-100 text-blue-700'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -165,7 +165,7 @@ export default function ChannelSelector({
         onClick={() => handleChannelClick(null)}
         className={`w-full flex items-center space-x-2 p-2 rounded-lg border-2 transition-all ${
           selectedChannelId === null || selectedChannelId === ''
-            ? 'border-blue-500 bg-blue-50'
+            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
             : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
         }`}
       >
@@ -174,7 +174,6 @@ export default function ChannelSelector({
         </div>
         <div className="flex-1 text-left">
           <div className="text-sm font-medium text-gray-900">Main Feed</div>
-          <div className="text-xs text-gray-500">Post to your main timeline</div>
         </div>
         {(selectedChannelId === null || selectedChannelId === '') && (
           <div className="text-blue-500 text-sm">✓</div>
@@ -204,7 +203,7 @@ export default function ChannelSelector({
               className={`w-full flex items-center space-x-2 p-2 rounded-lg border-2 transition-all ${
                 selectedChannelId === channel.id
                   ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                  : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
               }`}
             >
               {/* Channel Image */}
@@ -220,16 +219,11 @@ export default function ChannelSelector({
                 )}
               </div>
 
-              {/* Channel Info */}
+              {/* Channel Info - Single line only */}
               <div className="flex-1 text-left min-w-0">
                 <div className="text-sm font-medium text-gray-900 truncate">
                   /{channel.name}
                 </div>
-                {channel.follower_count && (
-                  <div className="text-xs text-gray-400">
-                    {channel.follower_count.toLocaleString()} followers
-                  </div>
-                )}
               </div>
 
               {/* Selected Indicator */}
