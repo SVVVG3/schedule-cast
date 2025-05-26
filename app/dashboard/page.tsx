@@ -71,15 +71,15 @@ export default function Dashboard() {
                 <span className="text-gray-300 font-medium text-lg">
                   Signed in as:
                 </span>
-                <div className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                <div className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg w-10 h-10">
                   {authUser.avatar ? (
                     <img 
                       src={authUser.avatar} 
                       alt={authUser.displayName || authUser.username || 'User'} 
-                      className="rounded-full object-cover w-12 h-12"
+                      className="rounded-full object-cover w-10 h-10"
                     />
                   ) : (
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
