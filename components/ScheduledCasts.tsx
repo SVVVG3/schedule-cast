@@ -86,6 +86,7 @@ export default function ScheduledCasts() {
 
   return (
     <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+      {/* Centered layout without bullet points - updated */}
       <h3 className="text-3xl font-semibold p-8 border-b border-gray-700 text-white text-center">Upcoming Casts</h3>
       <div className="divide-y divide-gray-700">
         {casts.map(cast => (
