@@ -165,7 +165,7 @@ export default function MiniApp() {
                 {/* Step 1 Card */}
                 <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                   <h3 className="text-white font-semibold text-lg mb-3">1) Visit our website</h3>
-                  <p className="text-gray-300 text-sm mb-4">Open the desktop/mobile site to grant permissions</p>
+                  <p className="text-gray-300 text-sm mb-4">Open the desktop/mobile site to grant permissions. You only need to do this the first time signing into our app - after that it's automatic!</p>
                   <div className="flex justify-center">
                     <button
                       onClick={copyUrlToClipboard}
@@ -175,7 +175,7 @@ export default function MiniApp() {
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                         <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
                       </svg>
-                      <span>Copy Website URL</span>
+                      <span>Copy Website URL By Tapping</span>
                     </button>
                   </div>
                   {urlCopied && (
