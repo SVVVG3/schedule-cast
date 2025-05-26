@@ -63,6 +63,33 @@ export default function Dashboard() {
               Schedule Cast
             </h1>
           </div>
+          
+          {/* User Info - Similar to Mini App */}
+          {authUser && (
+            <div className="mt-6">
+              <div className="flex items-center justify-center space-x-3">
+                <span className="text-gray-300 font-medium text-lg">
+                  Signed in as:
+                </span>
+                <div className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                  {authUser.avatar ? (
+                    <img 
+                      src={authUser.avatar} 
+                      alt={authUser.displayName || authUser.username || 'User'} 
+                      className="rounded-full object-cover w-12 h-12"
+                    />
+                  ) : (
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  )}
+                </div>
+                <p className="font-semibold text-white text-lg">
+                  @{authUser.username || 'user'}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         
         {supabaseUser ? (

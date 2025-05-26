@@ -277,6 +277,7 @@ WITH CHECK (
 - [x] **Fixed**: Restored "Schedule Cast" title with triangle icon above "Get Started" on main page (user correctly pointed out I accidentally removed it)
 - [x] **Fixed**: Updated frame context detection to hide NavBar in mini app - added route-based detection for `/miniapp` path to ensure NavBar doesn't show 
 - [x] **Updated**: Removed navbar entirely and moved SIWN button directly under "Get Started" instructions for cleaner design
+- [x] **Fixed**: Added user avatar and username display to dashboard page to match mini app experience
 - [ ] **Testing Required**: Need to test all fixes work correctly in production environment
 
 **Ready for user to test and confirm improved UX design works properly**
