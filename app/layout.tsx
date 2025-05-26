@@ -35,7 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="overflow-x-hidden">
+      <body className="overflow-x-hidden w-full max-w-full">
         <NeynarProvider>
           <FrameContextProvider>
             <AuthProvider>

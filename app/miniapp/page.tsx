@@ -51,10 +51,10 @@ export default function MiniApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 w-full max-w-full overflow-x-hidden">
       {isAuthenticated && supabaseUser ? (
-        <div className="py-8 px-4">
-          <div className="max-w-2xl mx-auto">
+        <div className="py-8 px-4 w-full max-w-full">
+          <div className="max-w-2xl mx-auto w-full">
             {/* Mini App Title - Small Triangle with Much More Spacing */}
             <div className="text-center mb-8">
               <div className="flex items-center justify-center mb-6">
@@ -130,8 +130,8 @@ export default function MiniApp() {
           </div>
         </div>
       ) : (
-        <div className="py-8 px-4">
-          <div className="max-w-2xl mx-auto">
+        <div className="py-8 px-4 w-full max-w-full">
+          <div className="max-w-2xl mx-auto w-full">
             {/* Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
