@@ -22,7 +22,7 @@ export interface MediaFile {
   format: string;
   size: number;
   filename: string;
-  storage_path?: string;
+  storage_path: string;
 }
 
 export interface ValidationError {
