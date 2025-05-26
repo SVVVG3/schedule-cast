@@ -102,7 +102,7 @@ export default function CompactCastForm() {
   };
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: '896px' }}>
+    <div className="w-full mx-auto" style={{ maxWidth: '1200px' }}>
       {/* Desktop width fix - force deploy */}
       <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 p-8 sm:p-10" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
 

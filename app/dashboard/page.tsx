@@ -67,8 +67,8 @@ export default function Dashboard() {
         
         {supabaseUser ? (
           <div className="space-y-12 w-full">
-            {/* Cast Form */}
-            <div className="w-full">
+            {/* Cast Form - Remove padding constraints */}
+            <div className="w-full -mx-4">
               <SimpleCastForm />
             </div>
             
