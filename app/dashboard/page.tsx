@@ -38,7 +38,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900" style={{ backgroundColor: '#111827 !important', color: '#ffffff !important', minHeight: '100vh' }}>
-      <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center space-x-4 mb-3">
