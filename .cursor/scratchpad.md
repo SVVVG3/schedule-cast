@@ -340,22 +340,20 @@ WITH CHECK (
 - **Features**: Visual channel selection, authentication-aware UI, proper state management
 
 #### **🚀 DEPLOYED TO PRODUCTION** ✅ **COMPLETE**
-- **Commit**: `aeecc89` - Channel selector UI improvements and API limit increases  
-- **Previous**: `3e312e4` - Neynar API fixes and channel selection enhancements
+- **Commit**: `0756f8d` - **URGENT FIX**: Corrected channel limit from 150 to 100 (Neynar API maximum)
+- **Previous**: `aeecc89` - Channel selector UI improvements and API limit increases  
 - **Status**: ✅ **LIVE ON PRODUCTION** - https://schedule-cast.vercel.app
-- **API Status**: ✅ Working correctly - fetching up to 150 channels for authenticated users
+- **API Status**: ✅ Working correctly - fetching up to 100 channels (API maximum) for authenticated users
 - **UI Status**: ✅ Compact, user-friendly design with better performance
 - **Testing**: 🔄 **READY FOR USER TESTING**
 
-**🎉 FEATURE READY FOR TESTING**: Users can now visually select from up to 150 of their Farcaster channels in a compact, efficient interface
+**🎉 FEATURE READY FOR TESTING**: Users can now visually select from up to 100 of their Farcaster channels in a compact, efficient interface
 
 **🔧 Key Fixes Applied**:
 - **Neynar SDK Issue**: Switched to direct API calls to resolve parsing errors
-- **Error Handling**: Added comprehensive logging and improved error responses  
-- **Authentication**: Verified user-specific channel fetching working correctly
-- **UI Integration**: Channel selector properly integrated into all form components
-- **UI/UX Improvements**: Compact design with 60% smaller channel items
-- **API Limit**: Increased from 25 to 150 channels by default
+- **Error Handling**: Added comprehensive logging and improved error messages  
+- **API Limit Bug**: Fixed 500 errors by correcting channel limit from 150 to 100 (Neynar API max)
+- **UI/UX**: Compact channel selector design with proper spacing and sizing
 
 ### **🚨 MAJOR DATABASE ARCHITECTURE ISSUE DISCOVERED**
 

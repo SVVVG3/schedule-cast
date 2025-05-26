@@ -7,8 +7,9 @@ import { authenticateUser } from '@/lib/auth';
  * 
  * Query parameters:
  * - fid: User's Farcaster ID (required)
- * - limit: Maximum number of channels to return (optional, default: 25)
+ * - limit: Maximum number of channels to return (optional, default: 100, max: 100)
  * - type: 'followed' (channels user follows) or 'active' (channels user has posted in) - default: 'followed'
+ * - search: Search query to filter channels by name (optional)
  */
 export async function GET(request: Request) {
   try {
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
     const fid = url.searchParams.get('fid');
     const limit = parseInt(url.searchParams.get('limit') || '100'); // Maximum allowed by Neynar API
     const type = url.searchParams.get('type') || 'followed';
+    const search = url.searchParams.get('search');
 
     // Validate required parameters
     if (!fid) {

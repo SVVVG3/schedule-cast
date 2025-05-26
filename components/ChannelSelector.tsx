@@ -12,14 +12,18 @@ export default function ChannelSelector({
   showSearch = true
 }: ChannelSelectorProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false - only load when user searches or expands
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [channelType, setChannelType] = useState<'followed' | 'active'>('followed');
+  const [isExpanded, setIsExpanded] = useState(false); // Track if user wants to see channels
 
-  // Fetch channels when component mounts or userFid changes
+  // Fetch channels when user searches or expands
   useEffect(() => {
     if (!userFid) return;
+    
+    // Only fetch if user has searched, expanded, or changed channel type
+    if (!isExpanded && !searchTerm.trim()) return;
 
     const fetchChannels = async () => {
       setLoading(true);
@@ -43,7 +47,7 @@ export default function ChannelSelector({
     };
 
     fetchChannels();
-  }, [userFid, limit, channelType]);
+  }, [userFid, limit, channelType, isExpanded, searchTerm]);
 
   // Filter channels based on search term
   const filteredChannels = useMemo(() => {
@@ -57,7 +61,21 @@ export default function ChannelSelector({
 
   // Handle channel selection
   const handleChannelClick = (channelId: string | null) => {
+    console.log('Channel selected:', channelId); // Debug logging
     onChannelSelect(channelId);
+  };
+
+  // Handle search input changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (value.trim() && !isExpanded) {
+      setIsExpanded(true); // Expand to load channels when user starts typing
+    }
+  };
+
+  // Handle expanding to show all channels
+  const handleShowChannels = () => {
+    setIsExpanded(true);
   };
 
   if (loading) {
@@ -92,6 +110,9 @@ export default function ChannelSelector({
     );
   }
 
+  // Debug logging
+  console.log('ChannelSelector render:', { selectedChannelId, channelsLength: channels.length, isExpanded, searchTerm });
+
   return (
     <div className={`space-y-3 ${className}`}>
       {/* Channel Type Toggle */}
@@ -123,14 +144,14 @@ export default function ChannelSelector({
         <div className="relative">
           <input
             type="text"
-            placeholder="Search channels..."
+            placeholder="Type to search channels..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm('')}
+              onClick={() => handleSearchChange('')}
               className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
             >
               ✕
@@ -162,7 +183,16 @@ export default function ChannelSelector({
 
       {/* Channel List */}
       <div className="space-y-1 max-h-60 overflow-y-auto">
-        {filteredChannels.length === 0 ? (
+        {!isExpanded && !searchTerm ? (
+          <div className="text-center py-4">
+            <button
+              onClick={handleShowChannels}
+              className="text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Browse your channels ({limit} max)
+            </button>
+          </div>
+        ) : filteredChannels.length === 0 && !loading ? (
           <div className="text-sm text-gray-500 text-center py-4">
             {searchTerm ? 'No channels match your search' : 'No channels found'}
           </div>
@@ -171,9 +201,9 @@ export default function ChannelSelector({
             <button
               key={channel.id}
               onClick={() => handleChannelClick(channel.id)}
-              className={`w-full flex items-center space-x-2 p-2 rounded-lg border transition-all ${
+              className={`w-full flex items-center space-x-2 p-2 rounded-lg border-2 transition-all ${
                 selectedChannelId === channel.id
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -212,9 +242,14 @@ export default function ChannelSelector({
       </div>
 
       {/* Channel Count */}
-      <div className="text-xs text-gray-500 text-center">
-        Showing {filteredChannels.length} of {channels.length} channels
-      </div>
+      {(isExpanded || searchTerm) && (
+        <div className="text-xs text-gray-500 text-center">
+          {searchTerm 
+            ? `Found ${filteredChannels.length} matching channels`
+            : `Showing ${filteredChannels.length} of ${channels.length} channels`
+          }
+        </div>
+      )}
     </div>
   );
 } 
