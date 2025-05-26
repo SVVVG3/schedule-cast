@@ -100,7 +100,7 @@ export default function SimpleCastForm() {
   };
 
   return (
-    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg w-full" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg w-full" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important', maxWidth: '896px', margin: '0 auto' }}>
 
       {submitSuccess && (
         <div className="bg-green-900 text-green-200 p-6 rounded-lg mb-8 border border-green-700 text-xl">
