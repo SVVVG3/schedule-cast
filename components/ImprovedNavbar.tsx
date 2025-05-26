@@ -58,33 +58,9 @@ export default function ImprovedNavbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-700 bg-gray-800/95 backdrop-blur-sm shadow-sm">
+    <nav className="sticky top-0 z-50 bg-gray-800/95 backdrop-blur-sm shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 justify-between items-center">
-          {/* Logo and App Name */}
-          <div className="flex items-center space-x-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-white flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
-            </div>
-            <span className="text-xl font-bold text-white">
-              Schedule Cast
-            </span>
-          </div>
-
+        <div className="flex h-16 justify-end items-center">
           {/* Auth Section */}
           <div className="flex items-center">
             {isAuthenticated && authUser ? (
