@@ -233,6 +233,44 @@ Based on the scratchpad history, the app has undergone extensive refactoring of 
 - Local build test: ✅ Passes
 - Pushed to trigger new Vercel deployment
 
+### **🚨 CURRENT ISSUE: Supabase RLS Policy Blocking Uploads**
+
+**Issue**: Media uploads failing in production with RLS policy violation
+- **Error**: `"Upload failed: new row violates row-level security policy"`
+- **Root Cause**: Storage RLS policy expects user auth (`auth.uid()`) but upload API uses service key
+- **Solution Needed**: Update Supabase Storage policies to allow service key uploads with validation
+
+**Required SQL Fix in Supabase Dashboard**:
+```sql
+-- 1. Drop the existing restrictive policy
+DROP POLICY IF EXISTS "Users can upload their own media files" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view media files" ON storage.objects;
+
+-- 2. Create new policies that work with service key uploads
+CREATE POLICY "Allow authenticated uploads to scheduled-cast-media" ON storage.objects
+FOR INSERT 
+WITH CHECK (
+  bucket_id = 'scheduled-cast-media'
+);
+
+CREATE POLICY "Public read access to scheduled-cast-media" ON storage.objects
+FOR SELECT 
+USING (bucket_id = 'scheduled-cast-media');
+
+-- 3. Alternative: More secure policy that validates file path structure
+-- (Use this instead if you want path-based validation)
+CREATE POLICY "Allow structured uploads to scheduled-cast-media" ON storage.objects
+FOR INSERT 
+WITH CHECK (
+  bucket_id = 'scheduled-cast-media' AND
+  name ~ '^[0-9]+/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{3}Z-[0-9]+-.*\.(jpg|jpeg|png|gif|webp|mp4|webm)$'
+);
+```
+
+**Status**: 🔄 **NEEDS MANUAL APPLICATION** - User must apply SQL in Supabase Dashboard
+
+**Expected Result**: After applying the SQL fix, media uploads should work in production
+
 ## Executor's Feedback or Assistance Requests
 
 **🚨 MAJOR DATABASE ARCHITECTURE ISSUE DISCOVERED**

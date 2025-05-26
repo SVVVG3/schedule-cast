@@ -23,7 +23,7 @@ interface MediaUploadProps {
 
 export default function MediaUpload({
   onFilesChange,
-  maxFiles = 4,
+  maxFiles = 2, // Updated to match Farcaster limitation
   acceptedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'],
   maxSizePerFile = 10 * 1024 * 1024, // 10MB
   className = ''
@@ -32,7 +32,6 @@ export default function MediaUpload({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [errors, setErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,7 +41,7 @@ export default function MediaUpload({
 
     // Check total file count
     if (uploadedFiles.length + files.length > maxFiles) {
-      errors.push(`Maximum ${maxFiles} files allowed. Currently have ${uploadedFiles.length}.`);
+      errors.push(`Maximum ${maxFiles} files allowed (Farcaster limitation). Currently have ${uploadedFiles.length}.`);
       return { valid, errors };
     }
 
@@ -116,7 +115,6 @@ export default function MediaUpload({
       setErrors([error instanceof Error ? error.message : 'Upload failed']);
     } finally {
       setUploading(false);
-      setUploadProgress({});
     }
   }, [user?.fid, validateFiles, uploadedFiles, onFilesChange]);
 
@@ -174,20 +172,18 @@ export default function MediaUpload({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Upload Area */}
+      {/* Upload Button - Matching Date/Time styling */}
       <div
         className={`
-          border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
+          relative cursor-pointer transition-all duration-200
           ${isDragging 
             ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' 
-            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+            : ''
           }
-          ${uploading ? 'opacity-50 pointer-events-none' : ''}
         `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={openFileDialog}
       >
         <input
           ref={fileInputRef}
@@ -198,30 +194,64 @@ export default function MediaUpload({
           className="hidden"
         />
         
-        {uploading ? (
-          <div className="space-y-2">
-            <div className="text-blue-600 dark:text-blue-400">📤 Uploading...</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Please wait</div>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <div className="text-gray-600 dark:text-gray-400">
-              {isDragging ? '📤 Drop files here' : '📎 Click or drag files to upload'}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-500">
-              Images & videos • Max {Math.round(maxSizePerFile / (1024 * 1024))}MB each • {maxFiles} files max
-            </div>
-            <div className="text-xs text-gray-400 dark:text-gray-600">
-              Supported: JPEG, PNG, GIF, WebP, MP4, WebM
+        <button
+          type="button"
+          onClick={openFileDialog}
+          disabled={uploading || uploadedFiles.length >= maxFiles}
+          style={{ 
+            backgroundColor: '#374151 !important', 
+            color: '#ffffff !important', 
+            borderColor: '#4b5563 !important', 
+            fontSize: '16px', 
+            minHeight: '48px' 
+          }}
+          className={`
+            w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white 
+            focus:ring-2 focus:ring-purple-500 focus:border-transparent box-border
+            flex items-center justify-center space-x-2 transition-colors
+            ${uploading || uploadedFiles.length >= maxFiles
+              ? 'opacity-50 cursor-not-allowed' 
+              : 'hover:bg-gray-600 active:bg-gray-500'
+            }
+          `}
+        >
+          {uploading ? (
+            <>
+              <span className="animate-spin">⚡</span>
+              <span>Uploading...</span>
+            </>
+          ) : uploadedFiles.length >= maxFiles ? (
+            <>
+              <span>📎</span>
+              <span>Maximum {maxFiles} files reached</span>
+            </>
+          ) : (
+            <>
+              <span>📎</span>
+              <span>Click or drag files to upload</span>
+            </>
+          )}
+        </button>
+
+        {/* Drag overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+            <div className="text-blue-600 dark:text-blue-400 font-medium">
+              📤 Drop files here
             </div>
           </div>
         )}
       </div>
 
+      {/* Help text */}
+      <div className="text-xs text-gray-400 dark:text-gray-500">
+        Images & videos • Max {Math.round(maxSizePerFile / (1024 * 1024))}MB each • {maxFiles} files max • Supported: JPEG, PNG, GIF, WebP, MP4, WebM
+      </div>
+
       {/* Error Messages */}
       {errors.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-          <div className="text-red-800 dark:text-red-200 text-sm space-y-1">
+        <div className="bg-red-900/20 border border-red-800 rounded-lg p-3">
+          <div className="text-red-200 text-sm space-y-1">
             {errors.map((error, index) => (
               <div key={index}>❌ {error}</div>
             ))}
@@ -229,58 +259,69 @@ export default function MediaUpload({
         </div>
       )}
 
-      {/* Uploaded Files Preview */}
+      {/* Uploaded Files Preview - Compact mobile-friendly design */}
       {uploadedFiles.length > 0 && (
         <div className="space-y-3">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="text-sm font-medium text-gray-300">
             Uploaded Files ({uploadedFiles.length}/{maxFiles})
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {uploadedFiles.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
+                className="relative bg-gray-700 border border-gray-600 rounded-lg overflow-hidden"
               >
-                {/* File Preview */}
-                <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                {/* File Preview - Properly sized for mobile */}
+                <div className="aspect-square w-full bg-gray-800 flex items-center justify-center relative">
                   {file.type === 'image' ? (
-                    <img
-                      src={file.url}
-                      alt={file.filename}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const sibling = target.nextElementSibling as HTMLElement;
-                        if (sibling) {
-                          sibling.style.display = 'block';
-                        }
-                      }}
-                    />
+                    <>
+                      <img
+                        src={file.url}
+                        alt={file.filename}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<span class="text-2xl">🖼️</span>';
+                          }
+                        }}
+                      />
+                      {/* Remove button overlay */}
+                      <button
+                        onClick={() => removeFile(file.id)}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        title="Remove file"
+                      >
+                        ✕
+                      </button>
+                    </>
                   ) : (
-                    <span className="text-2xl">{getFileTypeIcon(file.type)}</span>
+                    <>
+                      <span className="text-4xl">{getFileTypeIcon(file.type)}</span>
+                      {/* Remove button overlay */}
+                      <button
+                        onClick={() => removeFile(file.id)}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                        title="Remove file"
+                      >
+                        ✕
+                      </button>
+                    </>
                   )}
                 </div>
 
-                {/* File Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {file.filename}
+                {/* File Info - Compact */}
+                <div className="p-2 bg-gray-700">
+                  <div className="text-xs font-medium text-gray-200 truncate">
+                    {file.filename.length > 15 ? `${file.filename.substring(0, 12)}...` : file.filename}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-gray-400">
                     {file.format.toUpperCase()} • {formatFileSize(file.size)}
                   </div>
                 </div>
-
-                {/* Remove Button */}
-                <button
-                  onClick={() => removeFile(file.id)}
-                  className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
-                  title="Remove file"
-                >
-                  ❌
-                </button>
               </div>
             ))}
           </div>
@@ -289,7 +330,7 @@ export default function MediaUpload({
 
       {/* Character Impact Notice */}
       {uploadedFiles.length > 0 && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+        <div className="text-xs text-gray-400 bg-blue-900/20 p-2 rounded border border-blue-800">
           💡 Media files reduce available text space. Each file uses ~23 characters for the embed.
         </div>
       )}

@@ -1,7 +1,7 @@
 export const MEDIA_LIMITS = {
-  maxFiles: 4,
+  maxFiles: 2, // Farcaster limitation: maximum 2 embeds per cast
   maxSizePerFile: 10 * 1024 * 1024, // 10MB
-  maxTotalSize: 25 * 1024 * 1024, // 25MB
+  maxTotalSize: 20 * 1024 * 1024, // 20MB (2 files max)
   supportedTypes: {
     images: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
     videos: ['mp4', 'webm']
@@ -112,7 +112,7 @@ export function validateFiles(files: File[]): ValidationResult {
   if (files.length > MEDIA_LIMITS.maxFiles) {
     errors.push({
       field: 'files',
-      message: `Maximum ${MEDIA_LIMITS.maxFiles} files allowed, but ${files.length} files provided`
+      message: `Maximum ${MEDIA_LIMITS.maxFiles} files allowed per cast (Farcaster limitation), but ${files.length} files provided`
     });
   }
 
@@ -121,7 +121,7 @@ export function validateFiles(files: File[]): ValidationResult {
   if (totalSize > MEDIA_LIMITS.maxTotalSize) {
     errors.push({
       field: 'files',
-      message: `Total file size exceeds 25MB limit (${formatFileSize(totalSize)})`
+      message: `Total file size exceeds 20MB limit (${formatFileSize(totalSize)})`
     });
   }
 

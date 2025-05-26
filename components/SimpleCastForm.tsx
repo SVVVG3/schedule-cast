@@ -141,7 +141,7 @@ export default function SimpleCastForm() {
           </label>
           <MediaUpload 
             onFilesChange={setUploadedFiles}
-            maxFiles={4}
+            maxFiles={2} // Farcaster limitation: max 2 embeds per cast
             maxSizePerFile={10 * 1024 * 1024} // 10MB
             className="mb-4"
           />

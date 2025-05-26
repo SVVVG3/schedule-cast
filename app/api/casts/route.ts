@@ -128,9 +128,9 @@ export async function POST(request: Request) {
     }
     
     // Validate media arrays if provided
-    if (media_urls && (!Array.isArray(media_urls) || media_urls.length > 4)) {
+    if (media_urls && (!Array.isArray(media_urls) || media_urls.length > 2)) {
       return NextResponse.json(
-        { error: 'media_urls must be an array with maximum 4 items' },
+        { error: 'media_urls must be an array with maximum 2 items (Farcaster limitation)' },
         { status: 400 }
       );
     }
