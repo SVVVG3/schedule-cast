@@ -33,6 +33,16 @@ export default function ScheduledCasts() {
   const [selectedCast, setSelectedCast] = useState<ScheduledCast | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Debug modal states
+  useEffect(() => {
+    console.log('Modal states:', { 
+      editModalOpen, 
+      deleteModalOpen, 
+      selectedCast: selectedCast?.id,
+      isDeleting 
+    });
+  }, [editModalOpen, deleteModalOpen, selectedCast, isDeleting]);
+
   useEffect(() => {
     async function fetchCasts() {
       if (!supabaseUser || !authUser?.fid) return;
@@ -70,13 +80,17 @@ export default function ScheduledCasts() {
 
   // Handler functions
   const handleEditCast = (cast: ScheduledCast) => {
+    console.log('handleEditCast called with cast:', cast);
     setSelectedCast(cast);
     setEditModalOpen(true);
+    console.log('Edit modal should now be open');
   };
 
   const handleDeleteCast = (cast: ScheduledCast) => {
+    console.log('handleDeleteCast called with cast:', cast);
     setSelectedCast(cast);
     setDeleteModalOpen(true);
+    console.log('Delete modal should now be open');
   };
 
   const confirmDelete = async () => {
@@ -162,6 +176,42 @@ export default function ScheduledCasts() {
         {casts.map(cast => (
           <div key={cast.id} className="p-8 hover:bg-gray-750">
             <div className="flex flex-col space-y-4">
+              {/* Edit and Delete Buttons - Moved above date/time for upcoming casts */}
+              {!cast.posted && (
+                <div className="flex justify-center space-x-4">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Edit button clicked for cast:', cast.id);
+                      handleEditCast(cast);
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                    type="button"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Delete button clicked for cast:', cast.id);
+                      handleDeleteCast(cast);
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                    type="button"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              )}
+
               {/* Date and Time - Centered */}
               <div className="text-center">
                 <p className="font-medium text-xl text-gray-200">
@@ -236,29 +286,7 @@ export default function ScheduledCasts() {
                 </div>
               </div>
 
-              {/* Edit and Delete Buttons - Only show for upcoming casts */}
-              {!cast.posted && (
-                <div className="flex justify-center space-x-4 mt-4">
-                  <button
-                    onClick={() => handleEditCast(cast)}
-                    className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCast(cast)}
-                    className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
-                </div>
-              )}
+
             </div>
             {cast.error && (
               <div className="mt-6 p-6 bg-red-900 text-lg text-red-200 rounded-lg border border-red-700">
@@ -270,31 +298,29 @@ export default function ScheduledCasts() {
       </div>
 
       {/* Edit Modal */}
-      {selectedCast && (
-        <EditCastModal
-          isOpen={editModalOpen}
-          onClose={() => {
-            setEditModalOpen(false);
-            setSelectedCast(null);
-          }}
-          cast={selectedCast}
-          onSuccess={handleEditSuccess}
-        />
-      )}
+      <EditCastModal
+        isOpen={editModalOpen && selectedCast !== null}
+        onClose={() => {
+          console.log('Edit modal closing');
+          setEditModalOpen(false);
+          setSelectedCast(null);
+        }}
+        cast={selectedCast!}
+        onSuccess={handleEditSuccess}
+      />
 
       {/* Delete Confirmation Modal */}
-      {selectedCast && (
-        <DeleteConfirmModal
-          isOpen={deleteModalOpen}
-          onClose={() => {
-            setDeleteModalOpen(false);
-            setSelectedCast(null);
-          }}
-          onConfirm={confirmDelete}
-          isDeleting={isDeleting}
-          castContent={selectedCast.content}
-        />
-      )}
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen && selectedCast !== null}
+        onClose={() => {
+          console.log('Delete modal closing');
+          setDeleteModalOpen(false);
+          setSelectedCast(null);
+        }}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        castContent={selectedCast?.content || ''}
+      />
     </div>
   );
 } 
