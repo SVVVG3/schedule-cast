@@ -38,7 +38,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-900" style={{ backgroundColor: '#111827 !important', color: '#ffffff !important', minHeight: '100vh' }}>
-      <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
         <div className="text-center mb-10">
           <div className="flex items-center justify-center space-x-4 mb-3">
@@ -67,8 +67,8 @@ export default function Dashboard() {
         
         {supabaseUser ? (
           <div className="space-y-12 w-full">
-            {/* Cast Form - Removed redundant heading */}
-            <div className="w-full flex justify-center">
+            {/* Cast Form */}
+            <div className="w-full">
               <SimpleCastForm />
             </div>
             
