@@ -21,8 +21,8 @@ interface MediaUploadProps {
   className?: string;
 }
 
-// Small SVG icon for file attachment (similar to social media sites)
-const AttachmentIcon = ({ className }: { className?: string }) => (
+// Small SVG icon for image/media upload (similar to social media sites)
+const ImageUploadIcon = ({ className }: { className?: string }) => (
   <svg 
     className={className} 
     width="16" 
@@ -31,8 +31,25 @@ const AttachmentIcon = ({ className }: { className?: string }) => (
     fill="none" 
     xmlns="http://www.w3.org/2000/svg"
   >
+    <rect 
+      x="3" 
+      y="3" 
+      width="18" 
+      height="18" 
+      rx="2" 
+      ry="2" 
+      stroke="currentColor" 
+      strokeWidth="2"
+    />
+    <circle 
+      cx="8.5" 
+      cy="8.5" 
+      r="1.5" 
+      stroke="currentColor" 
+      strokeWidth="2"
+    />
     <path 
-      d="M21.44 11.05l-9.19 9.19c-1.78 1.78-4.67 1.78-6.45 0s-1.78-4.67 0-6.45l9.19-9.19c1.05-1.05 2.76-1.05 3.81 0s1.05 2.76 0 3.81L9.61 17.6c-.32.32-.85.32-1.17 0s-.32-.85 0-1.17l8.24-8.24" 
+      d="M21 15l-5-5L5 21" 
       stroke="currentColor" 
       strokeWidth="2" 
       strokeLinecap="round" 
@@ -218,22 +235,23 @@ export default function MediaUpload({
           type="button"
           onClick={openFileDialog}
           disabled={uploading || uploadedFiles.length >= maxFiles}
-          style={{ 
-            backgroundColor: '#374151 !important', 
-            color: '#ffffff !important', 
-            borderColor: '#4b5563 !important', 
-            fontSize: '16px', 
-            minHeight: '48px' 
-          }}
           className={`
-            w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white 
-            focus:ring-2 focus:ring-purple-500 focus:border-transparent box-border
+            w-full p-3 border border-gray-600 rounded-lg 
+            bg-gray-700 text-white 
+            focus:ring-2 focus:ring-purple-500 focus:border-transparent 
             flex items-center justify-center space-x-2 transition-colors
             ${uploading || uploadedFiles.length >= maxFiles
               ? 'opacity-50 cursor-not-allowed' 
               : 'hover:bg-gray-600 active:bg-gray-500'
             }
           `}
+          style={{ 
+            backgroundColor: '#374151', 
+            color: '#ffffff', 
+            borderColor: '#4b5563', 
+            fontSize: '16px', 
+            minHeight: '48px' 
+          }}
         >
           {uploading ? (
             <>
@@ -242,12 +260,12 @@ export default function MediaUpload({
             </>
           ) : uploadedFiles.length >= maxFiles ? (
             <>
-              <AttachmentIcon className="w-4 h-4 text-gray-400" />
+              <ImageUploadIcon className="w-4 h-4 text-gray-400" />
               <span>Maximum {maxFiles} files reached</span>
             </>
           ) : (
             <>
-              <AttachmentIcon className="w-4 h-4" />
+              <ImageUploadIcon className="w-4 h-4" />
               <span>Click or drag files to upload</span>
             </>
           )}
