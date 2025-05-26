@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
+import EditCastModal from './EditCastModal';
+import DeleteConfirmModal from './DeleteConfirmModal';
 
 interface ScheduledCast {
   id: string;
@@ -24,6 +26,12 @@ export default function ScheduledCasts() {
   const [casts, setCasts] = useState<ScheduledCast[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Modal states
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedCast, setSelectedCast] = useState<ScheduledCast | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchCasts() {
@@ -59,6 +67,68 @@ export default function ScheduledCasts() {
       fetchCasts();
     }
   }, [supabaseUser, authUser]);
+
+  // Handler functions
+  const handleEditCast = (cast: ScheduledCast) => {
+    setSelectedCast(cast);
+    setEditModalOpen(true);
+  };
+
+  const handleDeleteCast = (cast: ScheduledCast) => {
+    setSelectedCast(cast);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedCast || !authUser?.fid) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/casts/${selectedCast.id}?fid=${authUser.fid}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete cast');
+      }
+
+      // Remove the cast from the list
+      setCasts(prev => prev.filter(cast => cast.id !== selectedCast.id));
+      setDeleteModalOpen(false);
+      setSelectedCast(null);
+    } catch (error) {
+      console.error('Error deleting cast:', error);
+      setError((error as Error)?.message || 'Failed to delete cast');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEditSuccess = () => {
+    // Refresh the casts list after successful edit
+    if (supabaseUser && authUser?.fid) {
+      const fetchCasts = async () => {
+        try {
+          const response = await fetch(`/api/casts?fid=${authUser.fid}`);
+          const result = await response.json();
+
+          if (response.ok) {
+            const upcomingCasts = (result.data || [])
+              .filter((cast: ScheduledCast) => !cast.posted)
+              .sort((a: ScheduledCast, b: ScheduledCast) => 
+                new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
+              );
+            setCasts(upcomingCasts);
+          }
+        } catch (err) {
+          console.error('Error refreshing casts:', err);
+        }
+      };
+      fetchCasts();
+    }
+  };
 
   if (loading) {
     return (
@@ -165,6 +235,30 @@ export default function ScheduledCasts() {
                   )}
                 </div>
               </div>
+
+              {/* Edit and Delete Buttons - Only show for upcoming casts */}
+              {!cast.posted && (
+                <div className="flex justify-center space-x-4 mt-4">
+                  <button
+                    onClick={() => handleEditCast(cast)}
+                    className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCast(cast)}
+                    className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
             {cast.error && (
               <div className="mt-6 p-6 bg-red-900 text-lg text-red-200 rounded-lg border border-red-700">
@@ -174,6 +268,33 @@ export default function ScheduledCasts() {
           </div>
         ))}
       </div>
+
+      {/* Edit Modal */}
+      {selectedCast && (
+        <EditCastModal
+          isOpen={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false);
+            setSelectedCast(null);
+          }}
+          cast={selectedCast}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {selectedCast && (
+        <DeleteConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setSelectedCast(null);
+          }}
+          onConfirm={confirmDelete}
+          isDeleting={isDeleting}
+          castContent={selectedCast.content}
+        />
+      )}
     </div>
   );
 } 
