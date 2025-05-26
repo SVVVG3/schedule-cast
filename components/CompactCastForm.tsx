@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 import UniversalAuthButton from './UniversalAuthButton';
 import SignerApprovalChecker from './SignerApprovalChecker';
 import MediaUpload, { UploadedFile } from './MediaUpload';
+import ChannelSelector from './ChannelSelector';
 
 interface CastFormData {
   content: string;
@@ -23,6 +24,7 @@ export default function CompactCastForm() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(undefined);
   
   const {
     register,
@@ -60,7 +62,7 @@ export default function CompactCastForm() {
       const castData = {
         content: data.content,
         scheduled_at: scheduledAt.toISOString(),
-        channel_id: data.channelId || null,
+        channel_id: selectedChannelId || null,
         // Include media data if files are uploaded
         ...(uploadedFiles.length > 0 && {
           media_urls: uploadedFiles.map(file => file.url),
@@ -190,16 +192,20 @@ export default function CompactCastForm() {
             <label className="block text-xl font-medium text-gray-300 mb-4">
               Channel (optional)
             </label>
-            <input
-              type="text"
-              style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '18px', minHeight: '56px' }}
-              className={`w-full px-6 py-6 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg ${
-                !isAuthenticated ? 'bg-gray-700 text-gray-400 border-gray-600 placeholder-gray-500' : 'bg-gray-700 text-white border-gray-600 placeholder-gray-400'
-              }`}
-              placeholder={isAuthenticated ? "e.g. farcaster, crypto, art" : "Sign in to use channels"}
-              disabled={!isAuthenticated}
-              {...register('channelId')}
-            />
+            {isAuthenticated && authUser?.fid ? (
+              <ChannelSelector
+                selectedChannelId={selectedChannelId}
+                onChannelSelect={(channelId) => setSelectedChannelId(channelId || undefined)}
+                userFid={authUser.fid}
+                className="bg-gray-700 border-gray-600"
+                limit={25}
+                showSearch={true}
+              />
+            ) : (
+              <div className="text-gray-400 text-sm p-4 bg-gray-700 rounded-lg border border-gray-600">
+                Sign in to select from your channels
+              </div>
+            )}
           </div>
 
           {/* Signer approval check for authenticated users */}
