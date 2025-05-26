@@ -71,12 +71,16 @@ export default function Dashboard() {
                 <span className="text-gray-300 font-medium text-lg">
                   Signed in as:
                 </span>
-                <div className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg w-6 h-6">
+                <div 
+                  className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg"
+                  style={{ width: '24px', height: '24px' }}
+                >
                   {authUser.avatar ? (
                     <img 
                       src={authUser.avatar} 
                       alt={authUser.displayName || authUser.username || 'User'} 
-                      className="rounded-full object-cover w-6 h-6"
+                      className="rounded-full object-cover"
+                      style={{ width: '24px', height: '24px' }}
                     />
                   ) : (
                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
