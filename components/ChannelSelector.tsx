@@ -21,11 +21,18 @@ export default function ChannelSelector({
   // Find selected channel for display
   const selectedChannel = channels.find(ch => ch.id === selectedChannelId);
 
-  // Fetch all channels on mount - we'll implement pagination to get ALL channels
+  // Fetch channels only when user searches (debounced)
   useEffect(() => {
-    if (!userFid || hasLoadedChannels) return;
+    if (!userFid || !searchTerm.trim()) {
+      setChannels([]);
+      setHasLoadedChannels(false);
+      return;
+    }
 
-    const fetchAllChannels = async () => {
+    // Debounce search to avoid too many API calls
+    const timeoutId = setTimeout(async () => {
+      if (hasLoadedChannels && searchTerm.trim()) return; // Already loaded for this search session
+
       setLoading(true);
       setError(null);
       
@@ -34,7 +41,7 @@ export default function ChannelSelector({
         let cursor: string | null = null;
         let hasMore = true;
         
-        // Fetch ALL user channels using pagination
+        // Fetch ALL user channels using pagination (only when searching)
         while (hasMore) {
           const url = new URL('/api/channels', window.location.origin);
           url.searchParams.set('fid', userFid.toString());
@@ -59,7 +66,7 @@ export default function ChannelSelector({
           hasMore = !!cursor;
         }
         
-        console.log(`Loaded ${allChannels.length} total channels for user`);
+        console.log(`Loaded ${allChannels.length} total channels for search`);
         setChannels(allChannels);
         setHasLoadedChannels(true);
       } catch (err) {
@@ -68,42 +75,44 @@ export default function ChannelSelector({
       } finally {
         setLoading(false);
       }
-    };
+    }, 300); // 300ms debounce
 
-    fetchAllChannels();
-  }, [userFid, hasLoadedChannels]);
+    return () => clearTimeout(timeoutId);
+  }, [userFid, searchTerm, hasLoadedChannels]);
 
-  // Filter and sort channels based on search term (client-side only)
+  // Filter and sort channels based on search term - show only top 10 relevant results
   const filteredChannels = useMemo(() => {
     if (!searchTerm.trim()) {
-      // Return channels sorted alphabetically by name when no search
-      return channels.sort((a, b) => a.name.localeCompare(b.name));
+      // Don't show any channels when no search term
+      return [];
     }
     
     const query = searchTerm.toLowerCase();
     
-    // Filter channels that match the search
-    const filtered = channels.filter(channel =>
-      channel.name.toLowerCase().includes(query) ||
-      (channel.description && channel.description.toLowerCase().includes(query))
+    // Categorize matches by relevance
+    const exactMatches = channels.filter(channel =>
+      channel.name.toLowerCase() === query
     );
     
-    // Sort by relevance: exact matches first, then starts with, then contains
-    return filtered.sort((a, b) => {
-      const aName = a.name.toLowerCase();
-      const bName = b.name.toLowerCase();
-      
-      // Exact match
-      if (aName === query && bName !== query) return -1;
-      if (bName === query && aName !== query) return 1;
-      
-      // Starts with search term
-      if (aName.startsWith(query) && !bName.startsWith(query)) return -1;
-      if (bName.startsWith(query) && !aName.startsWith(query)) return 1;
-      
-      // Alphabetical as tiebreaker
-      return aName.localeCompare(bName);
-    });
+    const startsWithMatches = channels.filter(channel =>
+      channel.name.toLowerCase().startsWith(query) && 
+      channel.name.toLowerCase() !== query // Exclude exact matches already included
+    );
+    
+    const containsMatches = channels.filter(channel =>
+      channel.name.toLowerCase().includes(query) &&
+      !channel.name.toLowerCase().startsWith(query) // Exclude already included matches
+    );
+    
+    // Combine in order of relevance: exact → starts with → contains
+    // Limit to top 10 results for better UX
+    const relevantResults = [
+      ...exactMatches,
+      ...startsWithMatches.sort((a, b) => a.name.localeCompare(b.name)),
+      ...containsMatches.sort((a, b) => a.name.localeCompare(b.name))
+    ].slice(0, 10);
+    
+    return relevantResults;
   }, [channels, searchTerm]);
 
   // Handle channel selection
@@ -165,8 +174,8 @@ export default function ChannelSelector({
   if (selectedChannelId && selectedChannel) {
     return (
       <div className={`space-y-2 ${className}`}>
-        <div className="text-xs text-gray-600 font-medium">Selected Channel:</div>
-        <div className="flex items-center justify-between p-2 bg-blue-50 border-2 border-blue-500 rounded-lg">
+        <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Selected Channel:</div>
+        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-400 rounded-lg">
           <div className="flex items-center space-x-2">
                          {/* Uniform circular image */}
              <div className="w-3 h-3 min-w-[12px] min-h-[12px] max-w-[12px] max-h-[12px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
@@ -183,8 +192,8 @@ export default function ChannelSelector({
                )}
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-900">/{selectedChannel.name}</div>
-              <div className="text-xs text-gray-500">
+              <div className="text-sm font-medium text-gray-900 dark:text-white">/{selectedChannel.name}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {selectedChannel.follower_count?.toLocaleString()} followers
               </div>
             </div>
@@ -204,15 +213,15 @@ export default function ChannelSelector({
   if (selectedChannelId === null || selectedChannelId === '') {
     return (
       <div className={`space-y-2 ${className}`}>
-        <div className="text-xs text-gray-600 font-medium">Selected Channel:</div>
-        <div className="flex items-center justify-between p-2 bg-blue-50 border-2 border-blue-500 rounded-lg">
+        <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">Selected Channel:</div>
+        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-400 rounded-lg">
                      <div className="flex items-center space-x-2">
              <div className="w-3 h-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
                📢
              </div>
             <div>
-              <div className="text-sm font-medium text-gray-900">Main Feed</div>
-              <div className="text-xs text-gray-500">Post to your main timeline</div>
+              <div className="text-sm font-medium text-gray-900 dark:text-white">Main Feed</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Post to your main timeline</div>
             </div>
           </div>
           <button
@@ -237,7 +246,7 @@ export default function ChannelSelector({
             placeholder="Search channels or browse below..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
           />
           {searchTerm && (
             <button
@@ -253,14 +262,14 @@ export default function ChannelSelector({
       {/* Main Feed Option */}
       <button
         onClick={() => handleChannelClick(null)}
-        className="w-full flex items-center space-x-2 p-2 rounded-lg border-2 border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 transition-all"
+        className="w-full flex items-center space-x-2 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
       >
                  <div className="w-3 h-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
            📢
          </div>
         <div className="flex-1 text-left">
-          <div className="text-sm font-medium text-gray-900">Main Feed</div>
-          <div className="text-xs text-gray-500">Post to your main timeline</div>
+          <div className="text-sm font-medium text-gray-900 dark:text-white">Main Feed</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Post to your main timeline</div>
         </div>
       </button>
 
@@ -275,7 +284,7 @@ export default function ChannelSelector({
             <button
               key={channel.id}
               onClick={() => handleChannelClick(channel.id)}
-              className="w-full flex items-center space-x-2 p-2 rounded-lg border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-all"
+              className="w-full flex items-center space-x-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
             >
                              {/* Uniform circular image */}
                <div className="w-3 h-3 min-w-[12px] min-h-[12px] max-w-[12px] max-h-[12px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
@@ -294,10 +303,10 @@ export default function ChannelSelector({
 
               {/* Channel Info */}
               <div className="flex-1 text-left min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">
+                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   /{channel.name}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {channel.follower_count?.toLocaleString()} followers
                 </div>
               </div>
