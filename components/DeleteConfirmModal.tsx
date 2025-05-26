@@ -17,13 +17,15 @@ export default function DeleteConfirmModal({
 }: DeleteConfirmModalProps) {
   if (!isOpen) return null;
 
+  console.log('DeleteConfirmModal rendering with isOpen:', isOpen, 'castContent:', castContent);
+
   // Truncate content for preview
   const previewContent = castContent.length > 100 
     ? castContent.substring(0, 100) + '...' 
     : castContent;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ zIndex: 9999 }}>
       <div className="bg-gray-800 rounded-xl shadow-xl border border-gray-700 w-full max-w-md">
         {/* Header */}
         <div className="p-6 border-b border-gray-700">

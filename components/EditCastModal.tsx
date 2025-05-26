@@ -147,9 +147,26 @@ export default function EditCastModal({ isOpen, onClose, cast, onSuccess }: Edit
 
   if (!isOpen) return null;
 
+  console.log('EditCastModal rendering with isOpen:', isOpen, 'cast:', cast?.id);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-xl shadow-xl border border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
+      style={{ zIndex: 9999 }}
+      onClick={(e) => {
+        console.log('Modal backdrop clicked');
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-gray-800 rounded-xl shadow-xl border border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => {
+          console.log('Modal content clicked');
+          e.stopPropagation();
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <h2 className="text-2xl font-bold text-white">Edit Scheduled Cast</h2>

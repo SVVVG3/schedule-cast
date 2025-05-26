@@ -81,6 +81,8 @@ export default function ScheduledCasts() {
   // Handler functions
   const handleEditCast = (cast: ScheduledCast) => {
     console.log('handleEditCast called with cast:', cast);
+    // Close any other modals first
+    setDeleteModalOpen(false);
     setSelectedCast(cast);
     setEditModalOpen(true);
     console.log('Edit modal should now be open');
@@ -88,6 +90,8 @@ export default function ScheduledCasts() {
 
   const handleDeleteCast = (cast: ScheduledCast) => {
     console.log('handleDeleteCast called with cast:', cast);
+    // Close any other modals first
+    setEditModalOpen(false);
     setSelectedCast(cast);
     setDeleteModalOpen(true);
     console.log('Delete modal should now be open');
