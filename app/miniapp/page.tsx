@@ -79,15 +79,16 @@ export default function MiniApp() {
             <div className="mb-8">
               <div className="flex items-center justify-center bg-white rounded-xl px-6 py-5 shadow-lg border border-gray-100">
                 <span className="text-gray-600 text-base font-medium mr-6">Signed in as:</span>
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-4 flex-shrink-0 shadow-md">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-4 flex-shrink-0 shadow-md">
                   {authUser?.avatar ? (
                     <img 
                       src={authUser.avatar} 
                       alt={authUser.displayName || authUser.username || 'User'} 
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-8 h-8 rounded-full object-cover"
+                      style={{ width: '32px', height: '32px', maxWidth: '32px', maxHeight: '32px' }}
                     />
                   ) : (
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
