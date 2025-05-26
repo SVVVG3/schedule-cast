@@ -75,17 +75,35 @@ export default function MiniApp() {
               </div>
             </div>
 
-            {/* User Header - Clean and Professional with Better Spacing */}
-            <div className="mb-8">
-              <div className="flex items-center justify-center bg-white rounded-xl px-8 py-6 shadow-lg border border-gray-100">
-                <span className="text-gray-600 text-base font-medium mr-12">Signed in as:</span>
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-8 flex-shrink-0 shadow-md">
+            {/* User Header - FORCED SPACING WITH INLINE STYLES */}
+            <div style={{ marginBottom: '2rem' }}>
+              <div 
+                className="flex items-center justify-center bg-white rounded-xl shadow-lg border border-gray-100"
+                style={{ 
+                  padding: '1.5rem 2rem',
+                  gap: '1.5rem'
+                }}
+              >
+                <span 
+                  className="text-gray-600 font-medium"
+                  style={{ fontSize: '16px', marginRight: '2rem' }}
+                >
+                  Signed in as:
+                </span>
+                <div 
+                  className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md"
+                  style={{ 
+                    width: '32px', 
+                    height: '32px',
+                    marginRight: '1.5rem'
+                  }}
+                >
                   {authUser?.avatar ? (
                     <img 
                       src={authUser.avatar} 
                       alt={authUser.displayName || authUser.username || 'User'} 
-                      className="w-8 h-8 rounded-full object-cover"
-                      style={{ width: '32px', height: '32px', maxWidth: '32px', maxHeight: '32px' }}
+                      className="rounded-full object-cover"
+                      style={{ width: '32px', height: '32px' }}
                     />
                   ) : (
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +111,10 @@ export default function MiniApp() {
                     </svg>
                   )}
                 </div>
-                <p className="font-semibold text-gray-900 text-lg">
+                <p 
+                  className="font-semibold text-gray-900"
+                  style={{ fontSize: '18px' }}
+                >
                   @{authUser?.username || 'user'}
                 </p>
               </div>
