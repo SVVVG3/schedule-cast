@@ -12,17 +12,20 @@ export default function ChannelSelector({
   showSearch = true
 }: ChannelSelectorProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
-  const [loading, setLoading] = useState(false); // Start with false - only load when user searches or expands
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [channelType, setChannelType] = useState<'followed' | 'active'>('followed');
-  const [isExpanded, setIsExpanded] = useState(false); // Track if user wants to see channels
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [hasLoadedChannels, setHasLoadedChannels] = useState(false);
 
-  // Fetch channels when user searches or expands
+  // Find selected channel for display
+  const selectedChannel = channels.find(ch => ch.id === selectedChannelId);
+
+  // Fetch channels only once when expanded or searched
   useEffect(() => {
-    if (!userFid) return;
+    if (!userFid || hasLoadedChannels) return;
     
-    // Only fetch if user has searched, expanded, or changed channel type
+    // Only fetch if user has expanded or started searching
     if (!isExpanded && !searchTerm.trim()) return;
 
     const fetchChannels = async () => {
@@ -30,7 +33,7 @@ export default function ChannelSelector({
       setError(null);
       
       try {
-        const response = await fetch(`/api/channels?fid=${userFid}&limit=${limit}&type=${channelType}`);
+        const response = await fetch(`/api/channels?fid=${userFid}&limit=${limit}&type=followed`);
         const data: ChannelsResponse = await response.json();
         
         if (!response.ok) {
@@ -38,6 +41,7 @@ export default function ChannelSelector({
         }
         
         setChannels(data.channels || []);
+        setHasLoadedChannels(true);
       } catch (err) {
         console.error('Failed to fetch channels:', err);
         setError((err as Error).message);
@@ -47,11 +51,11 @@ export default function ChannelSelector({
     };
 
     fetchChannels();
-  }, [userFid, limit, channelType, isExpanded, searchTerm]);
+  }, [userFid, limit, isExpanded, searchTerm, hasLoadedChannels]);
 
-  // Filter channels based on search term
+  // Filter channels based on search term (client-side only)
   const filteredChannels = useMemo(() => {
-    if (!searchTerm) return channels;
+    if (!searchTerm.trim()) return channels;
     
     return channels.filter(channel =>
       channel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,21 +65,31 @@ export default function ChannelSelector({
 
   // Handle channel selection
   const handleChannelClick = (channelId: string | null) => {
-    console.log('Channel selected:', channelId); // Debug logging
+    console.log('Channel selected:', channelId);
     onChannelSelect(channelId);
+    // After selection, collapse the list for cleaner UX
+    setIsExpanded(false);
+    setSearchTerm('');
   };
 
-  // Handle search input changes
+  // Handle search input changes (no API calls, just filtering)
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     if (value.trim() && !isExpanded) {
-      setIsExpanded(true); // Expand to load channels when user starts typing
+      setIsExpanded(true); // Expand to show channels when user starts typing
     }
   };
 
   // Handle expanding to show all channels
   const handleShowChannels = () => {
     setIsExpanded(true);
+  };
+
+  // Handle clearing selection
+  const handleClearSelection = () => {
+    onChannelSelect(null);
+    setIsExpanded(false);
+    setSearchTerm('');
   };
 
   if (loading) {
@@ -110,48 +124,87 @@ export default function ChannelSelector({
     );
   }
 
-  // Debug logging
-  console.log('ChannelSelector render:', { selectedChannelId, channelsLength: channels.length, isExpanded, searchTerm });
+  // If a channel is selected, show compact selected state
+  if (selectedChannelId && selectedChannel) {
+    return (
+      <div className={`space-y-2 ${className}`}>
+        <div className="text-xs text-gray-600 font-medium">Selected Channel:</div>
+        <div className="flex items-center justify-between p-3 bg-blue-50 border-2 border-blue-500 rounded-lg">
+          <div className="flex items-center space-x-3">
+            {/* Uniform circular image */}
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+              {selectedChannel.image_url ? (
+                <img
+                  src={selectedChannel.image_url}
+                  alt={selectedChannel.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-gray-500 text-sm font-bold">
+                  #{selectedChannel.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">/{selectedChannel.name}</div>
+              <div className="text-xs text-gray-500">
+                {selectedChannel.follower_count?.toLocaleString()} followers
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleClearSelection}
+            className="text-blue-600 hover:text-blue-800 text-sm"
+          >
+            Change
+          </button>
+        </div>
+      </div>
+    );
+  }
 
+  // If main feed is selected, show compact selected state
+  if (selectedChannelId === null || selectedChannelId === '') {
+    return (
+      <div className={`space-y-2 ${className}`}>
+        <div className="text-xs text-gray-600 font-medium">Selected Channel:</div>
+        <div className="flex items-center justify-between p-3 bg-blue-50 border-2 border-blue-500 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
+              📢
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-900">Main Feed</div>
+              <div className="text-xs text-gray-500">Post to your main timeline</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsExpanded(true)}
+            className="text-blue-600 hover:text-blue-800 text-sm"
+          >
+            Change
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Selection interface
   return (
     <div className={`space-y-3 ${className}`}>
-      {/* Channel Type Toggle */}
-      <div className="flex items-center space-x-1 text-xs">
-        <button
-          onClick={() => setChannelType('followed')}
-          className={`px-2 py-1 rounded text-xs ${
-            channelType === 'followed'
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          Following
-        </button>
-        <button
-          onClick={() => setChannelType('active')}
-          className={`px-2 py-1 rounded text-xs ${
-            channelType === 'active'
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          Active In
-        </button>
-      </div>
-
       {/* Search Input */}
       {showSearch && (
         <div className="relative">
           <input
             type="text"
-            placeholder="Type to search channels..."
+            placeholder="Search channels or browse below..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           {searchTerm && (
             <button
-              onClick={() => handleSearchChange('')}
+              onClick={() => setSearchTerm('')}
               className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
             >
               ✕
@@ -160,24 +213,18 @@ export default function ChannelSelector({
         </div>
       )}
 
-      {/* No Channel Option */}
+      {/* Main Feed Option */}
       <button
         onClick={() => handleChannelClick(null)}
-        className={`w-full flex items-center space-x-2 p-2 rounded-lg border-2 transition-all ${
-          selectedChannelId === null || selectedChannelId === ''
-            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-            : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
-        }`}
+        className="w-full flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 transition-all"
       >
-        <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded flex items-center justify-center text-white text-xs">
+        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
           📢
         </div>
         <div className="flex-1 text-left">
           <div className="text-sm font-medium text-gray-900">Main Feed</div>
+          <div className="text-xs text-gray-500">Post to your main timeline</div>
         </div>
-        {(selectedChannelId === null || selectedChannelId === '') && (
-          <div className="text-blue-500 text-sm">✓</div>
-        )}
       </button>
 
       {/* Channel List */}
@@ -200,14 +247,10 @@ export default function ChannelSelector({
             <button
               key={channel.id}
               onClick={() => handleChannelClick(channel.id)}
-              className={`w-full flex items-center space-x-2 p-2 rounded-lg border-2 transition-all ${
-                selectedChannelId === channel.id
-                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                  : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
-              }`}
+              className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-all"
             >
-              {/* Channel Image */}
-              <div className="w-6 h-6 rounded overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+              {/* Uniform circular image */}
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
                 {channel.image_url ? (
                   <img
                     src={channel.image_url}
@@ -215,32 +258,32 @@ export default function ChannelSelector({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-gray-500 text-xs font-bold">#{channel.name.charAt(0).toUpperCase()}</div>
+                  <div className="text-gray-500 text-sm font-bold">
+                    #{channel.name.charAt(0).toUpperCase()}
+                  </div>
                 )}
               </div>
 
-              {/* Channel Info - Single line only */}
+              {/* Channel Info */}
               <div className="flex-1 text-left min-w-0">
                 <div className="text-sm font-medium text-gray-900 truncate">
                   /{channel.name}
                 </div>
+                <div className="text-xs text-gray-500">
+                  {channel.follower_count?.toLocaleString()} followers
+                </div>
               </div>
-
-              {/* Selected Indicator */}
-              {selectedChannelId === channel.id && (
-                <div className="text-blue-500 text-sm flex-shrink-0">✓</div>
-              )}
             </button>
           ))
         )}
       </div>
 
       {/* Channel Count */}
-      {(isExpanded || searchTerm) && (
+      {(isExpanded || searchTerm) && filteredChannels.length > 0 && (
         <div className="text-xs text-gray-500 text-center">
           {searchTerm 
             ? `Found ${filteredChannels.length} matching channels`
-            : `Showing ${filteredChannels.length} of ${channels.length} channels`
+            : `Showing ${filteredChannels.length} channels`
           }
         </div>
       )}
