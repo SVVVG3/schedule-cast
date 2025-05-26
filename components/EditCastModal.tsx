@@ -151,8 +151,17 @@ export default function EditCastModal({ isOpen, onClose, cast, onSuccess }: Edit
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" 
-      style={{ zIndex: 9999 }}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+      style={{ 
+        zIndex: 99999,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex'
+      }}
       onClick={(e) => {
         console.log('Modal backdrop clicked');
         if (e.target === e.currentTarget) {

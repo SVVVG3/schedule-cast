@@ -25,7 +25,19 @@ export default function DeleteConfirmModal({
     : castContent;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style={{ zIndex: 9999 }}>
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+      style={{ 
+        zIndex: 99999,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex'
+      }}
+    >
       <div className="bg-gray-800 rounded-xl shadow-xl border border-gray-700 w-full max-w-md">
         {/* Header */}
         <div className="p-6 border-b border-gray-700">
