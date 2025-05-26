@@ -134,11 +134,24 @@ export default function MiniApp() {
           <div className="max-w-2xl mx-auto w-full">
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                Schedule Cast
-              </h1>
-              <p className="text-gray-600">
-                Plan and schedule your Farcaster posts
+              <div className="flex items-center justify-center mb-6">
+                <svg 
+                  className="text-white mr-3" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  width="32"
+                  height="32"
+                  style={{ width: '32px', height: '32px', minWidth: '32px', minHeight: '32px' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                <h1 className="text-2xl font-bold text-white">
+                  Schedule Cast
+                </h1>
+              </div>
+              <p className="text-gray-300 text-lg px-4">
+                Visit <span className="text-purple-400 font-semibold">https://schedule-cast.vercel.app</span> on desktop or mobile browser and click the <span className="text-purple-400 font-semibold">"Sign in with Neynar"</span> button to give us permission to post your casts at scheduled times. Revisit the mini app after granting permissions to be automatically signed in and start scheduling casts!
               </p>
             </div>
 

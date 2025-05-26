@@ -819,4 +819,27 @@ const MEDIA_LIMITS = {
 
 **Next Actions**: Re-test Manifest Tool to confirm "Embed Valid" now passes
 
+### **🔗 URL Embed Detection Fix - COMPLETED**
+**Issue**: Scheduled casts containing mini app URLs were posting as plain text without embed previews
+**Root Cause**: When posting via Neynar API, URLs in cast content aren't automatically detected as embeds
+**Solution**: Enhanced `postCastDirect()` function to auto-detect URLs and add them to embeds array
+
+**Changes Made**:
+- ✅ **URL Detection**: Added `extractUrls()` function using regex to find URLs in cast content
+- ✅ **Auto-Embed Logic**: URLs found in content are automatically added to embeds array
+- ✅ **Priority System**: Media files take priority, then content URLs (max 2 embeds per Farcaster limit)
+- ✅ **Debug Logging**: Added comprehensive logging to track embed detection and processing
+
+**Technical Details**:
+```typescript
+// Auto-detects URLs like: https://schedule-cast.vercel.app/miniapp
+const contentUrls = extractUrls(content);
+if (contentUrls.length > 0) {
+  allEmbeds.push(...contentUrls);
+  requestBody.embeds = limitedEmbeds.map(url => ({ url }));
+}
+```
+
+**Expected Result**: Mini app URLs in scheduled casts should now show embed previews just like manual posting
+
 This implementation plan provides a comprehensive roadmap for adding media support while maintaining the stability and reliability of your existing scheduling system.

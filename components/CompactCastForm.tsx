@@ -242,16 +242,7 @@ export default function CompactCastForm() {
           </button>
         </form>
 
-        {!isAuthenticated && (
-          <div className="text-center mt-8">
-            <p className="text-lg text-gray-300 mb-6">
-              Sign in with your Farcaster account to start scheduling casts
-            </p>
-            <p className="text-sm text-gray-400">
-              Use the "Sign in with Neynar" button in the top-right corner to get started
-            </p>
-          </div>
-        )}
+
       </div>
     </div>
   );
