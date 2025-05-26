@@ -64,31 +64,47 @@ export default function Dashboard() {
             </h1>
           </div>
           
-          {/* User Info - Similar to Mini App */}
+          {/* User Info - Matching Mini App Spacing */}
           {authUser && (
             <div className="mt-6">
-              <div className="flex items-center justify-center space-x-3">
-                <span className="text-gray-300 font-medium text-lg">
+              <div 
+                className="flex items-center justify-center"
+                style={{ 
+                  padding: '0.375rem 1rem',
+                  gap: '0.375rem'
+                }}
+              >
+                <span 
+                  className="text-gray-300 font-medium"
+                  style={{ fontSize: '16px', marginRight: '0.5rem' }}
+                >
                   Signed in as:
                 </span>
                 <div 
-                  className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg"
-                  style={{ width: '24px', height: '24px' }}
+                  className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md"
+                  style={{ 
+                    width: '48px', 
+                    height: '48px',
+                    marginRight: '0.375rem'
+                  }}
                 >
                   {authUser.avatar ? (
                     <img 
                       src={authUser.avatar} 
                       alt={authUser.displayName || authUser.username || 'User'} 
                       className="rounded-full object-cover"
-                      style={{ width: '24px', height: '24px' }}
+                      style={{ width: '48px', height: '48px' }}
                     />
                   ) : (
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
                 </div>
-                <p className="font-semibold text-white text-lg">
+                <p 
+                  className="font-semibold text-white"
+                  style={{ fontSize: '18px' }}
+                >
                   @{authUser.username || 'user'}
                 </p>
               </div>
