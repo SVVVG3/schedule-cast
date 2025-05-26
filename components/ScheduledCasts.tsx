@@ -78,7 +78,7 @@ export default function ScheduledCasts() {
 
   if (casts.length === 0) {
     return (
-      <div className="bg-gray-800 p-10 rounded-xl text-center border border-gray-700" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+      <div className="bg-gray-800 p-8 rounded-xl text-center border border-gray-700" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
         <p className="text-gray-300 text-xl">No upcoming scheduled casts.</p>
       </div>
     );
