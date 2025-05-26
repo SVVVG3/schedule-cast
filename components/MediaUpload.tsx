@@ -21,6 +21,26 @@ interface MediaUploadProps {
   className?: string;
 }
 
+// Small SVG icon for file attachment (similar to social media sites)
+const AttachmentIcon = ({ className }: { className?: string }) => (
+  <svg 
+    className={className} 
+    width="16" 
+    height="16" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path 
+      d="M21.44 11.05l-9.19 9.19c-1.78 1.78-4.67 1.78-6.45 0s-1.78-4.67 0-6.45l9.19-9.19c1.05-1.05 2.76-1.05 3.81 0s1.05 2.76 0 3.81L9.61 17.6c-.32.32-.85.32-1.17 0s-.32-.85 0-1.17l8.24-8.24" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 export default function MediaUpload({
   onFilesChange,
   maxFiles = 2, // Updated to match Farcaster limitation
@@ -172,7 +192,7 @@ export default function MediaUpload({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Upload Button - Matching Date/Time styling */}
+      {/* Upload Button - Dark mode styling matching Date/Time inputs */}
       <div
         className={`
           relative cursor-pointer transition-all duration-200
@@ -217,17 +237,17 @@ export default function MediaUpload({
         >
           {uploading ? (
             <>
-              <span className="animate-spin">⚡</span>
+              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
               <span>Uploading...</span>
             </>
           ) : uploadedFiles.length >= maxFiles ? (
             <>
-              <span>📎</span>
+              <AttachmentIcon className="w-4 h-4 text-gray-400" />
               <span>Maximum {maxFiles} files reached</span>
             </>
           ) : (
             <>
-              <span>📎</span>
+              <AttachmentIcon className="w-4 h-4" />
               <span>Click or drag files to upload</span>
             </>
           )}
@@ -241,11 +261,6 @@ export default function MediaUpload({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Help text */}
-      <div className="text-xs text-gray-400 dark:text-gray-500">
-        Images & videos • Max {Math.round(maxSizePerFile / (1024 * 1024))}MB each • {maxFiles} files max • Supported: JPEG, PNG, GIF, WebP, MP4, WebM
       </div>
 
       {/* Error Messages */}
