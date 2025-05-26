@@ -75,18 +75,18 @@ export default function MiniApp() {
               </div>
             </div>
 
-            {/* User Header - FORCED SPACING WITH INLINE STYLES */}
-            <div style={{ marginBottom: '2rem' }}>
+            {/* User Header - BALANCED SPACING */}
+            <div style={{ marginBottom: '1rem' }}>
               <div 
                 className="flex items-center justify-center bg-white rounded-xl shadow-lg border border-gray-100"
                 style={{ 
-                  padding: '1.5rem 2rem',
-                  gap: '1.5rem'
+                  padding: '0.75rem 1rem',
+                  gap: '0.75rem'
                 }}
               >
                 <span 
                   className="text-gray-600 font-medium"
-                  style={{ fontSize: '16px', marginRight: '2rem' }}
+                  style={{ fontSize: '16px', marginRight: '1rem' }}
                 >
                   Signed in as:
                 </span>
@@ -95,7 +95,7 @@ export default function MiniApp() {
                   style={{ 
                     width: '32px', 
                     height: '32px',
-                    marginRight: '1.5rem'
+                    marginRight: '0.75rem'
                   }}
                 >
                   {authUser?.avatar ? (
