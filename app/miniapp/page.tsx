@@ -166,16 +166,18 @@ export default function MiniApp() {
                 <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                   <h3 className="text-white font-semibold text-lg mb-3">1) Visit our website</h3>
                   <p className="text-gray-300 text-sm mb-4">Open the desktop/mobile site to grant permissions</p>
-                  <button
-                    onClick={copyUrlToClipboard}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 text-sm"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                    </svg>
-                    <span>Copy Website URL</span>
-                  </button>
+                  <div className="flex justify-center">
+                    <button
+                      onClick={copyUrlToClipboard}
+                      className="inline-flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                      </svg>
+                      <span>Copy Website URL</span>
+                    </button>
+                  </div>
                   {urlCopied && (
                     <div className="mt-2 text-center">
                       <span className="text-green-400 text-sm font-medium">✓ Copied to clipboard!</span>
