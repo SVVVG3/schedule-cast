@@ -75,43 +75,26 @@ export default function MiniApp() {
               </div>
             </div>
 
-            {/* User Header - IMPOSSIBLE TO MISS CHANGES */}
-            <div className="mb-16" style={{ marginBottom: '4rem' }}>
-              <div 
-                className="flex flex-col items-center justify-center rounded-3xl shadow-2xl border-4"
-                style={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-                  padding: '3rem 2rem',
-                  marginBottom: '2rem'
-                }}
-              >
-                <div className="text-center mb-8">
-                  <p className="text-white text-2xl font-bold mb-6" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
-                    🎉 Welcome Back! 🎉
-                  </p>
-                  <div 
-                    className="rounded-full overflow-hidden mx-auto shadow-2xl border-4 border-white"
-                    style={{ width: '100px', height: '100px' }}
-                  >
-                    {authUser?.avatar ? (
-                      <img 
-                        src={authUser.avatar} 
-                        alt={authUser.displayName || authUser.username || 'User'} 
-                        className="rounded-full object-cover"
-                        style={{ width: '100px', height: '100px' }}
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center">
-                        <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-white text-2xl font-bold mt-6" style={{ fontSize: '1.5rem', marginTop: '1.5rem' }}>
-                    @{authUser?.username || 'user'}
-                  </p>
+            {/* User Header - Clean and Professional */}
+            <div className="mb-8">
+              <div className="flex items-center justify-center bg-white rounded-xl px-6 py-5 shadow-lg border border-gray-100">
+                <span className="text-gray-600 text-base font-medium mr-6">Signed in as:</span>
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-4 flex-shrink-0 shadow-md">
+                  {authUser?.avatar ? (
+                    <img 
+                      src={authUser.avatar} 
+                      alt={authUser.displayName || authUser.username || 'User'} 
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  )}
                 </div>
+                <p className="font-semibold text-gray-900 text-lg">
+                  @{authUser?.username || 'user'}
+                </p>
               </div>
             </div>
 
