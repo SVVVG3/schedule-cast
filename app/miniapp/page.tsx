@@ -174,10 +174,10 @@ export default function MiniApp() {
                   {urlCopied && (
                     <span className="ml-2 text-green-400 text-sm">✓ Copied!</span>
                   )}
-                  {" "}on a desktop or mobile browser.
+                  {" "}(tap to copy) on a desktop or mobile browser.
                 </p>
                 <p><span className="text-purple-400 font-semibold">2)</span> Click the <span className="text-purple-400 font-semibold">"Sign in with Neynar"</span> button to give us permission to post your casts at scheduled times.</p>
-                <p><span className="text-purple-400 font-semibold">3)</span> Revisit the mini app after granting permissions to be automatically signed in and start scheduling casts!</p>
+                <p><span className="text-purple-400 font-semibold">3)</span> Revisit the mini app after granting permissions to be automatically signed in and start scheduling casts! Refresh the mini app in the top right-hand corner if needed.</p>
               </div>
             </div>
 
