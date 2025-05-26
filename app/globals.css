@@ -17,12 +17,9 @@ html, body {
   -webkit-touch-callout: none;
 }
 
-/* Ensure proper centering and no horizontal scroll */
+/* Ensure proper layout without constraining width */
 body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
+  display: block;
 }
 
 /* Allow text selection for inputs and textareas */

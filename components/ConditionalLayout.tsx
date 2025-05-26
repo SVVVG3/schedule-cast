@@ -19,9 +19,13 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     );
   }
 
-  // Frame/Mini app layout - no navbar, simplified
+  // Frame/Mini app layout - no navbar, simplified, with horizontal centering
   if (isFrameApp) {
-    return <>{children}</>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-start">
+        {children}
+      </div>
+    );
   }
 
   // Regular web layout - with navbar and footer
