@@ -21,58 +21,62 @@ export default function ChannelSelector({
   // Find selected channel for display
   const selectedChannel = channels.find(ch => ch.id === selectedChannelId);
 
-  // Fetch channels once when user starts searching
+  // Fetch channels once when user starts searching - with delayed loading to avoid input disruption
   useEffect(() => {
     if (!userFid) return;
 
     // Only fetch channels once when user first starts typing
     if (!hasLoadedChannels && searchTerm.trim().length > 0) {
-      const fetchChannels = async () => {
-        setLoading(true);
-        setError(null);
-        
-        try {
-          let allChannels: Channel[] = [];
-          let cursor: string | null = null;
-          let hasMore = true;
+      // Use setTimeout to avoid disrupting the user's typing
+      const timeoutId = setTimeout(async () => {
+        // Double-check that user is still typing and we haven't loaded yet
+        if (!hasLoadedChannels) {
+          setLoading(true);
+          setError(null);
           
-          // Fetch ALL user channels using pagination (only once)
-          while (hasMore) {
-            const url = new URL('/api/channels', window.location.origin);
-            url.searchParams.set('fid', userFid.toString());
-            url.searchParams.set('limit', '100'); // Maximum per request
-            url.searchParams.set('type', 'followed');
-            if (cursor) {
-              url.searchParams.set('cursor', cursor);
+          try {
+            let allChannels: Channel[] = [];
+            let cursor: string | null = null;
+            let hasMore = true;
+            
+            // Fetch ALL user channels using pagination (only once)
+            while (hasMore) {
+              const url = new URL('/api/channels', window.location.origin);
+              url.searchParams.set('fid', userFid.toString());
+              url.searchParams.set('limit', '100'); // Maximum per request
+              url.searchParams.set('type', 'followed');
+              if (cursor) {
+                url.searchParams.set('cursor', cursor);
+              }
+              
+              const response = await fetch(url.toString());
+              const data: ChannelsResponse = await response.json();
+              
+              if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch channels');
+              }
+              
+              // Add channels to our collection
+              allChannels = [...allChannels, ...(data.channels || [])];
+              
+              // Check if there's more data
+              cursor = data.next?.cursor || null;
+              hasMore = !!cursor;
             }
             
-            const response = await fetch(url.toString());
-            const data: ChannelsResponse = await response.json();
-            
-            if (!response.ok) {
-              throw new Error(data.error || 'Failed to fetch channels');
-            }
-            
-            // Add channels to our collection
-            allChannels = [...allChannels, ...(data.channels || [])];
-            
-            // Check if there's more data
-            cursor = data.next?.cursor || null;
-            hasMore = !!cursor;
+            console.log(`Loaded ${allChannels.length} total channels`);
+            setChannels(allChannels);
+            setHasLoadedChannels(true);
+          } catch (err) {
+            console.error('Failed to fetch channels:', err);
+            setError((err as Error).message);
+          } finally {
+            setLoading(false);
           }
-          
-          console.log(`Loaded ${allChannels.length} total channels`);
-          setChannels(allChannels);
-          setHasLoadedChannels(true);
-        } catch (err) {
-          console.error('Failed to fetch channels:', err);
-          setError((err as Error).message);
-        } finally {
-          setLoading(false);
         }
-      };
+      }, 500); // 500ms delay to let user finish typing first characters
 
-      fetchChannels();
+      return () => clearTimeout(timeoutId);
     }
   }, [userFid, searchTerm, hasLoadedChannels]);
 
@@ -178,12 +182,12 @@ export default function ChannelSelector({
              style={{ backgroundColor: '#1e3a8a !important', borderColor: '#60a5fa !important', minHeight: '56px' }}>
           <div className="flex items-center space-x-2">
                          {/* Uniform circular image */}
-             <div className="w-3 h-3 min-w-[12px] min-h-[12px] max-w-[12px] max-h-[12px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+             <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
                {selectedChannel.image_url ? (
                  <img
                    src={selectedChannel.image_url}
                    alt={selectedChannel.name}
-                   className="w-full h-full object-cover max-w-[12px] max-h-[12px]"
+                   className="w-full h-full object-cover max-w-[24px] max-h-[24px]"
                  />
                ) : (
                  <div className="text-gray-500 text-xs font-bold">
@@ -217,7 +221,7 @@ export default function ChannelSelector({
         <div className="flex items-center justify-between p-4 bg-blue-900/30 border-2 border-blue-400 rounded-lg"
              style={{ backgroundColor: '#1e3a8a !important', borderColor: '#60a5fa !important', minHeight: '56px' }}>
                      <div className="flex items-center space-x-2">
-             <div className="w-3 h-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+             <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
                📢
              </div>
             <div>
@@ -270,6 +274,7 @@ export default function ChannelSelector({
           borderColor: '#4b5563 !important', 
           color: '#ffffff !important',
           minHeight: '56px',
+          boxShadow: 'inset 0 0 0 1000px #374151 !important',
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = '#4b5563 !important';
@@ -280,7 +285,7 @@ export default function ChannelSelector({
           e.currentTarget.style.borderColor = '#4b5563 !important';
         }}
       >
-                 <div className="w-3 h-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+                                    <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
            📢
          </div>
         <div className="flex-1 text-left">
@@ -291,11 +296,17 @@ export default function ChannelSelector({
 
       {/* Channel List */}
       <div className="space-y-1 max-h-60 overflow-y-auto">
-        {filteredChannels.length === 0 && !loading ? (
+        {loading && filteredChannels.length === 0 && (
           <div className="text-sm text-center py-4" style={{ color: '#9ca3af !important' }}>
-            {searchTerm ? 'No channels match your search' : 'No channels found'}
+            🔍 Searching channels...
           </div>
-        ) : (
+        )}
+        {!loading && filteredChannels.length === 0 && searchTerm && (
+          <div className="text-sm text-center py-4" style={{ color: '#9ca3af !important' }}>
+            No channels match your search
+          </div>
+        )}
+        {filteredChannels.length > 0 && (
           filteredChannels.map((channel) => (
             <button
               key={channel.id}
@@ -306,6 +317,7 @@ export default function ChannelSelector({
                 borderColor: '#4b5563 !important', 
                 color: '#ffffff !important',
                 minHeight: '56px',
+                boxShadow: 'inset 0 0 0 1000px #374151 !important',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#4b5563 !important';
@@ -317,12 +329,12 @@ export default function ChannelSelector({
               }}
             >
                              {/* Uniform circular image */}
-               <div className="w-3 h-3 min-w-[12px] min-h-[12px] max-w-[12px] max-h-[12px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+               <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
                  {channel.image_url ? (
                    <img
                      src={channel.image_url}
                      alt={channel.name}
-                     className="w-full h-full object-cover max-w-[12px] max-h-[12px]"
+                     className="w-full h-full object-cover max-w-[24px] max-h-[24px]"
                    />
                  ) : (
                    <div className="text-gray-500 text-xs font-bold">
