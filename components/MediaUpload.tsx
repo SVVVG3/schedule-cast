@@ -110,6 +110,7 @@ export default function MediaUpload({
       }
     } catch (error) {
       console.error('Upload error:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Upload failed');
       setErrors([error instanceof Error ? error.message : 'Upload failed']);
     } finally {
       setUploading(false);
