@@ -75,11 +75,11 @@ export default function MiniApp() {
               </div>
             </div>
 
-            {/* User Header - Clean and Professional */}
+            {/* User Header - Clean and Professional with Better Spacing */}
             <div className="mb-8">
-              <div className="flex items-center justify-center bg-white rounded-xl px-6 py-5 shadow-lg border border-gray-100">
-                <span className="text-gray-600 text-base font-medium mr-6">Signed in as:</span>
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-4 flex-shrink-0 shadow-md">
+              <div className="flex items-center justify-center bg-white rounded-xl px-8 py-6 shadow-lg border border-gray-100">
+                <span className="text-gray-600 text-base font-medium mr-12">Signed in as:</span>
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center mr-8 flex-shrink-0 shadow-md">
                   {authUser?.avatar ? (
                     <img 
                       src={authUser.avatar} 
