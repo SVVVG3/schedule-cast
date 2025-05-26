@@ -75,18 +75,18 @@ export default function MiniApp() {
               </div>
             </div>
 
-            {/* User Header - Clean Without Rectangle */}
+            {/* User Header - Tighter Spacing */}
             <div style={{ marginBottom: '1rem' }}>
               <div 
                 className="flex items-center justify-center"
                 style={{ 
-                  padding: '0.75rem 1rem',
-                  gap: '0.75rem'
+                  padding: '0.375rem 1rem',
+                  gap: '0.375rem'
                 }}
               >
                 <span 
                   className="text-white font-medium"
-                  style={{ fontSize: '16px', marginRight: '1rem' }}
+                  style={{ fontSize: '16px', marginRight: '0.5rem' }}
                 >
                   Signed in as:
                 </span>
@@ -95,7 +95,7 @@ export default function MiniApp() {
                   style={{ 
                     width: '64px', 
                     height: '64px',
-                    marginRight: '0.75rem'
+                    marginRight: '0.375rem'
                   }}
                 >
                   {authUser?.avatar ? (
