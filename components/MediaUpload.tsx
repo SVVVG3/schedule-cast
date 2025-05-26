@@ -201,6 +201,17 @@ export default function MediaUpload({
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Hide any blue buttons that might be interfering */}
+      <style jsx>{`
+        .aspect-square button[style*="blue"],
+        .aspect-square button[class*="blue"],
+        .aspect-square .button-blue,
+        .aspect-square [style*="background-color: blue"],
+        .aspect-square [style*="background: blue"] {
+          display: none !important;
+          visibility: hidden !important;
+        }
+      `}</style>
       {/* Upload Button - Dark mode styling matching Date/Time inputs */}
       <div
         className={`
@@ -298,12 +309,21 @@ export default function MediaUpload({
                 className="relative bg-gray-700 border border-gray-600 rounded-lg overflow-hidden"
               >
                 {/* File Preview - Clean design without extra info */}
-                <div className="aspect-square w-full bg-gray-800 flex items-center justify-center relative overflow-hidden">
+                <div 
+                  className="aspect-square w-full bg-gray-800 flex items-center justify-center relative overflow-hidden"
+                  style={{
+                    position: 'relative'
+                  }}
+                >
                   {file.type === 'image' ? (
                     <img
                       src={file.url}
                       alt={file.filename}
                       className="w-full h-full object-cover"
+                      style={{
+                        userSelect: 'none',
+                        pointerEvents: 'none'
+                      }}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.style.display = 'none';
@@ -317,16 +337,25 @@ export default function MediaUpload({
                     <span className="text-4xl">{getFileTypeIcon(file.type)}</span>
                   )}
                   
-                  {/* Remove button - Always positioned in top-right corner */}
+                  {/* Remove button - FORCE top-right positioning */}
                   <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       removeFile(file.id);
                     }}
-                    className="absolute top-1 right-1 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-lg z-10 border border-white/20"
+                    className="absolute w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-sm font-bold transition-all duration-200 shadow-2xl border-2 border-white"
                     title="Remove file"
-                    style={{ zIndex: 1000 }}
+                    style={{ 
+                      top: '4px',
+                      right: '4px',
+                      zIndex: 9999,
+                      position: 'absolute',
+                      backgroundColor: '#dc2626',
+                      color: '#ffffff',
+                      borderRadius: '50%',
+                      pointerEvents: 'auto'
+                    }}
                   >
                     ×
                   </button>
