@@ -99,7 +99,14 @@ export async function POST(request: NextRequest) {
         console.log('[upload] Successfully uploaded file:', uploadedFile.id);
 
       } catch (error) {
-        console.error('[upload] Error uploading file:', error);
+        console.error('[upload] Error uploading file:', file.name, error);
+        console.error('[upload] File details:', {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified
+        });
+        
         // Clean up any already uploaded files
         for (const uploaded of uploadedFiles) {
           await supabase.storage
@@ -108,7 +115,7 @@ export async function POST(request: NextRequest) {
         }
         
         return NextResponse.json(
-          { error: `Failed to upload file: ${file.name}` },
+          { error: `Failed to upload file "${file.name}": ${error instanceof Error ? error.message : 'Unknown error'}` },
           { status: 500 }
         );
       }

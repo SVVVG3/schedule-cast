@@ -71,6 +71,8 @@ export default function MediaUpload({
       setErrors(['Please sign in to upload files']);
       return;
     }
+    
+    console.log('[MediaUpload] Starting upload with user FID:', user.fid);
 
     const { valid, errors: validationErrors } = validateFiles(files);
     

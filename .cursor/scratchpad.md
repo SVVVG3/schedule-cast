@@ -190,12 +190,48 @@ Based on the scratchpad history, the app has undergone extensive refactoring of 
 
 **🎯 MEDIA SUPPORT IMPLEMENTATION STATUS**:
 - ✅ **Backend Complete**: Full media workflow from upload to posting
-- ✅ **Frontend Started**: Media upload component integrated into cast form
-- 🔄 **Ready for Testing**: Users can now upload media when scheduling casts
+- ✅ **Frontend Complete**: Media upload component integrated into all form components
+- ✅ **Deployment Fix**: Resolved TypeScript error preventing Vercel builds
+- ✅ **UI Integration Fixed**: Media upload now visible in both desktop and mini app
+- 🎉 **FEATURE COMPLETE**: Users can now upload media when scheduling casts
 
-**📋 NEXT STEPS**: 
-- **Test the complete workflow**: Upload files → Schedule cast → Verify posting with media
-- **Optional Enhancements**: Media preview in scheduled casts list, better error handling
+**📋 READY FOR TESTING**: 
+- **Complete workflow**: Upload files → Schedule cast → Verify posting with media
+- **Both environments**: Desktop and mini app now have media upload functionality
+- **All form components**: SimpleCastForm and CompactCastForm both support media
+
+### **🔧 UI Integration Fix (Media Upload Missing)**
+**Issue**: Media upload functionality wasn't visible in UI despite backend being ready
+- **Root Cause**: Updated wrong form component - only updated `CastForm.tsx` which isn't used
+- **Actual Components Used**: 
+  - Desktop: `SimpleCastForm.tsx`
+  - Mini App (authenticated): `SimpleCastForm.tsx` 
+  - Mini App (not authenticated): `CompactCastForm.tsx`
+- **Solution**: Added MediaUpload integration to the actual components being used
+- **Status**: ✅ **Fixed and deployed**
+
+**Files Updated**:
+- `components/SimpleCastForm.tsx`: Added MediaUpload component and media data handling
+- `components/CompactCastForm.tsx`: Added MediaUpload component and media data handling
+- Both components now include media URLs in cast creation payload
+- Media files are cleared on successful form submission
+
+### **🎉 MEDIA SUPPORT FEATURE COMPLETE**
+**Status**: ✅ Ready for user testing
+**Components**: All backend APIs, storage, validation, and UI components implemented
+**Next**: User can test complete media workflow in both desktop and mini app environments
+
+### **🛠 Recent Fix (Deployment Issue)**
+**Issue**: Vercel build failed with TypeScript error in upload route
+- **Error**: `Type 'string | undefined' is not assignable to type 'string'` on `storage_path`
+- **Root Cause**: `MediaFile.storage_path` was optional but used as required in cleanup logic
+- **Solution**: Made `storage_path` required in `MediaFile` interface since we always provide it
+- **Status**: ✅ **Fixed and deployed**
+
+**Files Changed**:
+- `lib/media-validation.ts`: Changed `storage_path?: string` to `storage_path: string`
+- Local build test: ✅ Passes
+- Pushed to trigger new Vercel deployment
 
 ## Executor's Feedback or Assistance Requests
 
