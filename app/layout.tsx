@@ -36,7 +36,7 @@ export default function RootLayout({
       <head>
         <meta 
           name="fc:frame" 
-          content='{"version":"1","imageUrl":"https://schedule-cast.vercel.app/ScheduleCastEmbed.png","button":{"title":"⚡ Schedule Cast","action":{"type":"launch_frame","name":"Schedule Cast","url":"https://schedule-cast.vercel.app/miniapp","splashImageUrl":"https://schedule-cast.vercel.app/ScheduleCastLogo.png","splashBackgroundColor":"#000000"}}}' 
+          content='{"version":"1","imageUrl":"https://schedule-cast.vercel.app/ScheduleCastEmbed.png","button":{"title":"📅 Schedule Cast","action":{"type":"launch_frame","name":"Schedule Cast","url":"https://schedule-cast.vercel.app/miniapp","splashImageUrl":"https://schedule-cast.vercel.app/ScheduleCastLogo.png","splashBackgroundColor":"#000000"}}}' 
         />
       </head>
       <body className="overflow-x-hidden w-full max-w-full">
