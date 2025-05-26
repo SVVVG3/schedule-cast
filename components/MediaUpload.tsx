@@ -298,44 +298,38 @@ export default function MediaUpload({
                 className="relative bg-gray-700 border border-gray-600 rounded-lg overflow-hidden"
               >
                 {/* File Preview - Clean design without extra info */}
-                <div className="aspect-square w-full bg-gray-800 flex items-center justify-center relative">
+                <div className="aspect-square w-full bg-gray-800 flex items-center justify-center relative overflow-hidden">
                   {file.type === 'image' ? (
-                    <>
-                      <img
-                        src={file.url}
-                        alt={file.filename}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const parent = target.parentElement;
-                          if (parent) {
-                            parent.innerHTML = '<span class="text-2xl">🖼️</span>';
-                          }
-                        }}
-                      />
-                      {/* Remove button overlay - more prominent */}
-                      <button
-                        onClick={() => removeFile(file.id)}
-                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors shadow-lg"
-                        title="Remove file"
-                      >
-                        ✕
-                      </button>
-                    </>
+                    <img
+                      src={file.url}
+                      alt={file.filename}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.insertAdjacentHTML('afterbegin', '<span class="text-2xl">🖼️</span>');
+                        }
+                      }}
+                    />
                   ) : (
-                    <>
-                      <span className="text-4xl">{getFileTypeIcon(file.type)}</span>
-                      {/* Remove button overlay - more prominent */}
-                      <button
-                        onClick={() => removeFile(file.id)}
-                        className="absolute top-2 right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-bold transition-colors shadow-lg"
-                        title="Remove file"
-                      >
-                        ✕
-                      </button>
-                    </>
+                    <span className="text-4xl">{getFileTypeIcon(file.type)}</span>
                   )}
+                  
+                  {/* Remove button - Always positioned in top-right corner */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeFile(file.id);
+                    }}
+                    className="absolute top-1 right-1 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs font-bold transition-all duration-200 shadow-lg z-10 border border-white/20"
+                    title="Remove file"
+                    style={{ zIndex: 1000 }}
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
             ))}
