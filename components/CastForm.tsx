@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
+import MediaUpload, { UploadedFile } from './MediaUpload';
 
 interface CastFormData {
   content: string;
@@ -19,6 +20,7 @@ export default function CastForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   
   const {
     register,
@@ -59,7 +61,20 @@ export default function CastForm() {
       const castData = {
         content: data.content,
         scheduled_at: scheduledAt.toISOString(),
-        channel_id: data.channelId || null
+        channel_id: data.channelId || null,
+        // Include media data if files are uploaded
+        ...(uploadedFiles.length > 0 && {
+          media_urls: uploadedFiles.map(file => file.url),
+          media_types: uploadedFiles.map(file => file.type),
+          media_metadata: {
+            files: uploadedFiles.map(file => ({
+              id: file.id,
+              filename: file.filename,
+              size: file.size,
+              format: file.format
+            }))
+          }
+        })
       };
 
       // Send to API endpoint with FID as query param for authentication
@@ -80,6 +95,7 @@ export default function CastForm() {
       // Success!
       setSubmitSuccess(true);
       reset(); // Clear the form
+      setUploadedFiles([]); // Clear uploaded files
     } catch (error) {
       console.error('Error scheduling cast:', error);
       setSubmitError((error as Error)?.message || 'An unexpected error occurred');
@@ -121,6 +137,18 @@ export default function CastForm() {
             <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
           )}
           <p className="mt-1 text-xs text-gray-500">Max 320 characters</p>
+        </div>
+
+        {/* Media Upload Section */}
+        <div className="mb-6">
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Media (optional)
+          </label>
+          <MediaUpload 
+            onFilesChange={setUploadedFiles}
+            maxFiles={4}
+            maxSizePerFile={10 * 1024 * 1024} // 10MB
+          />
         </div>
         
         <div className="grid grid-cols-2 gap-4 mb-4">
