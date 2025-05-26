@@ -482,7 +482,8 @@ export async function checkSignerStatus(signerUuid: string) {
 export async function postCastDirect(
   signerUuid: string,
   content: string,
-  channelId?: string
+  channelId?: string,
+  mediaUrls?: string[]
 ) {
   return retryWithBackoff(async () => {
     if (!process.env.NEYNAR_API_KEY) {
@@ -512,6 +513,12 @@ export async function postCastDirect(
       // Add channel ID if provided
       if (channelId) {
         requestBody.channel_id = channelId;
+      }
+      
+      // Add media embeds if provided
+      if (mediaUrls && mediaUrls.length > 0) {
+        requestBody.embeds = mediaUrls.map(url => ({ url }));
+        console.log('[postCastDirect] Including media embeds:', requestBody.embeds);
       }
       
       const response = await fetch("https://api.neynar.com/v2/farcaster/cast", {

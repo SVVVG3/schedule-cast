@@ -184,7 +184,8 @@ export async function GET(request: NextRequest) {
                 const response = await postCastDirect(
                   fallbackSignerUuid,
                   cast.content,
-                  cast.channel_id
+                  cast.channel_id,
+                  cast.media_urls || undefined
                 );
                 
                 console.log(`[${timestamp}] Successfully posted cast ${cast.id} using fallback signer`);
@@ -306,8 +307,13 @@ export async function GET(request: NextRequest) {
             const response = await postCastDirect(
               userData.signer_uuid,
               cast.content,
-              cast.channel_id
+              cast.channel_id,
+              cast.media_urls || undefined
             );
+            
+            if (cast.media_urls && cast.media_urls.length > 0) {
+              console.log(`[${timestamp}] Cast ${cast.id} includes ${cast.media_urls.length} media files`);
+            }
             
             console.log(`[${timestamp}] Successfully posted cast ${cast.id} using user's current signer: ${userData.signer_uuid}`);
             
@@ -386,7 +392,8 @@ export async function GET(request: NextRequest) {
                 const response = await postCastDirect(
                   fallbackSignerUuid,
                   cast.content,
-                  cast.channel_id
+                  cast.channel_id,
+                  cast.media_urls || undefined
                 );
                 
                 console.log(`[${timestamp}] Successfully posted cast ${cast.id} with fallback signer as last resort`);

@@ -117,12 +117,27 @@ export async function POST(request: Request) {
     const user = authResult.user;
     
     // Parse request body
-    const { content, scheduled_at, channel_id } = await request.json();
+    const { content, scheduled_at, channel_id, media_urls, media_types, media_metadata } = await request.json();
     
     // Validate required fields
     if (!content || !scheduled_at) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate media arrays if provided
+    if (media_urls && (!Array.isArray(media_urls) || media_urls.length > 4)) {
+      return NextResponse.json(
+        { error: 'media_urls must be an array with maximum 4 items' },
+        { status: 400 }
+      );
+    }
+    
+    if (media_types && (!Array.isArray(media_types) || media_types.length !== media_urls?.length)) {
+      return NextResponse.json(
+        { error: 'media_types must match media_urls length' },
         { status: 400 }
       );
     }
@@ -138,19 +153,33 @@ export async function POST(request: Request) {
       );
     }
     
+    // Prepare cast data for database
+    const castData: any = {
+      user_id: user.id,
+      content,
+      scheduled_at,
+      channel_id,
+      fid: user.fid,
+      has_media: !!(media_urls && media_urls.length > 0)
+    };
+
+    // Add media fields if provided
+    if (media_urls && media_urls.length > 0) {
+      castData.media_urls = media_urls;
+      castData.media_types = media_types || [];
+      castData.media_metadata = media_metadata || {};
+      console.log('[casts] Cast includes media:', {
+        count: media_urls.length,
+        types: media_types
+      });
+    }
+
     // Insert into database
     // NOTE: We don't store signer_uuid here because SIWN signers need approval after creation
     // The cron job will look up the user's current approved signer when posting
     const { data, error } = await supabase
       .from('scheduled_casts')
-      .insert({
-        user_id: user.id,
-        content,
-        scheduled_at,
-        channel_id,
-        fid: user.fid
-        // signer_uuid removed - will be looked up dynamically when posting
-      })
+      .insert(castData)
       .select()
       .single();
     
