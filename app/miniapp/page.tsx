@@ -161,23 +161,80 @@ export default function MiniApp() {
                   Schedule Cast
                 </h1>
               </div>
-              <div className="text-gray-300 text-lg px-4 space-y-3">
-                <p>
-                  <span className="text-purple-400 font-semibold">1)</span> Visit{" "}
-                  <button
-                    onClick={copyUrlToClipboard}
-                    className="text-purple-400 font-semibold hover:text-purple-300 underline cursor-pointer transition-colors"
-                    title="Click to copy URL"
-                  >
-                    https://schedule-cast.vercel.app
-                  </button>
-                  {urlCopied && (
-                    <span className="ml-2 text-green-400 text-sm">✓ Copied!</span>
-                  )}
-                  {" "}(tap to copy) on a desktop or mobile browser.
-                </p>
-                <p><span className="text-purple-400 font-semibold">2)</span> Click the <span className="text-purple-400 font-semibold">"Sign in with Neynar"</span> button to give us permission to post your casts at scheduled times.</p>
-                <p><span className="text-purple-400 font-semibold">3)</span> Revisit the mini app after granting permissions to be automatically signed in and start scheduling casts! Refresh the mini app in the top right-hand corner if needed.</p>
+              <div className="px-4 space-y-4">
+                {/* Step 1 Card */}
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">1</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                        </svg>
+                        <h3 className="text-white font-semibold">Visit our website</h3>
+                      </div>
+                      <p className="text-gray-300 text-sm mb-4">Open the desktop/mobile site to grant permissions</p>
+                      <button
+                        onClick={copyUrlToClipboard}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span>Copy Website URL</span>
+                      </button>
+                      {urlCopied && (
+                        <div className="mt-2 text-center">
+                          <span className="text-green-400 text-sm font-medium">✓ Copied to clipboard!</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 2 Card */}
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">2</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        <h3 className="text-white font-semibold">Grant permissions</h3>
+                      </div>
+                      <p className="text-gray-300 text-sm">Click the <span className="text-purple-400 font-semibold">"Sign in with Neynar"</span> button to give us permission to post your casts at scheduled times.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 Card */}
+                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">3</span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <h3 className="text-white font-semibold">Return & start scheduling</h3>
+                      </div>
+                      <p className="text-gray-300 text-sm">Come back to the mini app after granting permissions. You'll be automatically signed in and ready to schedule casts! <span className="text-purple-400">Refresh in the top right corner if needed.</span></p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
