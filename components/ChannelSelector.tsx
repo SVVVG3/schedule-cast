@@ -8,7 +8,7 @@ export default function ChannelSelector({
   onChannelSelect,
   userFid,
   className = '',
-  limit = 25,
+  limit = 100, // Increased to get more channels
   showSearch = true
 }: ChannelSelectorProps) {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -67,9 +67,9 @@ export default function ChannelSelector({
           <div className="w-4 h-4 bg-gray-300 rounded animate-pulse"></div>
           <div className="text-sm text-gray-500">Loading channels...</div>
         </div>
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-1 gap-1">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse"></div>
+            <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -142,26 +142,26 @@ export default function ChannelSelector({
       {/* No Channel Option */}
       <button
         onClick={() => handleChannelClick(null)}
-        className={`w-full flex items-center space-x-3 p-3 rounded-lg border-2 transition-all ${
+        className={`w-full flex items-center space-x-2 p-2 rounded-lg border-2 transition-all ${
           selectedChannelId === null || selectedChannelId === ''
             ? 'border-blue-500 bg-blue-50'
             : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100'
         }`}
       >
-        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
+        <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded flex items-center justify-center text-white text-xs">
           📢
         </div>
         <div className="flex-1 text-left">
-          <div className="font-medium text-gray-900">Main Feed</div>
-          <div className="text-sm text-gray-500">Post to your main timeline</div>
+          <div className="text-sm font-medium text-gray-900">Main Feed</div>
+          <div className="text-xs text-gray-500">Post to your main timeline</div>
         </div>
         {(selectedChannelId === null || selectedChannelId === '') && (
-          <div className="text-blue-500">✓</div>
+          <div className="text-blue-500 text-sm">✓</div>
         )}
       </button>
 
       {/* Channel List */}
-      <div className="space-y-2 max-h-60 overflow-y-auto">
+      <div className="space-y-1 max-h-60 overflow-y-auto">
         {filteredChannels.length === 0 ? (
           <div className="text-sm text-gray-500 text-center py-4">
             {searchTerm ? 'No channels match your search' : 'No channels found'}
@@ -171,14 +171,14 @@ export default function ChannelSelector({
             <button
               key={channel.id}
               onClick={() => handleChannelClick(channel.id)}
-              className={`w-full flex items-center space-x-3 p-3 rounded-lg border-2 transition-all ${
+              className={`w-full flex items-center space-x-2 p-2 rounded-lg border transition-all ${
                 selectedChannelId === channel.id
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
               {/* Channel Image */}
-              <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center">
+              <div className="w-6 h-6 rounded overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
                 {channel.image_url ? (
                   <img
                     src={channel.image_url}
@@ -191,15 +191,10 @@ export default function ChannelSelector({
               </div>
 
               {/* Channel Info */}
-              <div className="flex-1 text-left">
-                <div className="font-medium text-gray-900">
+              <div className="flex-1 text-left min-w-0">
+                <div className="text-sm font-medium text-gray-900 truncate">
                   /{channel.name}
                 </div>
-                {channel.description && (
-                  <div className="text-sm text-gray-500 truncate">
-                    {channel.description}
-                  </div>
-                )}
                 {channel.follower_count && (
                   <div className="text-xs text-gray-400">
                     {channel.follower_count.toLocaleString()} followers
@@ -209,7 +204,7 @@ export default function ChannelSelector({
 
               {/* Selected Indicator */}
               {selectedChannelId === channel.id && (
-                <div className="text-blue-500">✓</div>
+                <div className="text-blue-500 text-sm flex-shrink-0">✓</div>
               )}
             </button>
           ))

@@ -198,7 +198,7 @@ export default function CompactCastForm() {
                 onChannelSelect={(channelId) => setSelectedChannelId(channelId || undefined)}
                 userFid={authUser.fid}
                 className="bg-gray-700 border-gray-600"
-                limit={25}
+                limit={150}
                 showSearch={true}
               />
             ) : (

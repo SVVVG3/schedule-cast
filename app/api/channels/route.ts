@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const fid = url.searchParams.get('fid');
-    const limit = parseInt(url.searchParams.get('limit') || '25');
+    const limit = parseInt(url.searchParams.get('limit') || '150'); // Increased default limit
     const type = url.searchParams.get('type') || 'followed';
 
     // Validate required parameters
