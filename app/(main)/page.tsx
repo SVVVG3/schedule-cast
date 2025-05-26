@@ -21,8 +21,21 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h1 className="text-4xl font-bold text-center mb-6">Schedule Cast</h1>
-        <p className="text-center">Loading...</p>
+        <div className="flex items-center justify-center mb-6">
+          <svg 
+            className="text-purple-600 mr-4" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+            width="40"
+            height="40"
+            style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px' }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+          <h1 className="text-4xl font-bold text-gray-900">Schedule Cast</h1>
+        </div>
+        <p className="text-center text-gray-600">Loading...</p>
       </div>
     );
   }
@@ -38,12 +51,26 @@ export default function Home() {
         
         {/* Header Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-4">
-            Schedule Your Farcaster Casts
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Plan and schedule your Farcaster posts to be published at the perfect time
-          </p>
+          <div className="flex items-center justify-center mb-6">
+            <svg 
+              className="text-purple-600 mr-4" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+              width="48"
+              height="48"
+              style={{ width: '48px', height: '48px', minWidth: '48px', minHeight: '48px' }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
+              Schedule Cast
+            </h1>
+          </div>
+          <div className="text-xl text-gray-600 max-w-2xl mx-auto space-y-2">
+            <p>Sign in with Neynar to start scheduling casts.</p>
+            <p>You should be automatically signed in to the <a href="https://farcaster.xyz/miniapps/2gUG8a57KZYm/schedule-cast" className="text-purple-600 hover:text-purple-700 underline font-semibold" target="_blank" rel="noopener noreferrer">mini app</a> after granting cast permissions on a desktop/mobile browser!</p>
+          </div>
         </div>
 
         {/* Cast Form */}
