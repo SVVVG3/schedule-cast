@@ -21,26 +21,46 @@ export default function ChannelSelector({
   // Find selected channel for display
   const selectedChannel = channels.find(ch => ch.id === selectedChannelId);
 
-  // Fetch channels only once when expanded or searched
+  // Fetch all channels on mount - we'll implement pagination to get ALL channels
   useEffect(() => {
     if (!userFid || hasLoadedChannels) return;
-    
-    // Only fetch if user has expanded or started searching
-    if (!isExpanded && !searchTerm.trim()) return;
 
-    const fetchChannels = async () => {
+    const fetchAllChannels = async () => {
       setLoading(true);
       setError(null);
       
       try {
-        const response = await fetch(`/api/channels?fid=${userFid}&limit=${limit}&type=followed`);
-        const data: ChannelsResponse = await response.json();
+        let allChannels: Channel[] = [];
+        let cursor: string | null = null;
+        let hasMore = true;
         
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch channels');
+        // Fetch ALL user channels using pagination
+        while (hasMore) {
+          const url = new URL('/api/channels', window.location.origin);
+          url.searchParams.set('fid', userFid.toString());
+          url.searchParams.set('limit', '100'); // Maximum per request
+          url.searchParams.set('type', 'followed');
+          if (cursor) {
+            url.searchParams.set('cursor', cursor);
+          }
+          
+          const response = await fetch(url.toString());
+          const data: ChannelsResponse = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch channels');
+          }
+          
+          // Add channels to our collection
+          allChannels = [...allChannels, ...(data.channels || [])];
+          
+          // Check if there's more data
+          cursor = data.next?.cursor || null;
+          hasMore = !!cursor;
         }
         
-        setChannels(data.channels || []);
+        console.log(`Loaded ${allChannels.length} total channels for user`);
+        setChannels(allChannels);
         setHasLoadedChannels(true);
       } catch (err) {
         console.error('Failed to fetch channels:', err);
@@ -50,17 +70,40 @@ export default function ChannelSelector({
       }
     };
 
-    fetchChannels();
-  }, [userFid, limit, isExpanded, searchTerm, hasLoadedChannels]);
+    fetchAllChannels();
+  }, [userFid, hasLoadedChannels]);
 
-  // Filter channels based on search term (client-side only)
+  // Filter and sort channels based on search term (client-side only)
   const filteredChannels = useMemo(() => {
-    if (!searchTerm.trim()) return channels;
+    if (!searchTerm.trim()) {
+      // Return channels sorted alphabetically by name when no search
+      return channels.sort((a, b) => a.name.localeCompare(b.name));
+    }
     
-    return channels.filter(channel =>
-      channel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (channel.description && channel.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    const query = searchTerm.toLowerCase();
+    
+    // Filter channels that match the search
+    const filtered = channels.filter(channel =>
+      channel.name.toLowerCase().includes(query) ||
+      (channel.description && channel.description.toLowerCase().includes(query))
     );
+    
+    // Sort by relevance: exact matches first, then starts with, then contains
+    return filtered.sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      
+      // Exact match
+      if (aName === query && bName !== query) return -1;
+      if (bName === query && aName !== query) return 1;
+      
+      // Starts with search term
+      if (aName.startsWith(query) && !bName.startsWith(query)) return -1;
+      if (bName.startsWith(query) && !aName.startsWith(query)) return 1;
+      
+      // Alphabetical as tiebreaker
+      return aName.localeCompare(bName);
+    });
   }, [channels, searchTerm]);
 
   // Handle channel selection
@@ -75,13 +118,7 @@ export default function ChannelSelector({
   // Handle search input changes (no API calls, just filtering)
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    if (value.trim() && !isExpanded) {
-      setIsExpanded(true); // Expand to show channels when user starts typing
-    }
-  };
-
-  // Handle expanding to show all channels
-  const handleShowChannels = () => {
+    // Always show channels when there's a search term or when user starts typing
     setIsExpanded(true);
   };
 
@@ -229,16 +266,7 @@ export default function ChannelSelector({
 
       {/* Channel List */}
       <div className="space-y-1 max-h-60 overflow-y-auto">
-        {!isExpanded && !searchTerm ? (
-          <div className="text-center py-4">
-            <button
-              onClick={handleShowChannels}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Browse your channels ({limit} max)
-            </button>
-          </div>
-        ) : filteredChannels.length === 0 && !loading ? (
+        {filteredChannels.length === 0 && !loading ? (
           <div className="text-sm text-gray-500 text-center py-4">
             {searchTerm ? 'No channels match your search' : 'No channels found'}
           </div>
@@ -279,11 +307,11 @@ export default function ChannelSelector({
       </div>
 
       {/* Channel Count */}
-      {(isExpanded || searchTerm) && filteredChannels.length > 0 && (
+      {filteredChannels.length > 0 && (
         <div className="text-xs text-gray-500 text-center">
           {searchTerm 
             ? `Found ${filteredChannels.length} matching channels`
-            : `Showing ${filteredChannels.length} channels`
+            : `${filteredChannels.length} total channels`
           }
         </div>
       )}

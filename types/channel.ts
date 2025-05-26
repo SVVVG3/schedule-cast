@@ -21,6 +21,9 @@ export interface ChannelsResponse {
   type: 'followed' | 'active';
   fid: number;
   error?: string;
+  next?: {
+    cursor: string;
+  };
 }
 
 export interface ChannelSelectorProps {

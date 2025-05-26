@@ -9,6 +9,7 @@ import { authenticateUser } from '@/lib/auth';
  * - fid: User's Farcaster ID (required)
  * - limit: Maximum number of channels to return (optional, default: 100, max: 100)
  * - type: 'followed' (channels user follows) or 'active' (channels user has posted in) - default: 'followed'
+ * - cursor: Pagination cursor (optional)
  * - search: Search query to filter channels by name (optional)
  */
 export async function GET(request: Request) {
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
     const fid = url.searchParams.get('fid');
     const limit = parseInt(url.searchParams.get('limit') || '100'); // Maximum allowed by Neynar API
     const type = url.searchParams.get('type') || 'followed';
+    const cursor = url.searchParams.get('cursor');
     const search = url.searchParams.get('search');
 
     // Validate required parameters
@@ -66,9 +68,15 @@ export async function GET(request: Request) {
       if (type === 'active') {
         // Fetch channels user has been active in
         apiUrl = `https://api.neynar.com/v2/farcaster/user/channels?fid=${fid}&limit=${limit}`;
+        if (cursor) {
+          apiUrl += `&cursor=${encodeURIComponent(cursor)}`;
+        }
       } else {
         // Fetch channels user follows (default)
         apiUrl = `https://api.neynar.com/v2/farcaster/user/channels?fid=${fid}&limit=${limit}`;
+        if (cursor) {
+          apiUrl += `&cursor=${encodeURIComponent(cursor)}`;
+        }
       }
 
       console.log(`[channels] Making direct API call to: ${apiUrl}`);
@@ -120,13 +128,23 @@ export async function GET(request: Request) {
         lead: channel.lead
       }));
 
-      return NextResponse.json({
+      // Include pagination info if available
+      const response_data: any = {
         success: true,
         channels: formattedChannels,
         count: formattedChannels.length,
         type,
         fid: parseInt(fid)
-      });
+      };
+
+      // Add next cursor if available from Neynar response
+      if (data.next && data.next.cursor) {
+        response_data.next = {
+          cursor: data.next.cursor
+        };
+      }
+
+      return NextResponse.json(response_data);
 
     } catch (neynarError: any) {
       console.error('[channels] Neynar API error details:', {
