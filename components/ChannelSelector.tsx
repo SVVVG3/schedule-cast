@@ -132,7 +132,7 @@ export default function ChannelSelector({
         <div className="flex items-center justify-between p-3 bg-blue-50 border-2 border-blue-500 rounded-lg">
           <div className="flex items-center space-x-3">
                          {/* Uniform circular image */}
-             <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+             <div className="w-3 h-3 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
                {selectedChannel.image_url ? (
                  <img
                    src={selectedChannel.image_url}
@@ -170,7 +170,7 @@ export default function ChannelSelector({
         <div className="text-xs text-gray-600 font-medium">Selected Channel:</div>
         <div className="flex items-center justify-between p-3 bg-blue-50 border-2 border-blue-500 rounded-lg">
                      <div className="flex items-center space-x-3">
-             <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+             <div className="w-3 h-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
                📢
              </div>
             <div>
@@ -218,7 +218,7 @@ export default function ChannelSelector({
         onClick={() => handleChannelClick(null)}
         className="w-full flex items-center space-x-3 p-3 rounded-lg border-2 border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-gray-100 transition-all"
       >
-                 <div className="w-5 h-5 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+                 <div className="w-3 h-3 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xs">
            📢
          </div>
         <div className="flex-1 text-left">
@@ -250,7 +250,7 @@ export default function ChannelSelector({
               className="w-full flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 transition-all"
             >
                              {/* Uniform circular image */}
-               <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+               <div className="w-3 h-3 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
                  {channel.image_url ? (
                    <img
                      src={channel.image_url}
