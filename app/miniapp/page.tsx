@@ -75,17 +75,17 @@ export default function MiniApp() {
               </div>
             </div>
 
-            {/* User Header - BALANCED SPACING */}
+            {/* User Header - Clean Without Rectangle */}
             <div style={{ marginBottom: '1rem' }}>
               <div 
-                className="flex items-center justify-center bg-white rounded-xl shadow-lg border border-gray-100"
+                className="flex items-center justify-center"
                 style={{ 
                   padding: '0.75rem 1rem',
                   gap: '0.75rem'
                 }}
               >
                 <span 
-                  className="text-gray-600 font-medium"
+                  className="text-white font-medium"
                   style={{ fontSize: '16px', marginRight: '1rem' }}
                 >
                   Signed in as:
@@ -93,8 +93,8 @@ export default function MiniApp() {
                 <div 
                   className="rounded-full overflow-hidden bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md"
                   style={{ 
-                    width: '32px', 
-                    height: '32px',
+                    width: '64px', 
+                    height: '64px',
                     marginRight: '0.75rem'
                   }}
                 >
@@ -103,16 +103,16 @@ export default function MiniApp() {
                       src={authUser.avatar} 
                       alt={authUser.displayName || authUser.username || 'User'} 
                       className="rounded-full object-cover"
-                      style={{ width: '32px', height: '32px' }}
+                      style={{ width: '64px', height: '64px' }}
                     />
                   ) : (
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   )}
                 </div>
                 <p 
-                  className="font-semibold text-gray-900"
+                  className="font-semibold text-white"
                   style={{ fontSize: '18px' }}
                 >
                   @{authUser?.username || 'user'}
