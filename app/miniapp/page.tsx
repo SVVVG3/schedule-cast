@@ -12,6 +12,7 @@ export default function MiniApp() {
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const { isLoading: userLoading, supabaseUser } = useUser();
   const [isMiniAppReady, setIsMiniAppReady] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
 
   useEffect(() => {
     // Initialize Farcaster Mini App SDK
@@ -34,6 +35,16 @@ export default function MiniApp() {
 
     initializeMiniApp();
   }, []);
+
+  const copyUrlToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText('https://schedule-cast.vercel.app');
+      setUrlCopied(true);
+      setTimeout(() => setUrlCopied(false), 2000); // Hide after 2 seconds
+    } catch (err) {
+      console.error('Failed to copy URL:', err);
+    }
+  };
 
   if (authLoading || userLoading || !isMiniAppReady) {
     return (
@@ -150,9 +161,24 @@ export default function MiniApp() {
                   Schedule Cast
                 </h1>
               </div>
-              <p className="text-gray-300 text-lg px-4">
-                Visit <span className="text-purple-400 font-semibold">https://schedule-cast.vercel.app</span> on desktop or mobile browser and click the <span className="text-purple-400 font-semibold">"Sign in with Neynar"</span> button to give us permission to post your casts at scheduled times. Revisit the mini app after granting permissions to be automatically signed in and start scheduling casts!
-              </p>
+              <div className="text-gray-300 text-lg px-4 space-y-3">
+                <p>
+                  <span className="text-purple-400 font-semibold">1)</span> Visit{" "}
+                  <button
+                    onClick={copyUrlToClipboard}
+                    className="text-purple-400 font-semibold hover:text-purple-300 underline cursor-pointer transition-colors"
+                    title="Click to copy URL"
+                  >
+                    https://schedule-cast.vercel.app
+                  </button>
+                  {urlCopied && (
+                    <span className="ml-2 text-green-400 text-sm">✓ Copied!</span>
+                  )}
+                  {" "}on a desktop or mobile browser.
+                </p>
+                <p><span className="text-purple-400 font-semibold">2)</span> Click the <span className="text-purple-400 font-semibold">"Sign in with Neynar"</span> button to give us permission to post your casts at scheduled times.</p>
+                <p><span className="text-purple-400 font-semibold">3)</span> Revisit the mini app after granting permissions to be automatically signed in and start scheduling casts!</p>
+              </div>
             </div>
 
             {/* Cast Form */}

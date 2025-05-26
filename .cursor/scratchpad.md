@@ -842,4 +842,36 @@ if (contentUrls.length > 0) {
 
 **Expected Result**: Mini app URLs in scheduled casts should now show embed previews just like manual posting
 
+### **🎨 Mini App First-Time User Experience Fix - COMPLETED**
+**Issue**: Mini app showing poor first-time user experience with missing/transparent header and confusing instructions
+**Root Cause**: Non-authenticated section had incorrect styling and outdated instructions
+**Solution**: Updated mini app UI for better first-time user onboarding
+
+**Changes Made**:
+- ✅ **Header Visibility Fix**: Changed header from gradient text (invisible on dark background) to white text with visible triangle icon
+- ✅ **Updated Instructions**: Replaced "Plan and schedule your Farcaster posts" with clear Neynar permission instructions
+- ✅ **Clear Call-to-Action**: Added specific instructions to visit desktop/mobile site and use "Sign in with Neynar" button
+- ✅ **Removed Redundant Text**: Eliminated duplicate sign-in instructions from bottom of CompactCastForm
+
+**New User Experience**:
+```
+[Triangle Icon] Schedule Cast
+
+Visit https://schedule-cast.vercel.app on desktop or mobile browser 
+and click the "Sign in with Neynar" button to give us permission to 
+post your casts at scheduled times. Revisit the mini app after 
+granting permissions to be automatically signed in and start 
+scheduling casts!
+
+[Cast Form with clear disabled state]
+```
+
+**Technical Details**:
+- Fixed header styling to use `text-white` instead of gradient that was invisible
+- Added proper triangle/arrow icon matching authenticated state
+- Updated instruction text to guide users to the correct authentication flow
+- Removed redundant text that was confusing users about sign-in location
+
+**Expected Result**: New users will now clearly understand how to grant permissions and return to mini app
+
 This implementation plan provides a comprehensive roadmap for adding media support while maintaining the stability and reliability of your existing scheduling system.
