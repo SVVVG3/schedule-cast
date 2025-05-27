@@ -91,15 +91,19 @@ export default function SuccessModal({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-white hover:bg-gray-600 text-xl font-medium transition-colors rounded-full"
+          className="text-white hover:bg-gray-600 text-xl font-medium transition-colors rounded-full"
           style={{ 
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
             backgroundColor: 'transparent',
             lineHeight: '1',
             width: '28px',
             height: '28px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            border: 'none'
           }}
         >
           ×
@@ -119,18 +123,20 @@ export default function SuccessModal({
           </p>
 
           {/* Simplified scheduled time display */}
-          <div className="text-gray-300 text-lg font-medium mb-16">
+          <div className="text-gray-300 text-lg font-medium mb-32">
             {formatScheduledTime(castData.scheduledAt)}
           </div>
 
           {/* Single action button */}
           <button
             onClick={onScheduleAnother}
-            className="w-full font-semibold py-4 px-8 rounded-xl transition-colors text-lg shadow-lg hover:shadow-xl"
+            className="w-full font-semibold rounded-xl transition-colors text-lg shadow-lg hover:shadow-xl"
             style={{
               backgroundColor: '#2563eb',
               color: '#ffffff',
-              border: 'none'
+              border: 'none',
+              padding: '1.5rem 2rem',
+              minHeight: '64px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#1d4ed8';
