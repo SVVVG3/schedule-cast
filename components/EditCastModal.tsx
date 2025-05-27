@@ -59,18 +59,34 @@ export default function EditCastModal({ isOpen, onClose, cast, onSuccess }: Edit
       
       // Initialize media files if they exist
       if (cast.media_urls && cast.media_urls.length > 0) {
-        const initialFiles: UploadedFile[] = cast.media_urls.map((url, index) => ({
-          id: `existing_${index}`,
-          url,
-          type: cast.media_types?.[index]?.startsWith('image/') ? 'image' : 
-                cast.media_types?.[index]?.startsWith('video/') ? 'video' : 'gif',
-          filename: `media_${index + 1}`,
-          size: 0,
-          format: cast.media_types?.[index]?.split('/')[1] || 'jpeg',
-          storage_path: url // Use the URL as storage path for existing files
-        }));
+        const initialFiles: UploadedFile[] = cast.media_urls.map((url, index) => {
+          const mediaType = cast.media_types?.[index] || '';
+          
+          // Better type detection
+          let type: 'image' | 'video' | 'gif' = 'image';
+          if (mediaType.startsWith('video/')) {
+            type = 'video';
+          } else if (mediaType === 'image/gif' || url.toLowerCase().includes('.gif')) {
+            type = 'gif';
+          } else if (mediaType.startsWith('image/')) {
+            type = 'image';
+          }
+          
+          return {
+            id: `existing_${index}_${Date.now()}`, // Unique ID with timestamp
+            url,
+            type,
+            filename: `existing_media_${index + 1}`,
+            size: 0, // Unknown size for existing files
+            format: mediaType.split('/')[1] || 'jpeg',
+            storage_path: url // Use the URL as storage path for existing files
+          };
+        });
+        
+        console.log('Setting initial uploaded files in EditCastModal:', initialFiles);
         setUploadedFiles(initialFiles);
       } else {
+        console.log('No existing media files, clearing uploaded files');
         setUploadedFiles([]);
       }
     }
@@ -106,19 +122,22 @@ export default function EditCastModal({ isOpen, onClose, cast, onSuccess }: Edit
         content: data.content,
         scheduled_at: scheduledAt.toISOString(),
         channel_id: data.channelId || null,
-        // Include media data if files are uploaded
-        ...(uploadedFiles.length > 0 && {
-          media_urls: uploadedFiles.map(file => file.url),
-          media_types: uploadedFiles.map(file => file.type),
-          media_metadata: {
-            files: uploadedFiles.map(file => ({
-              id: file.id,
-              filename: file.filename,
-              size: file.size,
-              format: file.format
-            }))
-          }
-        })
+        // Always include media data (empty arrays if no files)
+        media_urls: uploadedFiles.map(file => file.url),
+        media_types: uploadedFiles.map(file => 
+          file.type === 'gif' ? 'image/gif' : 
+          file.type === 'video' ? `video/${file.format}` : 
+          `image/${file.format}`
+        ),
+        has_media: uploadedFiles.length > 0,
+        media_metadata: uploadedFiles.length > 0 ? {
+          files: uploadedFiles.map(file => ({
+            id: file.id,
+            filename: file.filename,
+            size: file.size,
+            format: file.format
+          }))
+        } : null
       };
 
       const response = await fetch(`/api/casts/${cast.id}?fid=${authUser.fid}`, {
@@ -225,6 +244,7 @@ export default function EditCastModal({ isOpen, onClose, cast, onSuccess }: Edit
               Media (optional)
             </label>
             <MediaUpload 
+              files={uploadedFiles} // Pass existing files for controlled component
               onFilesChange={setUploadedFiles}
               maxFiles={2}
               maxSizePerFile={10 * 1024 * 1024}
