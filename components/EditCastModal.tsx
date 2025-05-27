@@ -207,6 +207,9 @@ export default function EditCastModal({ isOpen, onClose, cast, onSuccess }: Edit
               className="w-full p-4 border border-gray-600 rounded-lg text-white bg-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               placeholder="Share your thoughts with the world..."
               maxLength={320}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
               {...register('content', { required: 'Content is required' })}
             />
             {errors.content && (

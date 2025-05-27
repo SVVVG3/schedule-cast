@@ -261,6 +261,9 @@ export default function ChannelSelector({
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             style={{ backgroundColor: '#374151 !important', color: '#ffffff !important', borderColor: '#4b5563 !important', fontSize: '16px', minHeight: '48px', maxWidth: '100%' }}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
           />
           {searchTerm && (
             <button

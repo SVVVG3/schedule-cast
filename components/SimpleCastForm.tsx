@@ -173,6 +173,9 @@ export default function SimpleCastForm({ onCastScheduled }: SimpleCastFormProps)
             className="w-full p-6 border border-gray-600 rounded-lg text-lg resize-none bg-gray-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             placeholder="Share your thoughts with the world..."
             maxLength={320}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
             {...register('content', { required: 'Content is required' })}
           />
           {errors.content && (

@@ -134,6 +134,9 @@ export default function CompactCastForm() {
               }`}
               placeholder={isAuthenticated ? "Share your thoughts with the world..." : "Sign in to schedule casts..."}
               maxLength={320}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck="false"
               disabled={!isAuthenticated}
               {...register('content', { required: 'Content is required' })}
             />
