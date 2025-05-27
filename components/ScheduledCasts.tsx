@@ -152,7 +152,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
 
   if (error) {
     return (
-      <div className="bg-red-900 p-8 rounded-xl border border-red-700">
+      <div className="bg-red-900 p-8 rounded-xl border border-red-700 w-full" style={{ maxWidth: '1000px', margin: '0 auto' }}>
         <p className="text-red-200 text-xl">Error: {error}</p>
       </div>
     );
@@ -160,14 +160,14 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
 
   if (casts.length === 0) {
     return (
-      <div className="bg-gray-800 p-10 rounded-xl text-center border border-gray-700" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+      <div className="bg-gray-800 p-10 rounded-xl text-center border border-gray-700 w-full" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important', maxWidth: '1000px', margin: '0 auto' }}>
         <p className="text-gray-300 text-xl">No upcoming scheduled casts.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important' }}>
+    <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 w-full" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important', maxWidth: '1000px', margin: '0 auto' }}>
       {/* Centered layout without bullet points - updated */}
       <h3 className="text-3xl font-semibold p-8 border-b border-gray-700 text-white text-center">Upcoming Casts</h3>
       <div className="divide-y divide-gray-700">
