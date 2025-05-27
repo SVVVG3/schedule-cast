@@ -133,7 +133,7 @@ export default function SuccessModal({
           </p>
 
           {/* Simplified scheduled time display */}
-          <div className="text-gray-300 text-lg font-medium mb-32">
+          <div className="text-gray-300 text-lg font-medium mb-48">
             {formatScheduledTime(castData.scheduledAt)}
           </div>
 
