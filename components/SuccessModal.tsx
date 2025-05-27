@@ -91,19 +91,29 @@ export default function SuccessModal({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="text-white hover:bg-gray-600 text-xl font-medium transition-colors rounded-full"
+          className="transition-colors rounded-full"
           style={{ 
             position: 'absolute',
             top: '12px',
             right: '12px',
             backgroundColor: 'transparent',
+            color: '#ffffff',
             lineHeight: '1',
             width: '28px',
             height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            border: 'none'
+            border: 'none',
+            fontSize: '20px',
+            fontWeight: '500',
+            zIndex: '10'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(75, 85, 99, 0.5)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
           ×
@@ -135,8 +145,9 @@ export default function SuccessModal({
               backgroundColor: '#2563eb',
               color: '#ffffff',
               border: 'none',
-              padding: '1.5rem 2rem',
-              minHeight: '64px'
+              padding: '1rem 2rem',
+              minHeight: '52px',
+              fontSize: '18px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#1d4ed8';
