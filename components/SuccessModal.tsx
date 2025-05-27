@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -21,6 +22,12 @@ export default function SuccessModal({
   onScheduleAnother 
 }: SuccessModalProps) {
   const [showContent, setShowContent] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -32,7 +39,7 @@ export default function SuccessModal({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isMounted) return null;
 
   const formatScheduledTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -47,12 +54,20 @@ export default function SuccessModal({
     });
   };
 
-  return (
+  const modalContent = (
     <div 
       className="fixed inset-0 flex items-center justify-center p-4"
       style={{ 
-        zIndex: 99999,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 999999,
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}
     >
       {/* Backdrop - clicking outside closes modal */}
@@ -128,4 +143,6 @@ export default function SuccessModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 } 

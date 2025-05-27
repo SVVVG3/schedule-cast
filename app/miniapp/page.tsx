@@ -13,6 +13,7 @@ export default function MiniApp() {
   const { isLoading: userLoading, supabaseUser } = useUser();
   const [isMiniAppReady, setIsMiniAppReady] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     // Initialize Farcaster Mini App SDK
@@ -133,11 +134,13 @@ export default function MiniApp() {
 
             {/* Cast Form */}
             <div className="mb-8">
-              <SimpleCastForm />
+              <SimpleCastForm 
+                onCastScheduled={() => setRefreshTrigger(prev => prev + 1)}
+              />
             </div>
 
             {/* Scheduled Casts */}
-            <ScheduledCasts />
+            <ScheduledCasts refreshTrigger={refreshTrigger} />
           </div>
         </div>
       ) : (

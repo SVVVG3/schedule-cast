@@ -884,12 +884,16 @@ const MEDIA_LIMITS = {
 - **Proper Cleanup**: Added `setLastScheduledCast(null)` to prevent state issues
 
 **🚀 DEPLOYMENT STATUS**: 
-- ✅ **Latest Commit**: `9bc48ec` - SUCCESS MODAL UX UPGRADE 
+- ✅ **Latest Commit**: `4b3ed52` - MODAL CENTERING FIX
 - ✅ **Production Live**: https://schedule-cast.vercel.app
-- ✅ **User Testing Ready**: Modal now properly centered with clean, simple design
+- ✅ **User Testing Ready**: Modal now perfectly centered with beautiful rounded design
 
 **Technical Changes**:
-- `SuccessModal.tsx`: Centered layout, simplified content structure, single action button
+- `SuccessModal.tsx`: **PERFECT CENTERING** with flex layout, beautiful rounded-3xl corners, generous 2.5rem padding
+- Added purple-tinted scheduled time box with subtle background and border
+- Enhanced close button with better positioning and hover effects  
+- Improved backdrop click-outside-to-close functionality
+- Larger max-width (max-w-lg) for better mobile experience
 - `SimpleCastForm.tsx`: Added proper modal data cleanup in both onClose and onScheduleAnother callbacks
 - Auto-refresh now triggers correctly for consecutive cast scheduling in same session
 
