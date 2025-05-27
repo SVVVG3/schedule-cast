@@ -142,11 +142,13 @@ export default function SimpleCastForm({ onCastScheduled }: SimpleCastFormProps)
           onClose={() => {
             setShowSuccessModal(false);
             setSubmitSuccess(false);
+            setLastScheduledCast(null); // Clear the modal data
           }}
           castData={lastScheduledCast}
           onScheduleAnother={() => {
             setShowSuccessModal(false);
             setSubmitSuccess(false);
+            setLastScheduledCast(null); // Clear the modal data
             // Form is already cleared, just focus on content textarea
             const textarea = document.querySelector('textarea');
             if (textarea) textarea.focus();
