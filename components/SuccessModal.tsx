@@ -84,18 +84,19 @@ export default function SuccessModal({
         style={{ 
           backgroundColor: '#1f2937',
           border: '2px solid #4b5563',
-          padding: '2.5rem'
+          padding: '1rem'
         }}
         onClick={(e) => e.stopPropagation()} // Prevent modal from closing when clicking inside
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-gray-400 hover:text-gray-200 text-3xl font-light transition-colors"
+          className="absolute top-3 right-3 text-white hover:bg-blue-700 text-xl font-medium transition-colors rounded-full"
           style={{ 
+            backgroundColor: '#3b82f6',
             lineHeight: '1',
-            width: '32px',
-            height: '32px',
+            width: '28px',
+            height: '28px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
@@ -105,14 +106,10 @@ export default function SuccessModal({
         </button>
 
         {/* Success animation and content */}
-        <div className="text-center" style={{ paddingTop: '1rem' }}>
-          {/* Celebration emoji with animation */}
-          <div className="mb-8">
-            <div className="text-7xl animate-bounce">🎉</div>
-          </div>
-
-          {/* Main heading */}
-          <h2 className="text-3xl font-bold text-white mb-4">
+        <div className="text-center" style={{ paddingTop: '0.5rem' }}>
+          {/* Main heading with celebration emoji */}
+          <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center gap-3">
+            <span className="text-4xl animate-bounce">🎉</span>
             Cast Scheduled Successfully!
           </h2>
 
@@ -122,22 +119,16 @@ export default function SuccessModal({
           </p>
 
           {/* Simplified scheduled time display */}
-          <div 
-            className="text-purple-400 text-xl font-medium mb-10 px-4 py-3 rounded-xl"
-            style={{ 
-              backgroundColor: 'rgba(147, 51, 234, 0.1)',
-              border: '1px solid rgba(147, 51, 234, 0.3)'
-            }}
-          >
+          <div className="text-gray-300 text-lg font-medium mb-8">
             {formatScheduledTime(castData.scheduledAt)}
           </div>
 
           {/* Single action button */}
           <button
             onClick={onScheduleAnother}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-4 px-8 rounded-xl transition-colors text-lg shadow-lg hover:shadow-xl"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-colors text-lg shadow-lg hover:shadow-xl"
           >
-            Schedule Another Cast
+            📅 Schedule Another Cast
           </button>
         </div>
       </div>

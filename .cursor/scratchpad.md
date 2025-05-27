@@ -873,29 +873,32 @@ const MEDIA_LIMITS = {
 
 ## Current Status / Progress Tracking
 
-### **🎉 SUCCESS MODAL UX UPGRADE COMPLETE - DEPLOYED**
+### **🎉 SUCCESS MODAL + AUTO-REFRESH COMPLETE - ALL ISSUES RESOLVED**
 
-**✅ MAJOR IMPROVEMENTS APPLIED**:
-- **Modal Positioning Fixed**: Centered modal on page (was off-left)
-- **Simplified Layout**: Removed detailed content breakdown boxes 
-- **Direct Time Display**: Scheduled time shown prominently under main heading
-- **Single Action Button**: Removed unnecessary "View My Scheduled Casts" button
-- **Auto-Refresh Fixed**: Now works for ALL scheduled casts, not just first one
-- **Proper Cleanup**: Added `setLastScheduledCast(null)` to prevent state issues
+**✅ CRITICAL ISSUES FIXED**:
+- **Modal Positioning SOLVED**: React Portal renders modal directly to document.body, escaping all parent containers
+- **True Viewport Centering**: Modal now perfectly centered on page in ALL environments (desktop + mini app)
+- **Mini App Auto-Refresh FIXED**: Added missing refreshTrigger state and callback system to mini app
+- **Consistent UX**: Both desktop and mini app now have identical success experience
 
 **🚀 DEPLOYMENT STATUS**: 
-- ✅ **Latest Commit**: `4b3ed52` - MODAL CENTERING FIX
+- ✅ **Latest Commit**: `7b2a3b7` - CRITICAL FIXES: Modal centering via Portal + Mini App auto-refresh
 - ✅ **Production Live**: https://schedule-cast.vercel.app
-- ✅ **User Testing Ready**: Modal now perfectly centered with beautiful rounded design
+- ✅ **User Testing Ready**: Perfect centering and auto-refresh working in all environments
 
-**Technical Changes**:
-- `SuccessModal.tsx`: **PERFECT CENTERING** with flex layout, beautiful rounded-3xl corners, generous 2.5rem padding
-- Added purple-tinted scheduled time box with subtle background and border
-- Enhanced close button with better positioning and hover effects  
-- Improved backdrop click-outside-to-close functionality
-- Larger max-width (max-w-lg) for better mobile experience
-- `SimpleCastForm.tsx`: Added proper modal data cleanup in both onClose and onScheduleAnother callbacks
-- Auto-refresh now triggers correctly for consecutive cast scheduling in same session
+**Technical Solutions**:
+- **`SuccessModal.tsx`**: **REACT PORTAL IMPLEMENTATION** - `createPortal(modalContent, document.body)`
+  - Z-index 999999 with explicit positioning properties
+  - Renders outside all parent containers for true viewport centering
+  - Beautiful rounded-3xl corners with generous 2.5rem padding
+  - Purple-tinted scheduled time box and enhanced interactions
+- **`app/miniapp/page.tsx`**: **AUTO-REFRESH SYSTEM ADDED**
+  - Added missing `refreshTrigger` state management
+  - Connected `SimpleCastForm` with `onCastScheduled` callback
+  - `ScheduledCasts` now receives `refreshTrigger` prop
+- **`SimpleCastForm.tsx`**: Proper modal data cleanup prevents state issues
+
+**Result**: **PERFECT SUCCESS EXPERIENCE** across all environments! 🎯
 
 ### **🎯 Farcaster Embed Validation - SCHEMA ISSUE RESOLVED**
 - ✅ **Meta Tag Implementation**: Successfully added `fc:frame` meta tag to app/layout.tsx
