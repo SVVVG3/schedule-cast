@@ -3,15 +3,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Channel, ChannelsResponse, ChannelSelectorProps } from '@/types/channel';
 
-// Nuclear CSS to override all styling
-const buttonStyle = {
-  backgroundColor: '#374151 !important',
-  borderColor: '#4b5563 !important', 
-  color: '#ffffff !important',
-  background: '#374151 !important',
-  backgroundImage: 'none !important',
-  backgroundClip: 'border-box !important',
-  border: '1px solid #4b5563 !important',
+// Nuclear CSS to override all styling - MAXIMUM FORCE
+const buttonStyle: React.CSSProperties = {
+  backgroundColor: '#374151',
+  borderColor: '#4b5563', 
+  color: '#ffffff',
+  background: '#374151',
+  backgroundImage: 'none',
+  backgroundClip: 'border-box',
+  border: '1px solid #4b5563',
   minHeight: '56px',
   padding: '16px',
   borderRadius: '8px',
@@ -21,14 +21,19 @@ const buttonStyle = {
   gap: '8px',
   transition: 'all 0.2s ease',
   boxSizing: 'border-box',
-  outline: 'none'
-} as const;
+  outline: 'none',
+  // Nuclear overrides - remove !important as it doesn't work in inline styles
+  // Instead use multiple properties to force the styling
+  WebkitAppearance: 'none',
+  MozAppearance: 'none',
+  appearance: 'none'
+};
 
-const hoverStyle = {
-  backgroundColor: '#4b5563 !important',
-  borderColor: '#6b7280 !important',
-  background: '#4b5563 !important'
-} as const;
+const hoverStyle: React.CSSProperties = {
+  backgroundColor: '#4b5563',
+  borderColor: '#6b7280',
+  background: '#4b5563'
+};
 
 export default function ChannelSelector({
   selectedChannelId,
@@ -270,6 +275,7 @@ export default function ChannelSelector({
 
       {/* Main Feed Option */}
       <button
+        type="button"
         onClick={() => handleChannelClick(null)}
         style={buttonStyle}
         onMouseEnter={(e) => {
@@ -279,12 +285,36 @@ export default function ChannelSelector({
           Object.assign(e.currentTarget.style, buttonStyle);
         }}
       >
-                                    <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
-           📢
-         </div>
-        <div className="flex-1 text-left">
-          <div className="text-sm font-medium" style={{ color: '#ffffff !important' }}>Main Feed</div>
-          <div className="text-xs" style={{ color: '#d1d5db !important' }}>Post to your main timeline</div>
+        <div style={{
+          width: '24px',
+          height: '24px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: '14px',
+          flexShrink: 0
+        }}>
+          📢
+        </div>
+        <div style={{ flex: 1, textAlign: 'left' }}>
+          <div style={{ 
+            fontSize: '14px', 
+            fontWeight: '500', 
+            color: '#ffffff',
+            lineHeight: '1.4'
+          }}>
+            Main Feed
+          </div>
+          <div style={{ 
+            fontSize: '12px', 
+            color: '#d1d5db',
+            lineHeight: '1.3'
+          }}>
+            Post to your main timeline
+          </div>
         </div>
       </button>
 
@@ -299,6 +329,7 @@ export default function ChannelSelector({
           filteredChannels.map((channel) => (
             <button
               key={channel.id}
+              type="button"
               onClick={() => handleChannelClick(channel.id)}
               style={buttonStyle}
               onMouseEnter={(e) => {
@@ -308,27 +339,65 @@ export default function ChannelSelector({
                 Object.assign(e.currentTarget.style, buttonStyle);
               }}
             >
-                             {/* Uniform circular image */}
-               <div className="w-6 h-6 min-w-[24px] min-h-[24px] max-w-[24px] max-h-[24px] rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
-                 {channel.image_url ? (
-                   <img
-                     src={channel.image_url}
-                     alt={channel.name}
-                     className="w-full h-full object-cover max-w-[24px] max-h-[24px]"
-                   />
-                 ) : (
-                   <div className="text-gray-500 text-xs font-bold">
-                     #{channel.name.charAt(0).toUpperCase()}
-                   </div>
-                 )}
-               </div>
+              {/* Uniform circular image */}
+              <div style={{
+                width: '24px',
+                height: '24px',
+                minWidth: '24px',
+                minHeight: '24px',
+                maxWidth: '24px',
+                maxHeight: '24px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                backgroundColor: '#e5e7eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                {channel.image_url ? (
+                  <img
+                    src={channel.image_url}
+                    alt={channel.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      maxWidth: '24px',
+                      maxHeight: '24px'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    color: '#6b7280',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    #{channel.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
 
               {/* Channel Info */}
-              <div className="flex-1 text-left min-w-0">
-                <div className="text-sm font-medium truncate" style={{ color: '#ffffff !important' }}>
+              <div style={{ 
+                flex: 1, 
+                textAlign: 'left', 
+                minWidth: 0 
+              }}>
+                <div style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#ffffff',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
                   /{channel.name}
                 </div>
-                <div className="text-xs" style={{ color: '#d1d5db !important' }}>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#d1d5db'
+                }}>
                   {channel.follower_count?.toLocaleString()} followers
                 </div>
               </div>
