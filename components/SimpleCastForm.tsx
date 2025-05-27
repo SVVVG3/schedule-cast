@@ -7,6 +7,7 @@ import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
 import MediaUpload, { UploadedFile } from './MediaUpload';
 import ChannelSelector from './ChannelSelector';
+import SuccessModal from './SuccessModal';
 
 interface CastFormData {
   content: string;
@@ -15,7 +16,11 @@ interface CastFormData {
   channelId?: string;
 }
 
-export default function SimpleCastForm() {
+interface SimpleCastFormProps {
+  onCastScheduled?: () => void; // Callback to refresh scheduled casts list
+}
+
+export default function SimpleCastForm({ onCastScheduled }: SimpleCastFormProps) {
   const { supabaseUser } = useUser();
   const { user: authUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,6 +28,14 @@ export default function SimpleCastForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(undefined);
+  const [selectedChannelName, setSelectedChannelName] = useState<string | undefined>(undefined);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastScheduledCast, setLastScheduledCast] = useState<{
+    content: string;
+    scheduledAt: string;
+    channelName?: string;
+    hasMedia: boolean;
+  } | null>(null);
   
   const {
     register,
@@ -90,9 +103,27 @@ export default function SimpleCastForm() {
         throw new Error(result.error || 'Failed to schedule cast');
       }
 
-      setSubmitSuccess(true);
-      reset();
-      setUploadedFiles([]); // Clear uploaded files
+              // Prepare success modal data
+        setLastScheduledCast({
+          content: data.content,
+          scheduledAt: scheduledAt.toISOString(),
+          channelName: selectedChannelName,
+          hasMedia: uploadedFiles.length > 0
+        });
+
+      // Show success modal instead of banner
+      setShowSuccessModal(true);
+      
+      // Trigger refresh of scheduled casts list
+      if (onCastScheduled) {
+        onCastScheduled();
+      }
+
+              // Clear form
+        reset();
+        setUploadedFiles([]); // Clear uploaded files
+        setSelectedChannelId(undefined); // Clear selected channel
+        setSelectedChannelName(undefined); // Clear selected channel name
     } catch (error) {
       console.error('Error scheduling cast:', error);
       setSubmitError((error as Error)?.message || 'An unexpected error occurred');
@@ -104,10 +135,23 @@ export default function SimpleCastForm() {
   return (
     <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg w-full" style={{ backgroundColor: '#1f2937 !important', color: '#ffffff !important', borderColor: '#374151 !important', maxWidth: '1000px', margin: '0 auto' }}>
 
-      {submitSuccess && (
-        <div className="bg-green-900 text-green-200 p-6 rounded-lg mb-8 border border-green-700 text-xl">
-          ✅ Your cast has been scheduled successfully!
-        </div>
+      {/* Success Modal */}
+      {lastScheduledCast && (
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => {
+            setShowSuccessModal(false);
+            setSubmitSuccess(false);
+          }}
+          castData={lastScheduledCast}
+          onScheduleAnother={() => {
+            setShowSuccessModal(false);
+            setSubmitSuccess(false);
+            // Form is already cleared, just focus on content textarea
+            const textarea = document.querySelector('textarea');
+            if (textarea) textarea.focus();
+          }}
+        />
       )}
 
       {submitError && (
@@ -191,7 +235,12 @@ export default function SimpleCastForm() {
           {authUser?.fid ? (
             <ChannelSelector
               selectedChannelId={selectedChannelId}
-              onChannelSelect={(channelId) => setSelectedChannelId(channelId || undefined)}
+              onChannelSelect={(channelId) => {
+                setSelectedChannelId(channelId || undefined);
+                // For now, we'll store a simple placeholder
+                // TODO: Enhance ChannelSelector to also return channel name
+                setSelectedChannelName(channelId ? 'Selected Channel' : undefined);
+              }}
               userFid={authUser.fid}
               className="bg-gray-700 border-gray-600"
               limit={100}

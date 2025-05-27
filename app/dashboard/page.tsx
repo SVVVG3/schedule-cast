@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
@@ -11,6 +11,7 @@ export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const { isLoading: userLoading, supabaseUser } = useUser();
   const router = useRouter();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Note: Authentication working properly
 
@@ -116,12 +117,14 @@ export default function Dashboard() {
           <div className="space-y-12 w-full">
             {/* Cast Form - Remove padding constraints */}
             <div className="w-full -mx-4">
-              <SimpleCastForm />
+              <SimpleCastForm 
+                onCastScheduled={() => setRefreshTrigger(prev => prev + 1)}
+              />
             </div>
             
             {/* Scheduled Casts */}
             <div className="w-full">
-              <ScheduledCasts />
+              <ScheduledCasts refreshTrigger={refreshTrigger} />
             </div>
           </div>
         ) : (

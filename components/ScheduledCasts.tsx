@@ -20,7 +20,11 @@ interface ScheduledCast {
   has_media: boolean;
 }
 
-export default function ScheduledCasts() {
+interface ScheduledCastsProps {
+  refreshTrigger?: number; // Increment this to trigger a refresh
+}
+
+export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) {
   const { supabaseUser } = useUser();
   const { user: authUser } = useAuth();
   const [casts, setCasts] = useState<ScheduledCast[]>([]);
@@ -43,40 +47,49 @@ export default function ScheduledCasts() {
     });
   }, [editModalOpen, deleteModalOpen, selectedCast, isDeleting]);
 
-  useEffect(() => {
-    async function fetchCasts() {
-      if (!supabaseUser || !authUser?.fid) return;
+  // Reusable fetchCasts function
+  const fetchCasts = async () => {
+    if (!supabaseUser || !authUser?.fid) return;
 
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await fetch(`/api/casts?fid=${authUser.fid}`);
-        const result = await response.json();
+    try {
+      const response = await fetch(`/api/casts?fid=${authUser.fid}`);
+      const result = await response.json();
 
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to fetch scheduled casts');
-        }
-
-        // Filter to only show upcoming casts (not posted) and sort by scheduled_at (next one first)
-        const upcomingCasts = (result.data || [])
-          .filter((cast: ScheduledCast) => !cast.posted)
-          .sort((a: ScheduledCast, b: ScheduledCast) => 
-            new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
-          );
-        setCasts(upcomingCasts);
-      } catch (err) {
-        console.error('Error fetching casts:', err);
-        setError((err as Error)?.message || 'An unexpected error occurred');
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch scheduled casts');
       }
-    }
 
+      // Filter to only show upcoming casts (not posted) and sort by scheduled_at (next one first)
+      const upcomingCasts = (result.data || [])
+        .filter((cast: ScheduledCast) => !cast.posted)
+        .sort((a: ScheduledCast, b: ScheduledCast) => 
+          new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
+        );
+      setCasts(upcomingCasts);
+    } catch (err) {
+      console.error('Error fetching casts:', err);
+      setError((err as Error)?.message || 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
     if (supabaseUser && authUser?.fid) {
       fetchCasts();
     }
   }, [supabaseUser, authUser]);
+
+  // Refresh when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger && supabaseUser && authUser?.fid) {
+      fetchCasts();
+    }
+  }, [refreshTrigger, supabaseUser, authUser]);
 
   // Handler functions
   const handleEditCast = (cast: ScheduledCast) => {
@@ -126,26 +139,7 @@ export default function ScheduledCasts() {
 
   const handleEditSuccess = () => {
     // Refresh the casts list after successful edit
-    if (supabaseUser && authUser?.fid) {
-      const fetchCasts = async () => {
-        try {
-          const response = await fetch(`/api/casts?fid=${authUser.fid}`);
-          const result = await response.json();
-
-          if (response.ok) {
-            const upcomingCasts = (result.data || [])
-              .filter((cast: ScheduledCast) => !cast.posted)
-              .sort((a: ScheduledCast, b: ScheduledCast) => 
-                new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
-              );
-            setCasts(upcomingCasts);
-          }
-        } catch (err) {
-          console.error('Error refreshing casts:', err);
-        }
-      };
-      fetchCasts();
-    }
+    fetchCasts();
   };
 
   if (loading) {
