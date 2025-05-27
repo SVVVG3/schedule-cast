@@ -174,7 +174,93 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
         {casts.map(cast => (
           <div key={cast.id} className="p-8 hover:bg-gray-750">
             <div className="flex flex-col space-y-4">
-              {/* Edit and Delete Buttons - Moved above date/time for upcoming casts */}
+              {/* Date and Time - Centered */}
+              <div className="text-center">
+                <p className="font-medium text-xl text-gray-200">
+                  {format(new Date(cast.scheduled_at), 'PPP')} at {format(new Date(cast.scheduled_at), 'p')}
+                </p>
+              </div>
+
+              {/* Channel - Centered, right below date/time */}
+              {cast.channel_id && (
+                <div className="text-center">
+                  <p className="text-lg text-gray-400">
+                    Channel: {cast.channel_id}
+                  </p>
+                </div>
+              )}
+              
+              {/* Content - Centered */}
+              <div className="text-center">
+                <p className="text-white whitespace-pre-wrap text-lg leading-relaxed">{cast.content}</p>
+              </div>
+                
+              {/* Media Preview - Centered with doubled size */}
+              {cast.has_media && cast.media_urls && cast.media_urls.length > 0 && (
+                <div className="flex justify-center px-4">
+                  <div className="flex flex-wrap gap-3 justify-center max-w-full">
+                    {cast.media_urls.slice(0, 2).map((url, index) => {
+                      const isImage = cast.media_types?.[index]?.startsWith('image/') || 
+                                     cast.media_types?.[index] === 'gif' ||
+                                     url.toLowerCase().includes('.gif') ||
+                                     url.toLowerCase().includes('.jpg') ||
+                                     url.toLowerCase().includes('.jpeg') ||
+                                     url.toLowerCase().includes('.png') ||
+                                     url.toLowerCase().includes('.webp');
+                      
+                      return (
+                        <div key={index} className="relative flex-shrink-0">
+                          {isImage ? (
+                            <img
+                              src={url}
+                              alt={`Media ${index + 1}`}
+                              className="w-32 h-32 object-cover rounded-lg border border-gray-600"
+                              style={{ 
+                                maxWidth: '128px', 
+                                maxHeight: '128px',
+                                width: '128px',
+                                height: '128px',
+                                objectFit: 'cover'
+                              }}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div 
+                              className="w-32 h-32 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0"
+                              style={{ 
+                                width: '128px',
+                                height: '128px',
+                                minWidth: '128px',
+                                minHeight: '128px'
+                              }}
+                            >
+                              <span className="text-4xl">🎥</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {cast.media_urls.length > 2 && (
+                      <div 
+                        className="w-32 h-32 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0"
+                        style={{ 
+                          width: '128px',
+                          height: '128px',
+                          minWidth: '128px',
+                          minHeight: '128px'
+                        }}
+                      >
+                        <span className="text-sm text-gray-300">+{cast.media_urls.length - 2}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Edit and Delete Buttons - Moved to bottom */}
               {!cast.posted && (
                 <div className="flex justify-center space-x-4">
                   <button
@@ -209,104 +295,6 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
                   </button>
                 </div>
               )}
-
-              {/* Date and Time - Centered */}
-              <div className="text-center">
-                <p className="font-medium text-xl text-gray-200">
-                  {format(new Date(cast.scheduled_at), 'PPP')} at {format(new Date(cast.scheduled_at), 'p')}
-                </p>
-              </div>
-              
-              {/* Content - Centered */}
-              <div className="text-center">
-                <p className="text-white whitespace-pre-wrap text-lg leading-relaxed">{cast.content}</p>
-              </div>
-                
-              {/* Media Preview - Centered with proper constraints */}
-              {cast.has_media && cast.media_urls && cast.media_urls.length > 0 && (
-                <div className="flex justify-center px-4">
-                  <div className="flex flex-wrap gap-2 justify-center max-w-full">
-                    {cast.media_urls.slice(0, 2).map((url, index) => {
-                      const isImage = cast.media_types?.[index]?.startsWith('image/') || 
-                                     cast.media_types?.[index] === 'gif' ||
-                                     url.toLowerCase().includes('.gif') ||
-                                     url.toLowerCase().includes('.jpg') ||
-                                     url.toLowerCase().includes('.jpeg') ||
-                                     url.toLowerCase().includes('.png') ||
-                                     url.toLowerCase().includes('.webp');
-                      
-                      return (
-                        <div key={index} className="relative flex-shrink-0">
-                          {isImage ? (
-                            <img
-                              src={url}
-                              alt={`Media ${index + 1}`}
-                              className="w-16 h-16 object-cover rounded-lg border border-gray-600"
-                              style={{ 
-                                maxWidth: '64px', 
-                                maxHeight: '64px',
-                                width: '64px',
-                                height: '64px',
-                                objectFit: 'cover'
-                              }}
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div 
-                              className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0"
-                              style={{ 
-                                width: '64px',
-                                height: '64px',
-                                minWidth: '64px',
-                                minHeight: '64px'
-                              }}
-                            >
-                              <span className="text-2xl">🎥</span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {cast.media_urls.length > 2 && (
-                      <div 
-                        className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0"
-                        style={{ 
-                          width: '64px',
-                          height: '64px',
-                          minWidth: '64px',
-                          minHeight: '64px'
-                        }}
-                      >
-                        <span className="text-xs text-gray-300">+{cast.media_urls.length - 2}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-              
-              {/* Channel and Status - Centered */}
-              <div className="flex flex-col items-center space-y-2">
-                {cast.channel_id && (
-                  <p className="text-lg text-gray-400">
-                    Channel: {cast.channel_id}
-                  </p>
-                )}
-                <div>
-                  {cast.posted ? (
-                    <span className="inline-flex items-center px-4 py-2 rounded-lg text-base font-medium bg-green-900 text-green-200 border border-green-700">
-                      Posted
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-4 py-2 rounded-lg text-base font-medium bg-blue-900 text-blue-200">
-                      Scheduled
-                    </span>
-                  )}
-                </div>
-              </div>
-
 
             </div>
             {cast.error && (
