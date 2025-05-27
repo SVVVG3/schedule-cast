@@ -173,7 +173,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
       <div className="divide-y divide-gray-700">
         {casts.map(cast => (
           <div key={cast.id} className="p-8 hover:bg-gray-750">
-            <div className="flex flex-col space-y-4">
+            <div className="flex flex-col">
               {/* Edit and Delete Buttons - Back at top with spacing above */}
               {!cast.posted && (
                 <div className="flex justify-center space-x-4 pt-8">
@@ -211,7 +211,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
               )}
 
               {/* Date and Time - Centered */}
-              <div className="text-center">
+              <div className="text-center mt-6">
                 <p className="font-medium text-xl text-gray-200">
                   {format(new Date(cast.scheduled_at), 'PPP')} at {format(new Date(cast.scheduled_at), 'p')}
                 </p>
@@ -227,7 +227,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
               )}
               
               {/* Content - Centered, with reduced spacing from channel (25% less) */}
-              <div className="text-center" style={{ marginTop: cast.channel_id ? '0.75rem' : '1rem' }}>
+              <div className="text-center mt-4" style={{ marginTop: cast.channel_id ? '0.75rem' : '1.5rem' }}>
                 <p className="text-white whitespace-pre-wrap text-lg leading-relaxed">{cast.content}</p>
               </div>
                 
