@@ -133,9 +133,12 @@ export default function SuccessModal({
           </p>
 
           {/* Simplified scheduled time display */}
-          <div className="text-gray-300 text-lg font-medium mb-48">
+          <div className="text-gray-300 text-lg font-medium">
             {formatScheduledTime(castData.scheduledAt)}
           </div>
+
+          {/* Spacing div */}
+          <div style={{ height: '3rem' }}></div>
 
           {/* Single action button */}
           <button
