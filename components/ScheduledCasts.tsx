@@ -225,9 +225,9 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
               </div>
               
               {/* Cast Content Container - Styled like an actual cast */}
-              <div className="mt-6 mx-4 bg-gray-700 border border-gray-600 rounded-xl p-6 shadow-lg">
+              <div className="mt-6 mx-6 bg-gray-700 border border-gray-600 rounded-lg p-4 shadow-lg">
                 {/* Content - Centered */}
-                <div className="text-center mb-4">
+                <div className="text-center mb-3">
                   <p className="text-white whitespace-pre-wrap text-lg leading-relaxed">{cast.content}</p>
                 </div>
                   
