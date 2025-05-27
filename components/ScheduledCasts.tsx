@@ -174,9 +174,9 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
         {casts.map(cast => (
           <div key={cast.id} className="p-8 hover:bg-gray-750">
             <div className="flex flex-col space-y-4">
-              {/* Edit and Delete Buttons - Back at top */}
+              {/* Edit and Delete Buttons - Back at top with spacing above */}
               {!cast.posted && (
-                <div className="flex justify-center space-x-4">
+                <div className="flex justify-center space-x-4 pt-4">
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -231,9 +231,9 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
                 <p className="text-white whitespace-pre-wrap text-lg leading-relaxed">{cast.content}</p>
               </div>
                 
-              {/* Media Preview - Centered with doubled size */}
+              {/* Media Preview - Centered with doubled size and spacing below */}
               {cast.has_media && cast.media_urls && cast.media_urls.length > 0 && (
-                <div className="flex justify-center px-4">
+                <div className="flex justify-center px-4 mb-6">
                   <div className="flex flex-wrap gap-3 justify-center max-w-full">
                     {cast.media_urls.slice(0, 2).map((url, index) => {
                       const isImage = cast.media_types?.[index]?.startsWith('image/') || 
