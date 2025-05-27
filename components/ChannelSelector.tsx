@@ -3,6 +3,33 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Channel, ChannelsResponse, ChannelSelectorProps } from '@/types/channel';
 
+// Nuclear CSS to override all styling
+const buttonStyle = {
+  backgroundColor: '#374151 !important',
+  borderColor: '#4b5563 !important', 
+  color: '#ffffff !important',
+  background: '#374151 !important',
+  backgroundImage: 'none !important',
+  backgroundClip: 'border-box !important',
+  border: '1px solid #4b5563 !important',
+  minHeight: '56px',
+  padding: '16px',
+  borderRadius: '8px',
+  width: '100%',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  transition: 'all 0.2s ease',
+  boxSizing: 'border-box',
+  outline: 'none'
+} as const;
+
+const hoverStyle = {
+  backgroundColor: '#4b5563 !important',
+  borderColor: '#6b7280 !important',
+  background: '#4b5563 !important'
+} as const;
+
 export default function ChannelSelector({
   selectedChannelId,
   onChannelSelect,
@@ -21,64 +48,54 @@ export default function ChannelSelector({
   // Find selected channel for display
   const selectedChannel = channels.find(ch => ch.id === selectedChannelId);
 
-  // Fetch channels once when user starts searching - with delayed loading to avoid input disruption
+  // Preload channels immediately when component mounts (if user is authenticated)
   useEffect(() => {
-    if (!userFid) return;
+    if (!userFid || hasLoadedChannels) return;
 
-    // Only fetch channels once when user first starts typing
-    if (!hasLoadedChannels && searchTerm.trim().length > 0) {
-      // Use setTimeout to avoid disrupting the user's typing
-      const timeoutId = setTimeout(async () => {
-        // Double-check that user is still typing and we haven't loaded yet
-        if (!hasLoadedChannels) {
-          setLoading(true);
-          setError(null);
-          
-          try {
-            let allChannels: Channel[] = [];
-            let cursor: string | null = null;
-            let hasMore = true;
-            
-            // Fetch ALL user channels using pagination (only once)
-            while (hasMore) {
-              const url = new URL('/api/channels', window.location.origin);
-              url.searchParams.set('fid', userFid.toString());
-              url.searchParams.set('limit', '100'); // Maximum per request
-              url.searchParams.set('type', 'followed');
-              if (cursor) {
-                url.searchParams.set('cursor', cursor);
-              }
-              
-              const response = await fetch(url.toString());
-              const data: ChannelsResponse = await response.json();
-              
-              if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch channels');
-              }
-              
-              // Add channels to our collection
-              allChannels = [...allChannels, ...(data.channels || [])];
-              
-              // Check if there's more data
-              cursor = data.next?.cursor || null;
-              hasMore = !!cursor;
-            }
-            
-            console.log(`Loaded ${allChannels.length} total channels`);
-            setChannels(allChannels);
-            setHasLoadedChannels(true);
-          } catch (err) {
-            console.error('Failed to fetch channels:', err);
-            setError((err as Error).message);
-          } finally {
-            setLoading(false);
+    // Load channels in background immediately - no UI disruption
+    const preloadChannels = async () => {
+      try {
+        let allChannels: Channel[] = [];
+        let cursor: string | null = null;
+        let hasMore = true;
+        
+        // Fetch ALL user channels using pagination
+        while (hasMore) {
+          const url = new URL('/api/channels', window.location.origin);
+          url.searchParams.set('fid', userFid.toString());
+          url.searchParams.set('limit', '100'); // Maximum per request
+          url.searchParams.set('type', 'followed');
+          if (cursor) {
+            url.searchParams.set('cursor', cursor);
           }
+          
+          const response = await fetch(url.toString());
+          const data: ChannelsResponse = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch channels');
+          }
+          
+          // Add channels to our collection
+          allChannels = [...allChannels, ...(data.channels || [])];
+          
+          // Check if there's more data
+          cursor = data.next?.cursor || null;
+          hasMore = !!cursor;
         }
-      }, 500); // 500ms delay to let user finish typing first characters
+        
+        console.log(`Preloaded ${allChannels.length} total channels in background`);
+        setChannels(allChannels);
+        setHasLoadedChannels(true);
+      } catch (err) {
+        console.error('Failed to preload channels:', err);
+        setError((err as Error).message);
+      }
+    };
 
-      return () => clearTimeout(timeoutId);
-    }
-  }, [userFid, searchTerm, hasLoadedChannels]);
+    // Start preloading immediately in background
+    preloadChannels();
+  }, [userFid, hasLoadedChannels]);
 
   // Filter and sort channels based on search term - show only top 10 relevant results
   const filteredChannels = useMemo(() => {
@@ -141,21 +158,7 @@ export default function ChannelSelector({
     setSearchTerm('');
   };
 
-  if (loading) {
-    return (
-      <div className={`space-y-3 ${className}`}>
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 bg-gray-300 rounded animate-pulse"></div>
-          <div className="text-sm text-gray-500">Loading channels...</div>
-        </div>
-        <div className="grid grid-cols-1 gap-1">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse"></div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Remove loading state - channels are preloaded in background
 
   if (error) {
     return (
@@ -268,21 +271,12 @@ export default function ChannelSelector({
       {/* Main Feed Option */}
       <button
         onClick={() => handleChannelClick(null)}
-        className="w-full flex items-center space-x-2 p-4 rounded-lg border-2 transition-all"
-        style={{ 
-          backgroundColor: '#374151 !important', 
-          borderColor: '#4b5563 !important', 
-          color: '#ffffff !important',
-          minHeight: '56px',
-          boxShadow: 'inset 0 0 0 1000px #374151 !important',
-        }}
+        style={buttonStyle}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#4b5563 !important';
-          e.currentTarget.style.borderColor = '#6b7280 !important';
+          Object.assign(e.currentTarget.style, hoverStyle);
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '#374151 !important';
-          e.currentTarget.style.borderColor = '#4b5563 !important';
+          Object.assign(e.currentTarget.style, buttonStyle);
         }}
       >
                                     <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm">
@@ -296,12 +290,7 @@ export default function ChannelSelector({
 
       {/* Channel List */}
       <div className="space-y-1 max-h-60 overflow-y-auto">
-        {loading && filteredChannels.length === 0 && (
-          <div className="text-sm text-center py-4" style={{ color: '#9ca3af !important' }}>
-            🔍 Searching channels...
-          </div>
-        )}
-        {!loading && filteredChannels.length === 0 && searchTerm && (
+        {filteredChannels.length === 0 && searchTerm && (
           <div className="text-sm text-center py-4" style={{ color: '#9ca3af !important' }}>
             No channels match your search
           </div>
@@ -311,21 +300,12 @@ export default function ChannelSelector({
             <button
               key={channel.id}
               onClick={() => handleChannelClick(channel.id)}
-              className="w-full flex items-center space-x-2 p-4 rounded-lg border transition-all"
-              style={{ 
-                backgroundColor: '#374151 !important', 
-                borderColor: '#4b5563 !important', 
-                color: '#ffffff !important',
-                minHeight: '56px',
-                boxShadow: 'inset 0 0 0 1000px #374151 !important',
-              }}
+              style={buttonStyle}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#4b5563 !important';
-                e.currentTarget.style.borderColor = '#6b7280 !important';
+                Object.assign(e.currentTarget.style, hoverStyle);
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#374151 !important';
-                e.currentTarget.style.borderColor = '#4b5563 !important';
+                Object.assign(e.currentTarget.style, buttonStyle);
               }}
             >
                              {/* Uniform circular image */}
