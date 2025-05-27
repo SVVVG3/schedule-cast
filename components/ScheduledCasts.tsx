@@ -171,9 +171,11 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
       {/* Centered layout without bullet points - updated */}
       <h3 className="text-3xl font-semibold p-8 border-b border-gray-700 text-white text-center">Upcoming Casts</h3>
       <div className="divide-y divide-gray-700">
-        {casts.map(cast => (
-          <div key={cast.id} className="p-8 hover:bg-gray-750">
-            <div className="flex flex-col">
+        {casts.map((cast, index) => (
+          <div key={cast.id} className="relative">
+            {/* Cast Entry Container */}
+            <div className="p-8 hover:bg-gray-750 border-l-4 border-transparent hover:border-purple-500 transition-colors duration-200">
+              <div className="flex flex-col">
               {/* Edit and Delete Buttons - Back at top with spacing above */}
               {!cast.posted && (
                 <div className="flex justify-center space-x-4" style={{ paddingTop: '32px' }}>
@@ -298,11 +300,17 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
               {/* Spacing below cast container */}
               <div style={{ marginBottom: '32px' }}></div>
 
-            </div>
-            {cast.error && (
-              <div className="mt-6 p-6 bg-red-900 text-lg text-red-200 rounded-lg border border-red-700">
-                Error: {cast.error}
               </div>
+              {cast.error && (
+                <div className="mt-6 p-6 bg-red-900 text-lg text-red-200 rounded-lg border border-red-700">
+                  Error: {cast.error}
+                </div>
+              )}
+            </div>
+            
+            {/* Visual separator between casts */}
+            {index < casts.length - 1 && (
+              <div className="mx-8 border-b border-gray-600 opacity-50"></div>
             )}
           </div>
         ))}
