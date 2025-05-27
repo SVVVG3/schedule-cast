@@ -91,9 +91,9 @@ export default function SuccessModal({
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-white hover:bg-blue-700 text-xl font-medium transition-colors rounded-full"
+          className="absolute top-3 right-3 text-white hover:bg-gray-600 text-xl font-medium transition-colors rounded-full"
           style={{ 
-            backgroundColor: '#3b82f6',
+            backgroundColor: 'transparent',
             lineHeight: '1',
             width: '28px',
             height: '28px',
@@ -119,14 +119,25 @@ export default function SuccessModal({
           </p>
 
           {/* Simplified scheduled time display */}
-          <div className="text-gray-300 text-lg font-medium mb-8">
+          <div className="text-gray-300 text-lg font-medium mb-16">
             {formatScheduledTime(castData.scheduledAt)}
           </div>
 
           {/* Single action button */}
           <button
             onClick={onScheduleAnother}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-colors text-lg shadow-lg hover:shadow-xl"
+            className="w-full font-semibold py-4 px-8 rounded-xl transition-colors text-lg shadow-lg hover:shadow-xl"
+            style={{
+              backgroundColor: '#2563eb',
+              color: '#ffffff',
+              border: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1d4ed8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#2563eb';
+            }}
           >
             📅 Schedule Another Cast
           </button>
