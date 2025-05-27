@@ -176,7 +176,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
             <div className="flex flex-col space-y-4">
               {/* Edit and Delete Buttons - Back at top with spacing above */}
               {!cast.posted && (
-                <div className="flex justify-center space-x-4 pt-4">
+                <div className="flex justify-center space-x-4 pt-8">
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -233,7 +233,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
                 
               {/* Media Preview - Centered with doubled size and spacing below */}
               {cast.has_media && cast.media_urls && cast.media_urls.length > 0 && (
-                <div className="flex justify-center px-4 mb-6">
+                <div className="flex justify-center px-4 mb-12">
                   <div className="flex flex-wrap gap-3 justify-center max-w-full">
                     {cast.media_urls.slice(0, 2).map((url, index) => {
                       const isImage = cast.media_types?.[index]?.startsWith('image/') || 
