@@ -176,7 +176,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
             <div className="flex flex-col">
               {/* Edit and Delete Buttons - Back at top with spacing above */}
               {!cast.posted && (
-                <div className="flex justify-center space-x-4" style={{ paddingTop: '48px !important' }}>
+                <div className="flex justify-center space-x-4" style={{ paddingTop: '48px', backgroundColor: 'red', border: '5px solid yellow' }}>
                   <button
                     onClick={(e) => {
                       e.preventDefault();
@@ -233,7 +233,7 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
                 
               {/* Media Preview - Centered with doubled size and spacing below */}
               {cast.has_media && cast.media_urls && cast.media_urls.length > 0 && (
-                <div className="flex justify-center px-4" style={{ marginBottom: '64px !important' }}>
+                <div className="flex justify-center px-4" style={{ marginBottom: '64px', backgroundColor: 'blue', border: '5px solid green' }}>
                   <div className="flex flex-wrap gap-3 justify-center max-w-full">
                     {cast.media_urls.slice(0, 2).map((url, index) => {
                       const isImage = cast.media_types?.[index]?.startsWith('image/') || 
