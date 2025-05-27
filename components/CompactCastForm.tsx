@@ -153,6 +153,7 @@ export default function CompactCastForm() {
               Media (optional)
             </label>
             <MediaUpload 
+              files={uploadedFiles} // Pass current files for controlled component
               onFilesChange={setUploadedFiles}
               maxFiles={2} // Farcaster limitation: max 2 embeds per cast
               maxSizePerFile={10 * 1024 * 1024} // 10MB

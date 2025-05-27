@@ -19,6 +19,7 @@ interface MediaUploadProps {
   acceptedTypes?: string[];
   maxSizePerFile?: number;
   className?: string;
+  files?: UploadedFile[]; // Allow external control of files
 }
 
 // Small SVG icon for image/media upload (similar to social media sites)
@@ -63,14 +64,20 @@ export default function MediaUpload({
   maxFiles = 2, // Updated to match Farcaster limitation
   acceptedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'],
   maxSizePerFile = 10 * 1024 * 1024, // 10MB
-  className = ''
+  className = '',
+  files = [] // Default to empty array if not provided
 }: MediaUploadProps) {
   const { user } = useAuth();
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(files);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync internal state with external files prop
+  React.useEffect(() => {
+    setUploadedFiles(files);
+  }, [files]);
 
   const validateFiles = useCallback((files: File[]): { valid: File[], errors: string[] } => {
     const valid: File[] = [];

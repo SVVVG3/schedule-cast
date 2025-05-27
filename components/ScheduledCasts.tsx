@@ -222,10 +222,10 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
                 <p className="text-white whitespace-pre-wrap text-lg leading-relaxed">{cast.content}</p>
               </div>
                 
-              {/* Media Preview - Centered */}
+              {/* Media Preview - Centered with proper constraints */}
               {cast.has_media && cast.media_urls && cast.media_urls.length > 0 && (
-                <div className="flex justify-center">
-                  <div className="flex flex-wrap gap-2 justify-center">
+                <div className="flex justify-center px-4">
+                  <div className="flex flex-wrap gap-2 justify-center max-w-full">
                     {cast.media_urls.slice(0, 2).map((url, index) => {
                       const isImage = cast.media_types?.[index]?.startsWith('image/') || 
                                      cast.media_types?.[index] === 'gif' ||
@@ -236,19 +236,34 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
                                      url.toLowerCase().includes('.webp');
                       
                       return (
-                        <div key={index} className="relative">
+                        <div key={index} className="relative flex-shrink-0">
                           {isImage ? (
                             <img
                               src={url}
                               alt={`Media ${index + 1}`}
                               className="w-16 h-16 object-cover rounded-lg border border-gray-600"
+                              style={{ 
+                                maxWidth: '64px', 
+                                maxHeight: '64px',
+                                width: '64px',
+                                height: '64px',
+                                objectFit: 'cover'
+                              }}
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                               }}
                             />
                           ) : (
-                            <div className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center">
+                            <div 
+                              className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0"
+                              style={{ 
+                                width: '64px',
+                                height: '64px',
+                                minWidth: '64px',
+                                minHeight: '64px'
+                              }}
+                            >
                               <span className="text-2xl">🎥</span>
                             </div>
                           )}
@@ -256,7 +271,15 @@ export default function ScheduledCasts({ refreshTrigger }: ScheduledCastsProps) 
                       );
                     })}
                     {cast.media_urls.length > 2 && (
-                      <div className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center">
+                      <div 
+                        className="w-16 h-16 bg-gray-700 rounded-lg border border-gray-600 flex items-center justify-center flex-shrink-0"
+                        style={{ 
+                          width: '64px',
+                          height: '64px',
+                          minWidth: '64px',
+                          minHeight: '64px'
+                        }}
+                      >
                         <span className="text-xs text-gray-300">+{cast.media_urls.length - 2}</span>
                       </div>
                     )}
