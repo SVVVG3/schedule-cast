@@ -105,6 +105,7 @@ export async function postCast(
     const requestBody: Record<string, any> = {
       signer_uuid: signerUuid,
       text: content,
+      client_id: process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9'
     };
 
     // Add channel ID if provided
@@ -517,6 +518,7 @@ export async function postCastDirect(
       const requestBody: Record<string, any> = {
         signer_uuid: signerUuid,
         text: content,
+        client_id: process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9'
       };
 
       // Add channel ID if provided
