@@ -13,6 +13,7 @@
     "buttonTitle": "📅 Schedule Cast",
     "splashImageUrl": "https://schedule-cast.vercel.app/ScheduleCastLogo.png",
     "splashBackgroundColor": "#000000",
+    "webhookUrl": "https://api.neynar.com/f/app/3bc04533-6297-438b-8d85-e655f3fc19f9/event",
     "subtitle": "Schedule your Farcaster casts",
     "description": "Plan and schedule your Farcaster casts for optimal engagement. Schedule posts in advance and never miss a beat.",
     "primaryCategory": "social",

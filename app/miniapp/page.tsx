@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import CompactCastForm from '@/components/CompactCastForm';
 import SimpleCastForm from '@/components/SimpleCastForm';
 import ScheduledCasts from '@/components/ScheduledCasts';
+import NotificationManager from '@/components/NotificationManager';
 import { useAuth } from '@/lib/auth-context';
 import { useUser } from '@/lib/user-context';
 
@@ -137,6 +138,11 @@ export default function MiniApp() {
               <SimpleCastForm 
                 onCastScheduled={() => setRefreshTrigger(prev => prev + 1)}
               />
+            </div>
+
+            {/* Notification Manager */}
+            <div className="mb-8">
+              <NotificationManager />
             </div>
 
             {/* Scheduled Casts */}

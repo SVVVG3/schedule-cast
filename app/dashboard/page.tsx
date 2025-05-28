@@ -6,6 +6,7 @@ import { useUser } from '@/lib/user-context';
 import { useAuth } from '@/lib/auth-context';
 import SimpleCastForm from '@/components/SimpleCastForm';
 import ScheduledCasts from '@/components/ScheduledCasts';
+import NotificationAdmin from '@/components/NotificationAdmin';
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
@@ -120,6 +121,11 @@ export default function Dashboard() {
               <SimpleCastForm 
                 onCastScheduled={() => setRefreshTrigger(prev => prev + 1)}
               />
+            </div>
+            
+            {/* Notification Admin */}
+            <div className="w-full max-w-2xl mx-auto">
+              <NotificationAdmin />
             </div>
             
             {/* Scheduled Casts */}
