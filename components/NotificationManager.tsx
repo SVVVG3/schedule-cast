@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import sdk from '@farcaster/frame-sdk';
 
-// Types from the Neynar documentation
+// Types from the Neynar documentation - updated for addMiniApp
 type FrameNotificationDetails = {
   url: string;
   token: string;
 };
 
-type AddFrameResult =
+type AddMiniAppResult =
   | {
       added: true;
       notificationDetails?: FrameNotificationDetails;
@@ -29,22 +29,22 @@ export default function NotificationManager({ onNotificationEnabled }: Notificat
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAddFrame = async () => {
+  const handleAddMiniApp = async () => {
     if (isAdded) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('[NotificationManager] Attempting to add frame...');
+      console.log('[NotificationManager] Attempting to add mini app...');
       
-      const result = await sdk.actions.addFrame() as AddFrameResult;
+      const result = await sdk.actions.addMiniApp() as AddMiniAppResult;
       
-      console.log('[NotificationManager] Add frame result:', result);
+      console.log('[NotificationManager] Add mini app result:', result);
 
       if (result.added) {
         setIsAdded(true);
-        console.log('[NotificationManager] Frame added successfully!');
+        console.log('[NotificationManager] Mini app added successfully!');
         
         if (result.notificationDetails) {
           setNotificationDetails(result.notificationDetails);
@@ -57,12 +57,12 @@ export default function NotificationManager({ onNotificationEnabled }: Notificat
           : 'Unable to add mini app. Please check your app manifest.';
         
         setError(errorMsg);
-        console.log('[NotificationManager] Failed to add frame:', result.reason);
+        console.log('[NotificationManager] Failed to add mini app:', result.reason);
       }
     } catch (err: any) {
       const errorMsg = 'Failed to add mini app. You may not be in a supported Farcaster client.';
       setError(errorMsg);
-      console.error('[NotificationManager] Error adding frame:', err);
+      console.error('[NotificationManager] Error adding mini app:', err);
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +106,7 @@ export default function NotificationManager({ onNotificationEnabled }: Notificat
         )}
         
         <button
-          onClick={handleAddFrame}
+          onClick={handleAddMiniApp}
           disabled={isLoading}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-medium py-2 px-4 rounded transition-colors"
         >
