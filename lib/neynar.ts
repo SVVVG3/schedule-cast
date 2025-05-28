@@ -104,8 +104,7 @@ export async function postCast(
     // Prepare the request body
     const requestBody: Record<string, any> = {
       signer_uuid: signerUuid,
-      text: content,
-      client_id: process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9'
+      text: content
     };
 
     // Add channel ID if provided
@@ -379,7 +378,9 @@ export async function createSignerDirect() {
         "x-api-key": process.env.NEYNAR_API_KEY
       },
       body: JSON.stringify({
-        sponsored_by_neynar: true // Let Neynar sponsor the signer for free
+        sponsored_by_neynar: true, // Let Neynar sponsor the signer for free
+        // Include app_fid if available to ensure proper attribution
+        ...(process.env.APP_FID && { app_fid: parseInt(process.env.APP_FID) })
       })
     });
     
@@ -517,8 +518,7 @@ export async function postCastDirect(
       // Prepare the request body
       const requestBody: Record<string, any> = {
         signer_uuid: signerUuid,
-        text: content,
-        client_id: process.env.NEXT_PUBLIC_NEYNAR_CLIENT_ID || '3bc04533-6297-438b-8d85-e655f3fc19f9'
+        text: content
       };
 
       // Add channel ID if provided
