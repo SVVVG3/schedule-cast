@@ -20,7 +20,8 @@
     "tags": ["scheduling", "farcaster", "social", "productivity", "automation"],
     "requiredCapabilities": [
       "actions.signIn",
-      "actions.ready"
+      "actions.ready",
+      "actions.addMiniApp"
     ]
   }
 } 

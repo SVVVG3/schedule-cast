@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import CompactCastForm from '@/components/CompactCastForm';
 import SimpleCastForm from '@/components/SimpleCastForm';
 import ScheduledCasts from '@/components/ScheduledCasts';
-import NotificationManager from '@/components/NotificationManager';
 import { useAuth } from '@/lib/auth-context';
 import { useUser } from '@/lib/user-context';
 
@@ -133,16 +132,26 @@ export default function MiniApp() {
               </div>
             </div>
 
+            {/* Notification Info */}
+            <div className="mb-6">
+              <div className="bg-blue-900 border border-blue-600 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-400 mt-0.5">🔔</span>
+                  <div>
+                    <h3 className="text-blue-200 font-medium text-sm">Notifications Enabled</h3>
+                    <p className="text-blue-300 text-xs mt-1">
+                      You'll receive notifications about your scheduled casts since you've added Schedule Cast to your mini apps.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Cast Form */}
             <div className="mb-8">
               <SimpleCastForm 
                 onCastScheduled={() => setRefreshTrigger(prev => prev + 1)}
               />
-            </div>
-
-            {/* Notification Manager */}
-            <div className="mb-8">
-              <NotificationManager />
             </div>
 
             {/* Scheduled Casts */}
