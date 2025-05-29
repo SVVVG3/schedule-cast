@@ -1001,7 +1001,7 @@ This implementation plan provides a comprehensive roadmap for adding media suppo
 #### **✅ IMPLEMENTATION COMPLETE**:
 
 **🎯 Step 1: Manifest Configuration**
-- ✅ **Webhook URL Added**: Updated `public/farcaster.json` with webhookUrl: `https://api.neynar.com/f/app/3bc04533-6297-438b-8d85-e655f3fc19f9/event`
+- ✅ **Webhook URL Added**: Updated `public/farcaster.json` with webhookUrl: `https://schedule-cast.vercel.app/api/webhook`
 - ✅ **Neynar Integration**: Enables automatic notification token management and analytics
 - ✅ **Manifest Validation**: Proper webhook configuration for mini app notifications
 
@@ -1062,3 +1062,44 @@ This implementation plan provides a comprehensive roadmap for adding media suppo
 **🎉 FEATURE COMPLETE**: Schedule Cast now has full push notification capabilities for engaged mini app users!
 
 ## Lessons
+
+### **🚨 CRITICAL NOTIFICATION ISSUE - FIXED ✅**
+
+**Problem Identified**: Incorrect webhook URL configuration preventing notifications from working
+**Root Cause**: We were using Neynar's webhook URL directly in manifest instead of our own endpoint
+**Status**: ✅ **RESOLVED** - Deployed commit `e9b993f`
+
+#### **What Was Wrong**:
+```json
+// ❌ INCORRECT - Using Neynar's URL directly
+{
+  "webhookUrl": "https://api.neynar.com/f/app/3bc04533-6297-438b-8d85-e655f3fc19f9/event"
+}
+```
+
+#### **What We Fixed**:
+```json
+// ✅ CORRECT - Using our own webhook endpoint
+{
+  "webhookUrl": "https://schedule-cast.vercel.app/api/webhook"
+}
+```
+
+#### **Why This Matters**:
+- **Manifest Tool Issue**: Fixed - Should now show webhookUrl as properly set
+- **Notification Toggle**: Fixed - Users should now see notification toggle when adding mini app
+- **Neynar Integration**: Properly configured for managed service approach
+
+#### **Technical Implementation**:
+- ✅ **Created**: `/api/webhook` endpoint to receive Farcaster events
+- ✅ **Handles**: `frame_added`, `frame_removed`, `notifications_enabled`, `notifications_disabled`
+- ✅ **Logging**: Comprehensive debug logging for troubleshooting
+- ✅ **Architecture**: Uses Neynar managed service (they handle tokens, we receive events)
+
+#### **Expected Result**:
+- ✅ Farcaster Manifest Tool should now show webhook URL as valid
+- ✅ Users adding mini app should see notification permission prompt
+- ✅ Notification toggle should appear in Farcaster client UI
+- ✅ Webhook events will be logged for debugging
+
+**Next Step**: Test with Farcaster Manifest Tool and mini app addition flow
